@@ -1303,3 +1303,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Rest of your existing DOMContentLoaded code...
 });
+
+async function updateChart(token, timeRange) {
+    console.log('Updating chart for:', token, timeRange);
+    window.currentToken = token;
+    const event = new CustomEvent('tokenChange');
+    window.dispatchEvent(event);
+    if (window.chartUpdateAndPrefetch) {
+        await window.chartUpdateAndPrefetch(timeRange);
+    }
+}
+
+// Token button click handlers
+document.querySelectorAll('.token-button').forEach(button => {
+    button.addEventListener('click', async () => {
+        const token = button.getAttribute('data-token');
+        const timeRange = document.querySelector('.time-dropdown').value || '7D';
+        await updateChart(token, timeRange);
+    });
+});
+
+// Initial chart render
+const initialToken = 'HYPE';
+const initialTimeRange = '7D';
+updateChart(initialToken, initialTimeRange);

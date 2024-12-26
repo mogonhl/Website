@@ -188,55 +188,32 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    async function updateChart(timeRange = '7D') {
-        try {
-            const data = await fetchData(timeRange);
-            if (!data || !data.prices || data.prices.length === 0) {
-                console.log('No data available');
-                return;
-            }
-
-            // Process the data
-            const chartData = data.prices.map(([timestamp, price]) => ({
-                time: timestamp / 1000,
-                value: price
-            }));
-
-            console.log('Processed chart data:', chartData);
-
-            // Update the chart
-            if (window.chart) {
-                window.chart.update(chartData);
-            } else {
-                initializeChart(chartData);
-            }
-        } catch (error) {
-            console.error('Error updating chart:', error);
-        }
-    }
-
     // Handle dropdown changes
     dropdown.addEventListener('change', (e) => {
         currentTimeRange = e.target.value;
-        updateChart();
+        console.log('Time range changed to:', currentTimeRange);
+        updateChart(currentTimeRange);
     });
 
     // Handle token changes
     window.addEventListener('tokenChange', () => {
+        console.log('Token changed to:', window.currentToken);
         updateButtonStyles();
         updateDropdownOptions();
+        updateChart(currentTimeRange);
     });
 
     // Initial render
-    updateChartAndPrefetch(currentTimeRange);
+    updateChart(currentTimeRange);
 
     // Make updateChart available globally
     window.chartUpdateAndPrefetch = async function(timeRange) {
+        console.log('chartUpdateAndPrefetch called with:', timeRange);
         if (timeRange) {
             currentTimeRange = timeRange;
             dropdown.value = timeRange;
         }
-        await updateChart();
+        await updateChart(currentTimeRange);
     };
 
     // Make clearCache available globally
@@ -246,7 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    function initializeChart(data) {
+    // Update the chart with new data
+    function updateChartData(chartData) {
         const { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } = window.Recharts;
         const container = document.getElementById('price-chart');
         
@@ -255,14 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Create root element
-        const root = ReactDOM.createRoot(container);
+        // Create root element if it doesn't exist
+        if (!window.chartRoot) {
+            window.chartRoot = ReactDOM.createRoot(container);
+        }
         
         const chart = React.createElement(ResponsiveContainer, 
             { width: '100%', height: '95%' },
             React.createElement(AreaChart, 
                 { 
-                    data: data,
+                    data: chartData,
                     margin: { top: 10, right: 0, left: 0, bottom: 0 }
                 },
                 React.createElement(XAxis, {
@@ -318,7 +298,28 @@ document.addEventListener('DOMContentLoaded', () => {
             )
         );
 
-        root.render(chart);
-        window.chart = { update: (newData) => root.render(chart) };
+        window.chartRoot.render(chart);
+    }
+
+    async function updateChart(timeRange = '7D') {
+        try {
+            console.log('Updating chart with timeRange:', timeRange);
+            const data = await fetchData(timeRange);
+            if (!data || !data.prices || data.prices.length === 0) {
+                console.log('No data available');
+                return;
+            }
+
+            // Process the data
+            const chartData = data.prices.map(([timestamp, price]) => ({
+                time: timestamp / 1000,
+                value: price
+            }));
+
+            console.log('Processed chart data:', chartData);
+            updateChartData(chartData);
+        } catch (error) {
+            console.error('Error updating chart:', error);
+        }
     }
 });

@@ -12,6 +12,10 @@
     { "src": "app/**", "use": "@vercel/static" },
     { "src": "index.html", "use": "@vercel/static" }
   ],
+  "env": {
+    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
+    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token"
+  },
   "routes": [
     {
       "src": "/api/(.*)",
