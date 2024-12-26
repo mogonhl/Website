@@ -33,12 +33,12 @@ const LoadingScreen = ({ onLoadComplete }) => {
 
     return React.createElement('div', {
         ref: containerRef,
-        className: 'fixed top-0 left-0 w-full h-screen bg-black',
+        className: 'relative w-full h-screen bg-black',
         style: { zIndex: 50 }
     },
         // Container for stickers and logo
         React.createElement('div', {
-            className: 'relative w-full h-full'
+            className: 'absolute inset-0'
         },
             // Stickers container
             React.createElement('div', {
