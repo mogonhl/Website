@@ -135,167 +135,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchData(timeRange) {
         try {
-            const token = window.currentToken || 'HYPE';
-            
-            // Check localStorage cache first
-            const cacheKey = `price_data_${timeRange}_${token.toLowerCase()}`;
-            
-            const memCache = dataCache[currentDataset][cacheKey];
-            if (memCache && (Date.now() - memCache.timestamp) < CACHE_EXPIRY) {
-                return memCache.data;
-            }
-
-            console.log('Fetching fresh data for token:', token, 'timeRange:', timeRange, 'dataset:', currentDataset);
-            const url = `${getApiUrl()}?timeRange=${timeRange}&token=${token}&dataset=${currentDataset}`;
-            console.log('Request URL:', url);
-            const response = await fetch(url);
-            
+            console.log('Fetching data for:', timeRange);
+            const response = await fetch(`/api/price-data?timeRange=${timeRange}&token=${window.currentToken}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
-            const rawData = await response.json();
-            console.log('Raw data received:', {
-                dataType: typeof rawData,
-                hasData: !!rawData,
-                keys: Object.keys(rawData),
-                dataset: currentDataset,
-                sample: rawData.prices?.slice(0, 2)
-            });
-            
-            // Handle both price and airdrop value data formats
-            let processedData;
-            if (currentDataset === 'dataset3') {
-                // For airdrop value data
-                if (!rawData || !Array.isArray(rawData.prices)) {
-                    console.error('Invalid price data format:', rawData);
-                    throw new Error('Invalid price data format');
-                }
-                const airdropAmount = window.TOKENS[token].airdropAmount;
-                processedData = rawData.prices.map(([timestamp, price]) => ({
-                    time: timestamp,
-                    value: parseFloat(price) * airdropAmount
-                }));
-                console.log('Processed airdrop value data sample:', processedData.slice(0, 2));
-            } else {
-                // For price data
-                if (!rawData || !Array.isArray(rawData.prices)) {
-                    console.error('Invalid price data format:', rawData);
-                    throw new Error('Invalid price data format');
-                }
-                processedData = rawData.prices.map(([timestamp, price]) => ({
-                    time: timestamp,
-                    value: parseFloat(price)
-                }));
-            }
-
-            // Cache the processed data
-            dataCache[currentDataset][cacheKey] = {
-                timestamp: Date.now(),
-                data: processedData
-            };
-
-            return processedData;
+            const data = await response.json();
+            console.log('Received data:', data);
+            return data;
         } catch (error) {
             console.error('Error fetching data:', error);
-            return [];
+            return null;
         }
     }
 
-    async function updateChart() {
+    async function updateChart(timeRange = '7D') {
         try {
-            const data = await fetchData(currentTimeRange);
-            if (!data || data.length === 0) {
-                console.error('No data available');
+            const data = await fetchData(timeRange);
+            if (!data || !data.prices || data.prices.length === 0) {
+                console.log('No data available');
                 return;
             }
-            
-            // Get Recharts components from the global Recharts object
-            const { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } = window.Recharts;
-            
-            if (!AreaChart) {
-                console.error('Recharts components not found. Available globals:', Object.keys(window));
-                return;
-            }
-            
-            // Clear the container first
-            container.innerHTML = '';
-            
-            // Create root using createRoot
-            const root = ReactDOM.createRoot(container);
-            
-            const chart = React.createElement(ResponsiveContainer, 
-                { 
-                    width: '100%',
-                    height: '95%'
-                },
-                React.createElement(AreaChart, 
-                    { 
-                        data: data,
-                        margin: { top: 10, right: 0, left: 0, bottom: 0 }
-                    },
-                    React.createElement(XAxis, {
-                        dataKey: 'time',
-                        stroke: '#3E3E3E',
-                        tick: false,
-                        tickLine: false,
-                        axisLine: true
-                    }),
-                    React.createElement(YAxis, {
-                        stroke: '#3E3E3E',
-                        fontSize: 12,
-                        tickLine: true,
-                        tickSize: 10,
-                        tick: { fill: '#FFFFFF' },
-                        axisLine: true,
-                        tickFormatter: (value) => formatAxisNumber(value)
-                    }),
-                    React.createElement(Tooltip, {
-                        content: ({ active, payload, label }) => {
-                            if (active && payload && payload.length) {
-                                const date = new Date(label * 1000);
-                                const year = date.getFullYear();
-                                const month = date.toLocaleString('en-US', { month: 'short' });
-                                const day = date.getDate();
-                                const value = payload[0].value;
-                                
-                                let tooltipText;
-                                if (currentDataset === 'dataset3') {
-                                    tooltipText = `${year} ${month} ${day}: $${formatTooltipNumber(value)}`;
-                                } else {
-                                    tooltipText = `${year} ${month} ${day}: $${formatTooltipNumber(value)}`;
-                                }
-                                
-                                return React.createElement('div', {
-                                    style: {
-                                        backgroundColor: '#041815',
-                                        padding: '8px 12px',
-                                        fontSize: '12px',
-                                        whiteSpace: 'nowrap',
-                                        border: 'none'
-                                    }
-                                }, tooltipText);
-                            }
-                            return null;
-                        },
-                        cursor: {
-                            stroke: '#3E3E3E'
-                        },
-                        wrapperStyle: { zIndex: 1000 }
-                    }),
-                    React.createElement(Area, {
-                        type: 'stepAfter',
-                        dataKey: 'value',
-                        stroke: '#FFFFFF',
-                        strokeWidth: 2,
-                        fill: 'none',
-                        dot: false,
-                        activeDot: false
-                    })
-                )
-            );
 
-            root.render(chart);
+            // Process the data
+            const chartData = data.prices.map(([timestamp, price]) => ({
+                time: timestamp / 1000,
+                value: price
+            }));
+
+            // Update the chart
+            if (window.chart) {
+                window.chart.update(chartData);
+            } else {
+                initializeChart(chartData);
+            }
         } catch (error) {
             console.error('Error updating chart:', error);
         }
