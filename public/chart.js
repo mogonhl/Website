@@ -4,6 +4,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTimeRange = '7D';
     let currentDataset = 'dataset1';
     
+    // Configure step sizes for each time range (in points)
+    const targetDataPoints = {
+        '24H': 24,     // One point per hour
+        '7D': 42,      // One point per 4 hours
+        '30D': 60,     // One point per 12 hours
+        'All-time': 90 // Larger steps for all-time view
+    };
+
+    // Function to reduce data points
+    function reduceDataPoints(data, targetPoints) {
+        if (!data || data.length <= targetPoints) return data;
+        
+        const step = Math.ceil(data.length / targetPoints);
+        return data.filter((_, index) => index % step === 0);
+    }
+
     // Format numbers with K/M/B for axis labels
     const formatAxisNumber = (num) => {
         if (num === 0) return '0';
@@ -308,13 +324,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     wrapperStyle: { zIndex: 1000 }
                 }),
                 React.createElement(Area, {
-                    type: 'stepAfter',
+                    type: 'step',
                     dataKey: 'value',
                     stroke: '#FFFFFF',
                     strokeWidth: 2,
                     fill: 'none',
                     dot: false,
-                    activeDot: false
+                    activeDot: false,
+                    step: true,
+                    connectNulls: true
                 })
             )
         );
@@ -331,8 +349,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            console.log('Rendering chart data:', data);
-            updateChartData(data);
+            // Reduce data points based on time range
+            const target = targetDataPoints[timeRange] || data.length;
+            const reducedData = reduceDataPoints(data, target);
+            console.log('Rendering chart data:', reducedData);
+            updateChartData(reducedData);
         } catch (error) {
             console.error('Error updating chart:', error);
         }
