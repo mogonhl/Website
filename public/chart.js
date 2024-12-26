@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
-    const timeRanges = ['7D', '14D', '30D'];
+    const timeRanges = ['24H', '7D', '30D', 'All-time'];
     let currentTimeRange = '7D';
     let currentDataset = 'dataset1';
     

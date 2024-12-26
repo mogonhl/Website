@@ -13,8 +13,8 @@
     { "src": "index.html", "use": "@vercel/static" }
   ],
   "env": {
-    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
-    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token"
+    "UPSTASH_REDIS_REST_URL": "https://witty-dassie-40050.upstash.io",
+    "UPSTASH_REDIS_REST_TOKEN": "AZxyAAIjcDE3Mzk2MTJkNzJjMDg0Yzk0ODMyZWE3YmRjOGRmZTQxZHAxMA"
   },
   "routes": [
     {
