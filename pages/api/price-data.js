@@ -1,9 +1,22 @@
 const { Redis } = require('@upstash/redis');
 
+// Create a single Redis instance
 const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL,
     token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    automaticDeserialization: true,
+    retry: {
+        retries: 3,
+        backoff: {
+            min: 100,
+            max: 3000
+        }
+    }
 });
+
+// In-memory cache with 5-minute expiry
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const memoryCache = new Map();
 
 export default async function handler(req, res) {
     // Set CORS headers
@@ -28,7 +41,14 @@ export default async function handler(req, res) {
             ? `tvl_data_${timeRange}_${token.toLowerCase()}`
             : `price_data_${timeRange}_${token.toLowerCase()}`;
 
-        console.log('Fetching key:', cacheKey);
+        // Check memory cache first
+        const cachedItem = memoryCache.get(cacheKey);
+        if (cachedItem && Date.now() - cachedItem.timestamp < CACHE_DURATION) {
+            console.log('Serving from memory cache:', cacheKey);
+            return res.json(cachedItem.data);
+        }
+
+        console.log('Fetching from Redis:', cacheKey);
         const cachedData = await redis.get(cacheKey);
         
         if (!cachedData) {
@@ -39,9 +59,15 @@ export default async function handler(req, res) {
             });
         }
 
-        // Handle the case where Redis returns an object directly
+        // Parse data if it's a string
         const data = typeof cachedData === 'string' ? JSON.parse(cachedData) : cachedData;
         
+        // Update memory cache
+        memoryCache.set(cacheKey, {
+            data,
+            timestamp: Date.now()
+        });
+
         console.log('Data retrieved successfully:', {
             type: typeof data,
             hasData: !!data,

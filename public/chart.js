@@ -134,10 +134,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchData(timeRange, retries = 3) {
+        // Check local cache first
+        const cacheKey = `${timeRange}_${window.currentToken}_${currentDataset}`;
+        const cached = dataCache[currentDataset][cacheKey];
+        if (cached && Date.now() - cached.timestamp < CACHE_EXPIRY) {
+            console.log('Serving from local cache:', cacheKey);
+            return cached.data;
+        }
+
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 console.log(`Fetching data attempt ${attempt}/${retries} for:`, timeRange, 'token:', window.currentToken);
-                const response = await fetch(`/api/price-data?timeRange=${timeRange}&token=${window.currentToken}`);
+                const response = await fetch(`/api/price-data?timeRange=${timeRange}&token=${window.currentToken}&dataset=${currentDataset}`);
                 
                 if (!response.ok) {
                     const text = await response.text();
@@ -159,6 +167,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Invalid data format:', data);
                     throw new Error('Invalid data format received');
                 }
+
+                // Update local cache
+                dataCache[currentDataset][cacheKey] = {
+                    data,
+                    timestamp: Date.now()
+                };
                 
                 return data;
             } catch (error) {
