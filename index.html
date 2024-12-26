@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Website</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="/assets/logo.png">
+    
+    <style>
+        body {
+            background-color: #002420;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .tab-indicator {
+            height: 1px;
+            bottom: -1px;
+        }
+        .airdrop-icon {
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+        .airdrop-icon.selected {
+            border-color: #10B981;
+        }
+
+        /* Chart container styles */
+        #price-chart {
+            min-height: 300px;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .content-right {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .content-right > div {
+            flex: 1;
+            min-height: 300px;
+        }
+
+        .category-select option {
+            background: #041815;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+        }
+
+        .category-select {
+            background: transparent;
+            border: none;
+            font-size: 3rem;
+            font-family: inherit;
+            color: rgba(72, 255, 225, 0.9);
+            text-shadow: 0 0 1px rgba(72, 255, 225, 0.9);
+            font-weight: bold;
+            padding: 0;
+            padding-left: 1.75rem;
+            margin-right: 0.25rem;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(72, 255, 225, 0.9)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='9 6 15 12 9 18'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: left 0.25rem center;
+            background-size: 1.25rem;
+            transition: color 0.2s ease;
+        }
+
+        .category-select:hover {
+            color: rgba(72, 255, 225, 1);
+        }
+
+        .category-select:focus {
+            outline: none;
+        }
+
+        .category-select option {
+            background: #041815;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+        }
+
+        /* Performance ranking styles */
+        .performance-ranking {
+            position: relative;
+        }
+        .performance-ranking > div:not(.flex) {
+            transition: all 0.2s ease;
+            padding: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .performance-ranking > div:not(.flex):hover {
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .performance-ranking > div:not(.flex):hover::after {
+            content: attr(title);
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #041815;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+            border: none;
+        }
+        .performance-ranking img {
+            transition: transform 0.2s ease;
+        }
+        .performance-ranking > div:not(.flex):hover img {
+            transform: scale(1.1);
+        }
+    </style>
+    
+    <!-- Base dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Add TOKENS data -->
+    <script>
+    window.TOKENS = {
+        HYPE: {
+            id: 'hype',
+            symbol: 'HYPE',
+            name: 'Hyperliquid',
+            coingeckoId: 'hyperliquid',
+            initialPrice: 2.00,
+            airdropAmount: 2915,
+            desc1: 'The special one. The one to rule them all. The one illuminating the path forward.',
+            desc2: 'Showing the true potential behind airdrops. Protocols are bound to follow. Like moths. Flying into the fire wielded by Jeff.',
+            supply: 333900000
+        },
+        ARB: {
+            id: 'arbitrum',
+            symbol: 'ARB',
+            name: 'Arbitrum',
+            coingeckoId: 'arbitrum',
+            initialPrice: 1.35,
+            airdropAmount: 1859,
+            desc1: 'Leading Layer 2 scaling solution built on Ethereum.',
+            desc2: 'Enabling fast, low-cost transactions while maintaining Ethereum\'s security.',
+            supply: 10000000000
+        },
+        FRIEND: {
+            id: 'friend',
+            symbol: 'FRIEND',
+            name: 'Friend Tech',
+            coingeckoId: 'friend-tech',
+            initialPrice: 1.67,
+            airdropAmount: 517,
+            desc1: 'Revolutionary social trading platform on Base.',
+            desc2: 'Tokenizing social connections and enabling direct creator monetization.',
+            supply: 2000000000
+        },
+        JTO: {
+            id: 'jito',
+            symbol: 'JTO',
+            name: 'Jito',
+            coingeckoId: 'jito-governance-token',
+            initialPrice: 2.43,
+            airdropAmount: 8120,
+            desc1: 'Advanced MEV solution for the Solana ecosystem.',
+            desc2: 'Optimizing block production and maximizing validator rewards.',
+            supply: 100000000
+        },
+        ME: {
+            id: 'magic-eden',
+            symbol: 'ME',
+            name: 'Magic Eden',
+            coingeckoId: 'magic-eden',
+            initialPrice: 5.4,
+            airdropAmount: 735.8,
+            desc1: 'Leading cross-chain NFT marketplace.',
+            desc2: 'Bridging digital collectibles across multiple blockchains.',
+            supply: 1000000000
+        },
+        PENGU: {
+            id: 'pengu',
+            symbol: 'PENGU',
+            name: 'Pudgy Penguins',
+            coingeckoId: 'pudgy-penguins',
+            initialPrice: 0.0114,
+            airdropAmount: 20800,
+            desc1: 'Iconic NFT collection turned global IP brand.',
+            desc2: 'Building a wholesome Web3 ecosystem around adorable penguins.',
+            supply: 400000000
+        },
+        UNI: {
+            id: 'uniswap',
+            symbol: 'UNI',
+            name: 'Uniswap',
+            coingeckoId: 'uniswap',
+            initialPrice: 3.44,
+            airdropAmount: 400,
+            desc1: 'Pioneer of decentralized exchange protocols.',
+            desc2: 'Setting the standard for automated market making and token swaps.',
+            supply: 1000000000
+        },
+        TIA: {
+            id: 'celestia',
+            symbol: 'TIA',
+            name: 'Celestia',
+            coingeckoId: 'celestia',
+            initialPrice: 2.3,
+            airdropAmount: 240,
+            desc1: 'Pioneer of decentralized exchange protocols.',
+            desc2: 'Setting the standard for automated market making and token swaps.',
+            supply: 463589000
+        },
+        ENS: {
+            id: 'ens',
+            symbol: 'ENS',
+            name: 'Ethereum Name Service',
+            coingeckoId: 'ethereum-name-service',
+            initialPrice: 43.44,
+            airdropAmount: 182,
+            desc1: 'Pioneer of decentralized exchange protocols.',
+            desc2: 'Setting the standard for automated market making and token swaps.',
+            supply: 33165000
+        },
+        JUP: {
+            id: 'jupiter',
+            symbol: 'JUP',
+            name: 'Jupiter',
+            coingeckoId: 'jupiter-exchange-solana',
+            initialPrice: 0.66,
+            airdropAmount: 200,
+            desc1: 'Pioneer of decentralized exchange protocols.',
+            desc2: 'Setting the standard for automated market making and token swaps.',
+            supply: 1350000000
+        },
+        WEN: {
+            id: 'wen',
+            symbol: 'WEN',
+            name: 'WEN',
+            coingeckoId: 'wen-4',
+            initialPrice: 0.0001,
+            airdropAmount: 643652,
+            desc1: 'Pioneer of decentralized exchange protocols.',
+            desc2: 'Setting the standard for automated market making and token swaps.',
+            supply: 727600000000
+        },
+        AEVO: {
+            id: 'aevo',
+            symbol: 'AEVO',
+            name: 'Aevo',
+            coingeckoId: 'aevo-exchange',
+            initialPrice: 3.22,
+            airdropAmount: 120,
+            desc1: 'Pioneer of decentralized exchange protocols.',
+            desc2: 'Setting the standard for automated market making and token swaps.',
+            supply: 902000000
+        }
+    };
+    </script>
+
+    <!-- Import our components -->
+    <script type="text/babel" src="components/TweetList.js"></script>
+</head>
+<body>
+    <div id="dropdown-backdrop" class="dropdown-backdrop"></div>
+    <div id="intro" class="intro active">
+        <img src="assets/fast.png" alt="Glasses Blur" class="glasses-blur">
+        <img src="assets/fast.png" alt="Glasses" id="glasses" class="glasses">
+    </div>
+
+    <div id="main-content" class="main-content">
+        <div class="section logo-section active" id="logo-section">
+            <div class="text-wrapper">
+                <div class="dynamic-text-container">
+                    <span id="dynamic-text"></span>
+                </div>
+                <img src="assets/logo.png" alt="Token Logo" class="center-logo" />
+                <div class="static-text-container">
+                    <span class="static-text">Everyone.</span>
+                </div>
+            </div>
+            <div class="button-container">
+                <a href="https://hypurr.fun" target="_blank" class="action-button trade-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                    </svg>
+                    Trade on Hypurr Fun
+                </a>
+                <a href="https://x.com/MOGonHL" target="_blank" class="action-button twitter-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
+            </div>
+            <div class="scroll-indicator">
+                <div class="scroll-arrow"></div>
+            </div>
+        </div>
+        
+        <div class="section ticker-section" id="ticker-section">
+            <div class="max-w-7xl mx-auto px-8">
+                <h1 class="text-5xl mb-2">
+                    <div class="inline-flex items-center gap-1">
+                        <div class="category-select-wrapper">
+                            <select class="category-select" id="category-select">
+                                <option value="airdrops">Airdrops</option>
+                                <option value="layer1s">Layer 1s</option>
+                                <option value="shitcoins">Shitcoins</option>
+                            </select>
+                        </div>
+                        <span class="text-[3rem] font-bold">Mogged</span>
+                    </div>
+                </h1>
+                <p class="text-gray-400 mb-8 text-lg">HYPE is the special one. Nice try.</p>
+                
+                <div class="grid grid-cols-3 gap-4 mb-12">
+                    <div>
+                        <p class="text-gray-400 mb-1">Market Cap</p>
+                        <p class="text-3xl market-cap">$8,850,584,777</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 mb-1">Performance since TGE</p>
+                        <p class="text-3xl text-emerald-400 flex items-center">
+                            <span class="performance">598.2%</span>
+                            <span class="text-sm bg-emerald-400/20 text-emerald-400 px-2 py-1 rounded ml-2 multiplier">6x</span>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 mb-1">Mog Counter</p>
+                        <div class="flex items-center gap-2 mb-4">
+                            <img src="assets/lol.png" alt="Mog Counter Icon" class="w-12 h-12 object-contain mog-counter" id="mogCounter">
+                            <span class="text-2xl">5</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid" style="grid-template-columns: 1fr 3fr; gap: 0.5rem;">
+                    <!-- Airdrops Box -->
+                    <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 pt-3 pb-6">
+                        <div class="border-b border-gray-700 mb-4 relative">
+                            <div class="flex">
+                                <span class="text-sm cursor-pointer hover:text-white transition-colors relative pb-2" onclick="selectTab(this, 'airdrops')">
+                                    Airdrops
+                                    <div class="absolute tab-indicator left-0 w-full bg-emerald-400"></div>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-4">
+                            <img src="assets/Logos/HYPE.png" alt="HYPE" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity selected" onclick="selectIcon(this)">
+                            <img src="assets/Logos/Arbitrum.png" alt="ARB" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/Friend.png" alt="FRIEND" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/Jito.png" alt="JTO" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/MagicalEden.png" alt="ME" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/Pengu.jpeg" alt="PENGU" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/Uniswap.png" alt="UNI" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/TIA.png" alt="TIA" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/ENS.png" alt="ENS" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/JUP.png" alt="JUP" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/WEN.png" alt="WEN" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                            <img src="assets/Logos/AEVO.png" alt="AEVO" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        </div>
+                    </div>
+                    
+                    <!-- About Box -->
+                    <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 pt-3 pb-6">
+                        <div class="border-b border-gray-700 mb-4 relative">
+                            <div class="flex gap-4">
+                                <span class="text-sm cursor-pointer text-[rgb(148,158,156)] transition-colors relative pb-2" onclick="selectTab(this, 'about')">
+                                    About
+                                    <div class="absolute tab-indicator left-0 w-full bg-emerald-400" style="display: none;"></div>
+                                </span>
+                                <div class="flex space-x-4">
+                                    <span onclick="selectTab(this, 'bagFumbled')" 
+                                          class="text-sm text-[rgb(148,158,156)] relative cursor-pointer hover:text-white transition-colors pb-2">
+                                        Bag Fumbled
+                                        <div class="absolute tab-indicator left-0 w-full bg-emerald-400" style="display: none;"></div>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex">
+                            <div class="w-[35%] content-left">
+                                <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 40px;">
+                                    <div style="width: 300px;">
+                                        <div style="display: flex; flex-direction: column; gap: 25px;">
+                                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                                <!-- Average Airdrop section -->
+                                                <div style="display: flex; flex-direction: column; gap: 15px;">
+                                                    <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Average Airdrop</p>
+                                                    <div>
+                                                        <p class="text-xl text-emerald-400 airdrop-value"></p>
+                                                        <p class="text-xs text-[rgb(148,158,156)] cursor-help relative group">
+                                                            <a href="https://www.binance.com/en/square/post/17006385746106" 
+                                                               target="_blank" 
+                                                               class="hover:underline cursor-help">
+                                                                2915 HYPE
+                                                            </a>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Information section -->
+                                                <div style="display: flex; flex-direction: column; gap: 15px;">
+                                                    <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Information</p>
+                                                    <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1"></p>
+                                                    <p class="text-[12px] text-[rgb(148,158,156)]" id="desc2"></p>
+                                                    <p></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-[65%] content-right relative" style="min-height: 300px;">
+                                <div class="absolute top-0 right-0 w-full h-full" style="min-height: 300px;">
+                                    <div class="relative h-full" style="min-height: 300px;">
+                                        <div id="price-chart" class="w-full h-full" style="min-height: 300px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- New Performance Ranking Section -->
+                <div class="mt-4">
+                    <div class="flex gap-4 mb-2 px-6">
+                        <span class="text-xs text-[rgb(148,158,156)] hover:text-white transition-colors cursor-pointer" onclick="updateRankingOrder('size')" data-sort="size">Size</span>
+                        <span class="text-xs text-[rgb(148,158,156)] hover:text-white transition-colors cursor-pointer" onclick="updateRankingOrder('performance')" data-sort="performance">Performance</span>
+                    </div>
+                    <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative">
+                        <div class="performance-ranking flex items-center justify-between"></div>
+                        <img src="assets/small.png" alt="Small" class="absolute -bottom-6 -right-6 w-12 h-12 object-contain transform rotate-12">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="volume-control">
+        <div class="volume-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path class="wave wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <path class="wave wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+        </div>
+    </div>
+    <script src="script.js" type="module"></script>
+    <script src="chart.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "builds": [
+    { 
+      "src": "pages/api/*.js", 
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 10,
+        "memory": 1024
+      }
+    },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.js", "use": "@vercel/static" },
+    { "src": "*.css", "use": "@vercel/static" },
+    { "src": "assets/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    {
+      "src": "/api/price-data",
+      "dest": "/pages/api/price-data.js",
+      "headers": {
+        "cache-control": "s-maxage=129600",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS"
+      }
+    },
+    {
+      "src": "/api/update-cache",
+      "dest": "/pages/api/update-cache.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+} 

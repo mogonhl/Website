@@ -1,0 +1,8 @@
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/_document": "pages/_document.js",
+  "/api/price-data": "pages/api/price-data.js",
+  "/api/redis/get-token-data": "pages/api/redis/get-token-data.js",
+  "/api/tweet-proxy": "pages/api/tweet-proxy.js"
+}
