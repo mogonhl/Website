@@ -329,30 +329,21 @@ const FallingSticker = ({ onAnimationEnd }) => {
         };
     });
 
-    return React.createElement('div', {
-        className: 'absolute inset-0 pointer-events-none',
+    return React.createElement('img', {
+        src: sticker.src,
+        className: 'sticker',
+        onAnimationEnd: onAnimationEnd,
         style: {
-            perspective: '1000px'
+            width: `${sticker.size}px`,
+            height: `${sticker.size}px`,
+            left: `${sticker.startX}%`,
+            top: `${sticker.startY}%`,
+            opacity: 0.95,
+            animation: `fall ${sticker.duration}ms linear forwards`,
+            '--start-rotation': `${sticker.rotation}deg`,
+            '--end-rotation': `${sticker.rotationEnd}deg`
         }
-    },
-        React.createElement('img', {
-            src: sticker.src,
-            className: 'absolute',
-            onAnimationEnd: onAnimationEnd,
-            style: {
-                width: `${sticker.size}px`,
-                height: `${sticker.size}px`,
-                left: `${sticker.startX}%`,
-                top: `${sticker.startY}%`,
-                opacity: 0.95,
-                animation: `fall ${sticker.duration}ms linear forwards`,
-                '--start-rotation': `${sticker.rotation}deg`,
-                '--end-rotation': `${sticker.rotationEnd}deg`,
-                transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg)`,
-                transformStyle: 'preserve-3d'
-            }
-        })
-    );
+    });
 };
 
 const formatDate = (date) => {

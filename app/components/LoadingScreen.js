@@ -33,36 +33,30 @@ const LoadingScreen = ({ onLoadComplete }) => {
 
     return React.createElement('div', {
         ref: containerRef,
-        className: 'relative w-full h-screen bg-black',
-        style: { zIndex: 50 }
+        className: 'relative w-full h-screen bg-black'
     },
-        // Container for stickers and logo
+        // Stickers container
         React.createElement('div', {
-            className: 'absolute inset-0'
+            className: 'sticker-container'
         },
-            // Stickers container
-            React.createElement('div', {
-                className: 'absolute inset-0 overflow-hidden pointer-events-none'
-            },
-                stickers.map(sticker => 
-                    React.createElement(FallingSticker, {
-                        key: sticker.id,
-                        onAnimationEnd: () => handleStickerAnimationEnd(sticker.id)
-                    })
-                )
-            ),
-            // Logo container
-            React.createElement('div', {
-                className: 'relative h-full flex items-center justify-center'
-            },
-                showLogo && React.createElement('img', {
-                    src: '/assets/logo.png',
-                    alt: 'Logo',
-                    className: 'w-64 h-64 cursor-pointer transition-opacity duration-1000 opacity-100',
-                    onClick: handleLogoClick,
-                    onDoubleClick: onLoadComplete
+            stickers.map(sticker => 
+                React.createElement(FallingSticker, {
+                    key: sticker.id,
+                    onAnimationEnd: () => handleStickerAnimationEnd(sticker.id)
                 })
             )
+        ),
+        // Logo container
+        React.createElement('div', {
+            className: 'relative h-full flex items-center justify-center'
+        },
+            showLogo && React.createElement('img', {
+                src: '/assets/logo.png',
+                alt: 'Logo',
+                className: 'w-64 h-64 cursor-pointer transition-opacity duration-1000 opacity-100',
+                onClick: handleLogoClick,
+                onDoubleClick: onLoadComplete
+            })
         )
     );
 };
