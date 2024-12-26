@@ -4,6 +4,46 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTimeRange = '7D';
     let currentDataset = 'dataset1';
     
+    // Format numbers with K/M/B for axis labels
+    const formatAxisNumber = (num) => {
+        if (num === 0) return '0';
+        
+        // For very small numbers (0.01 and below), show up to 3 decimal places
+        if (num > 0 && num < 0.01) {
+            return num.toFixed(3);
+        }
+        
+        // For numbers between 0.01 and 1, show two decimal places
+        if (num > 0 && num < 1) {
+            return num.toFixed(2);
+        }
+        
+        num = Math.round(num);
+        if (num >= 1e9) {
+            return Math.round(num / 1e9) + 'B';
+        } else if (num >= 1e6) {
+            return Math.round(num / 1e6) + 'M';
+        } else if (num >= 1e5) {
+            return Math.round(num / 1e3) + 'K';
+        }
+        return num.toString();
+    };
+
+    // Format numbers with dots for tooltip
+    const formatTooltipNumber = (num) => {
+        if (typeof num !== 'number') return '0';
+        num = Math.round(num);
+        if (num === 0) return '0';
+        
+        const numStr = num.toString();
+        const parts = [];
+        for (let i = numStr.length; i > 0; i -= 3) {
+            parts.unshift(numStr.slice(Math.max(0, i - 3), i));
+        }
+        
+        return parts.join('.');
+    };
+    
     // Initialize data cache for each dataset
     const dataCache = {
         dataset1: {},
@@ -40,6 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
             currentDataset = datasetId;
             console.log('Dataset updated to:', currentDataset);
             updateButtonStyles();
+            // Clear cache for current timerange and token
+            const token = window.currentToken || 'HYPE';
+            delete dataCache[currentDataset][`${currentTimeRange}_${token}_${currentDataset}`];
             await updateChart(currentTimeRange);
             console.log('Chart update completed for dataset:', currentDataset);
         };
@@ -116,13 +159,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('Invalid data format received');
                 }
 
+                // Process the data based on dataset type
+                let processedData;
+                if (currentDataset === 'dataset3' && window.TOKENS && window.TOKENS[token]) {
+                    // For airdrop value data
+                    const airdropAmount = window.TOKENS[token].airdropAmount;
+                    processedData = data.prices.map(([timestamp, price]) => ({
+                        time: timestamp / 1000,
+                        value: parseFloat(price) * airdropAmount
+                    }));
+                    console.log('Processed airdrop value data:', { token, airdropAmount, sample: processedData.slice(0, 2) });
+                } else {
+                    // For price data
+                    processedData = data.prices.map(([timestamp, price]) => ({
+                        time: timestamp / 1000,
+                        value: parseFloat(price)
+                    }));
+                }
+
                 // Update local cache
                 dataCache[currentDataset][cacheKey] = {
-                    data,
+                    data: processedData,
                     timestamp: Date.now()
                 };
                 
-                return data;
+                return processedData;
             } catch (error) {
                 console.error(`Error fetching data (attempt ${attempt}):`, error);
                 if (attempt === retries) {
@@ -139,6 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const newTimeRange = e.target.value;
         console.log('Time range changing from', currentTimeRange, 'to', newTimeRange);
         currentTimeRange = newTimeRange;
+        // Clear cache for current dataset and token
+        const token = window.currentToken || 'HYPE';
+        delete dataCache[currentDataset][`${currentTimeRange}_${token}_${currentDataset}`];
         await updateChart(currentTimeRange);
         console.log('Chart update completed for time range:', currentTimeRange);
     });
@@ -148,6 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const token = window.currentToken || 'HYPE';
         console.log('Token changed to:', token, 'Current dataset:', currentDataset, 'Current time range:', currentTimeRange);
         updateButtonStyles();
+        // Clear cache for current dataset and timerange
+        delete dataCache[currentDataset][`${currentTimeRange}_${token}_${currentDataset}`];
         await updateChart(currentTimeRange);
         console.log('Chart update completed for token change');
     });
@@ -260,19 +326,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             console.log('Updating chart with:', { timeRange, token: window.currentToken, dataset: currentDataset });
             const data = await fetchData(timeRange);
-            if (!data || !data.prices || data.prices.length === 0) {
+            if (!data || data.length === 0) {
                 console.log('No data available');
                 return;
             }
 
-            // Process the data
-            const chartData = data.prices.map(([timestamp, price]) => ({
-                time: timestamp / 1000,
-                value: price
-            }));
-
-            console.log('Processed chart data:', chartData);
-            updateChartData(chartData);
+            console.log('Rendering chart data:', data);
+            updateChartData(data);
         } catch (error) {
             console.error('Error updating chart:', error);
         }
