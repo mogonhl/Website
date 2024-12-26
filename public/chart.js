@@ -133,20 +133,45 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function fetchData(timeRange) {
-        try {
-            console.log('Fetching data for:', timeRange);
-            const response = await fetch(`/api/price-data?timeRange=${timeRange}&token=${window.currentToken}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+    async function fetchData(timeRange, retries = 3) {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                console.log(`Fetching data attempt ${attempt}/${retries} for:`, timeRange, 'token:', window.currentToken);
+                const response = await fetch(`/api/price-data?timeRange=${timeRange}&token=${window.currentToken}`);
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error(`API Response (attempt ${attempt}):`, text);
+                    
+                    if (attempt === retries) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Wait before retrying (exponential backoff)
+                    await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
+                    continue;
+                }
+                
+                const data = await response.json();
+                console.log('Received data:', data);
+                
+                if (!data || !data.prices) {
+                    console.error('Invalid data format:', data);
+                    throw new Error('Invalid data format received');
+                }
+                
+                return data;
+            } catch (error) {
+                if (attempt === retries) {
+                    console.error('Error fetching data (all retries failed):', error);
+                    return null;
+                }
+                console.warn(`Attempt ${attempt} failed:`, error);
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
             }
-            const data = await response.json();
-            console.log('Received data:', data);
-            return data;
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            return null;
         }
+        return null;
     }
 
     async function updateChart(timeRange = '7D') {
@@ -162,6 +187,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 time: timestamp / 1000,
                 value: price
             }));
+
+            console.log('Processed chart data:', chartData);
 
             // Update the chart
             if (window.chart) {
