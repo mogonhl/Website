@@ -3,42 +3,30 @@
   "builds": [
     { 
       "src": "pages/api/*.js", 
-      "use": "@vercel/node",
-      "config": {
-        "maxDuration": 10,
-        "memory": 1024
-      }
+      "use": "@vercel/node"
     },
-    { "src": "public/**/*", "use": "@vercel/static" },
-    { "src": "*.html", "use": "@vercel/static" },
-    { "src": "*.js", "use": "@vercel/static" },
-    { "src": "*.css", "use": "@vercel/static" }
+    { "src": "public/**", "use": "@vercel/static" },
+    { "src": "index.html", "use": "@vercel/static" }
   ],
   "routes": [
     {
-      "src": "/api/price-data",
-      "dest": "/pages/api/price-data.js",
-      "headers": {
-        "cache-control": "s-maxage=129600",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS"
-      }
-    },
-    {
-      "src": "/api/update-cache",
-      "dest": "/pages/api/update-cache.js"
+      "src": "/api/(.*)",
+      "dest": "/pages/api/$1"
     },
     {
       "src": "/assets/(.*)",
       "dest": "/public/assets/$1"
     },
     {
-      "src": "/(.+\\.(?:js|css))",
+      "src": "/(.+\\.(js|css))",
       "dest": "/public/$1"
     },
     {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/index.html"
     }
   ]
 } 
