@@ -33,32 +33,36 @@ const LoadingScreen = ({ onLoadComplete }) => {
 
     return React.createElement('div', {
         ref: containerRef,
-        className: 'relative h-screen w-full overflow-hidden bg-black',
-        style: { position: 'relative' }
+        className: 'fixed top-0 left-0 w-full h-screen bg-black',
+        style: { zIndex: 50 }
     },
-        // Container for stickers
+        // Container for stickers and logo
         React.createElement('div', {
-            className: 'absolute inset-0 overflow-hidden pointer-events-none',
-            style: { zIndex: 1 }
+            className: 'relative w-full h-full'
         },
-            stickers.map(sticker => 
-                React.createElement(FallingSticker, {
-                    key: sticker.id,
-                    onAnimationEnd: () => handleStickerAnimationEnd(sticker.id)
+            // Stickers container
+            React.createElement('div', {
+                className: 'absolute inset-0 overflow-hidden pointer-events-none'
+            },
+                stickers.map(sticker => 
+                    React.createElement(FallingSticker, {
+                        key: sticker.id,
+                        onAnimationEnd: () => handleStickerAnimationEnd(sticker.id)
+                    })
+                )
+            ),
+            // Logo container
+            React.createElement('div', {
+                className: 'relative h-full flex items-center justify-center'
+            },
+                showLogo && React.createElement('img', {
+                    src: '/assets/logo.png',
+                    alt: 'Logo',
+                    className: 'w-64 h-64 cursor-pointer transition-opacity duration-1000 opacity-100',
+                    onClick: handleLogoClick,
+                    onDoubleClick: onLoadComplete
                 })
             )
-        ),
-        // Logo container
-        React.createElement('div', {
-            className: 'relative z-10 h-full flex items-center justify-center'
-        },
-            showLogo && React.createElement('img', {
-                src: '/assets/logo.png',
-                alt: 'Logo',
-                className: 'w-64 h-64 cursor-pointer transition-opacity duration-1000 opacity-100',
-                onClick: handleLogoClick,
-                onDoubleClick: onLoadComplete
-            })
         )
     );
 };

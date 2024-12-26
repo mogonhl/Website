@@ -329,35 +329,22 @@ const FallingSticker = ({ onAnimationEnd }) => {
         };
     });
 
-    return React.createElement('div', {
-        className: 'relative h-screen w-full overflow-hidden pointer-events-none',
+    return React.createElement('img', {
+        src: sticker.src,
+        className: 'absolute pointer-events-none',
+        onAnimationEnd: onAnimationEnd,
         style: {
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 0
+            width: `${sticker.size}px`,
+            height: `${sticker.size}px`,
+            left: `${sticker.startX}%`,
+            top: `${sticker.startY}%`,
+            opacity: 0.95,
+            animation: `fall ${sticker.duration}ms linear forwards`,
+            '--start-rotation': `${sticker.rotation}deg`,
+            '--end-rotation': `${sticker.rotationEnd}deg`,
+            transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg)`
         }
-    }, 
-        React.createElement('img', {
-            src: sticker.src,
-            className: 'absolute',
-            onAnimationEnd: onAnimationEnd,
-            style: {
-                width: `${sticker.size}px`,
-                height: `${sticker.size}px`,
-                left: `${sticker.startX}%`,
-                top: `${sticker.startY}%`,
-                opacity: 0.95,
-                animation: `fall ${sticker.duration}ms linear forwards`,
-                '--start-rotation': `${sticker.rotation}deg`,
-                '--end-rotation': `${sticker.rotationEnd}deg`,
-                transform: `translate(-50%, -50%) rotate(${sticker.rotation}deg)`,
-                zIndex: 0
-            }
-        })
-    );
+    });
 };
 
 const formatDate = (date) => {
