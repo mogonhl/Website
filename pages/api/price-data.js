@@ -2,34 +2,29 @@ import path from 'path';
 import fs from 'fs';
 const { Redis } = require('@upstash/redis');
 
-// Create a single Redis instance
-const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    automaticDeserialization: true,
-    retry: 1 // Only retry once
-});
-
-// In-memory cache with 5-minute expiry
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-const memoryCache = new Map();
-
-// Helper function to add timeout to promises
-const withTimeout = (promise, timeoutMs = 2000) => {
-    let timeoutHandle;
-    const timeoutPromise = new Promise((_, reject) => {
-        timeoutHandle = setTimeout(() => {
-            reject(new Error('Operation timed out'));
-        }, timeoutMs);
-    });
-
-    return Promise.race([
-        promise,
-        timeoutPromise
-    ]).finally(() => {
-        clearTimeout(timeoutHandle);
+// Debug Redis configuration
+const debugRedisConfig = () => {
+    console.log('Redis Configuration:', {
+        hasUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+        urlStart: process.env.UPSTASH_REDIS_REST_URL?.substring(0, 20),
+        hasToken: !!process.env.UPSTASH_REDIS_REST_TOKEN,
+        tokenStart: process.env.UPSTASH_REDIS_REST_TOKEN?.substring(0, 10)
     });
 };
+
+// Create a single Redis instance
+let redis;
+try {
+    debugRedisConfig();
+    redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        automaticDeserialization: true
+    });
+    console.log('Redis instance created successfully');
+} catch (error) {
+    console.error('Failed to create Redis instance:', error);
+}
 
 export default async function handler(req, res) {
     // Set CORS headers
@@ -48,69 +43,78 @@ export default async function handler(req, res) {
     const dataset = req.query.dataset || 'dataset1';
 
     try {
+        console.log('Request received:', { timeRange, token, dataset });
+
         const cacheKey = dataset === 'dataset2' 
             ? `tvl_data_${timeRange}_${token.toLowerCase()}`
             : `price_data_${timeRange}_${token.toLowerCase()}`;
 
-        // Check memory cache first
-        const cachedItem = memoryCache.get(cacheKey);
-        if (cachedItem && Date.now() - cachedItem.timestamp < CACHE_DURATION) {
-            console.log('Serving from memory cache:', cacheKey);
-            return res.json(cachedItem.data);
-        }
+        console.log('Using cache key:', cacheKey);
 
-        // Try Redis with timeout
-        let data;
-        try {
-            console.log('Attempting Redis get for:', cacheKey);
-            const redisData = await withTimeout(redis.get(cacheKey));
-            if (redisData) {
-                data = typeof redisData === 'string' ? JSON.parse(redisData) : redisData;
-                console.log('Redis data retrieved successfully');
+        // Try Redis first
+        if (redis) {
+            try {
+                console.log('Testing Redis connection...');
+                await redis.ping();
+                console.log('Redis connection test successful');
+
+                console.log('Fetching data from Redis...');
+                const redisData = await redis.get(cacheKey);
+                console.log('Redis response:', {
+                    hasData: !!redisData,
+                    type: typeof redisData,
+                    sample: redisData ? JSON.stringify(redisData).substring(0, 100) + '...' : null
+                });
+
+                if (redisData) {
+                    const data = typeof redisData === 'string' ? JSON.parse(redisData) : redisData;
+                    if (data && data.prices && Array.isArray(data.prices)) {
+                        console.log('Valid data found in Redis');
+                        return res.json(data);
+                    } else {
+                        console.log('Invalid data structure in Redis response');
+                    }
+                } else {
+                    console.log('No data found in Redis');
+                }
+            } catch (error) {
+                console.error('Redis operation failed:', {
+                    error: error.message,
+                    stack: error.stack
+                });
             }
-        } catch (error) {
-            console.error('Redis operation failed:', error.message);
+        } else {
+            console.log('Redis instance not available');
         }
 
-        // Fall back to static data if Redis fails or returns no data
-        if (!data) {
-            console.log('Falling back to static data');
-            const dataPath = path.join(process.cwd(), 'public', 'data', 'price-data.json');
-            const fileData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-            data = fileData[token]?.[timeRange];
-        }
+        // Fall back to static data
+        console.log('Falling back to static data');
+        const dataPath = path.join(process.cwd(), 'public', 'data', 'price-data.json');
+        const fileData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+        const data = fileData[token]?.[timeRange];
 
         if (!data || !data.prices || !Array.isArray(data.prices)) {
-            console.error('Invalid data structure');
+            console.error('Invalid data structure in static data');
             return res.status(404).json({
                 error: 'Data not found',
                 details: { timeRange, token, dataset }
             });
         }
 
-        // Update memory cache
-        memoryCache.set(cacheKey, {
-            data,
-            timestamp: Date.now()
-        });
-
         return res.json(data);
     } catch (error) {
-        console.error('API Error:', error);
-        // Try to return static data even if there's an error
-        try {
-            const dataPath = path.join(process.cwd(), 'public', 'data', 'price-data.json');
-            const fileData = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-            const data = fileData[token]?.[timeRange];
-            if (data) {
-                return res.json(data);
+        console.error('API Error:', {
+            error: error.message,
+            stack: error.stack,
+            redisConfig: {
+                hasUrl: !!process.env.UPSTASH_REDIS_REST_URL,
+                hasToken: !!process.env.UPSTASH_REDIS_REST_TOKEN
             }
-        } catch (fallbackError) {
-            console.error('Static fallback failed:', fallbackError);
-        }
+        });
 
         return res.status(500).json({ 
-            error: error.message
+            error: error.message,
+            details: 'Check server logs for more information'
         });
     }
 }
