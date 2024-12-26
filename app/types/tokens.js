@@ -18,9 +18,9 @@ export const TOKENS = {
         coingeckoId: 'arbitrum',
         initialPrice: 1.35,
         airdropAmount: 1859,
-        desc1: 'Leading Layer 2 scaling solution built on Ethereum.',
-        desc2: 'Enabling fast, low-cost transactions while maintaining Ethereum\'s security.',
-        supply: 10000000000
+        desc1: 'A leading Layer 2 scaling solution built on Ethereum. Bla bla. They built a great bridge.',
+        desc2: 'The ARB drop set a benchmark for how to distribute tokens. It was widely celebrated. Some would say the best L2 drop to date.',
+        supply: 4210111900
     },
     FRIEND: {
         id: 'friend',
@@ -29,9 +29,9 @@ export const TOKENS = {
         coingeckoId: 'friend-tech',
         initialPrice: 1.67,
         airdropAmount: 517,
-        desc1: 'Revolutionary social trading platform on Base.',
-        desc2: 'Tokenizing social connections and enabling direct creator monetization.',
-        supply: 2000000000
+        desc1: 'Revolutionary social trading platform on Base. A pyramid scheme for paid group avocates and KOLs.',
+        desc2: 'The airdrop was... a spectacle. A prime example of the points meta acting as life support for shit products..',
+        supply: 94824000
     },
     JTO: {
         id: 'jito',
@@ -40,9 +40,9 @@ export const TOKENS = {
         coingeckoId: 'jito-governance-token',
         initialPrice: 2.43,
         airdropAmount: 8120,
-        desc1: 'Advanced MEV solution for the Solana ecosystem.',
-        desc2: 'Optimizing block production and maximizing validator rewards.',
-        supply: 100000000
+        desc1: 'A staking and MEV solution on Solana. Not particularly innovative as a product.',
+        desc2: 'The aidrop was one of the all-time greats. Catching everyone off-guard. Pathing the way for SOl szn.',
+        supply: 274669000
     },
     ME: {
         id: 'magic-eden',
@@ -51,9 +51,9 @@ export const TOKENS = {
         coingeckoId: 'magic-eden',
         initialPrice: 5.4,
         airdropAmount: 735.8,
-        desc1: 'Leading cross-chain NFT marketplace.',
-        desc2: 'Bridging digital collectibles across multiple blockchains.',
-        supply: 1000000000
+        desc1: 'A protocol that benefited from the laissez-faire approach of Open Sea. Unfortunately that was their only value proposition.',
+        desc2: 'Being less shit than competitors is worth something. Unlike the aidrop. Ordinals might change that...',
+        supply: 129751000
     },
     PENGU: {
         id: 'pengu',
@@ -62,9 +62,9 @@ export const TOKENS = {
         coingeckoId: 'pudgy-penguins',
         initialPrice: 0.0114,
         airdropAmount: 20800,
-        desc1: 'Iconic NFT collection turned global IP brand.',
-        desc2: 'Building a wholesome Web3 ecosystem around adorable penguins.',
-        supply: 400000000
+        desc1: 'An iconic NFT collection. An individuals comeback story. A global IP.',
+        desc2: 'The oprah of airdrop distributions. Everyone got some dust. The real winners were long-term supporters. As it should be.',
+        supply: 62860000000
     },
     UNI: {
         id: 'uniswap',
@@ -73,9 +73,9 @@ export const TOKENS = {
         coingeckoId: 'uniswap',
         initialPrice: 3.44,
         airdropAmount: 400,
-        desc1: 'Pioneer of decentralized exchange protocols.',
-        desc2: 'Setting the standard for automated market making and token swaps.',
-        supply: 1000000000
+        desc1: 'The true OG. On all levels.',
+        desc2: 'A VCs dream. Infinite vesting. Why even work on anything? Thank you for DeFi Summer.',
+        supply: 600480000
     },
     TIA: {
         id: 'celestia',
@@ -84,9 +84,9 @@ export const TOKENS = {
         coingeckoId: 'celestia',
         initialPrice: 2.3,
         airdropAmount: 240,
-        desc1: 'Pioneer of decentralized exchange protocols.',
-        desc2: 'Setting the standard for automated market making and token swaps.',
-        supply: 463589000
+        desc1: 'A chain to build chains to build chains to build chains...',
+        desc2: 'An airdrop to get airdrops to get airdrops...',
+        supply: 466000000
     },
     ENS: {
         id: 'ens',
@@ -95,8 +95,8 @@ export const TOKENS = {
         coingeckoId: 'ethereum-name-service',
         initialPrice: 43.44,
         airdropAmount: 182,
-        desc1: 'Pioneer of decentralized exchange protocols.',
-        desc2: 'Setting the standard for automated market making and token swaps.',
+        desc1: 'Imagine you would have bought porn.com a few decades ago...',
+        desc2: 'Well... .eth domains are worth shit now but you got a big aidrop at least.',
         supply: 33165000
     },
     JUP: {
@@ -106,8 +106,8 @@ export const TOKENS = {
         coingeckoId: 'jupiter-exchange-solana',
         initialPrice: 0.66,
         airdropAmount: 200,
-        desc1: 'Pioneer of decentralized exchange protocols.',
-        desc2: 'Setting the standard for automated market making and token swaps.',
+        desc1: 'An aggregator worth more than most DEXs. Showing that UX trumps everything.',
+        desc2: 'The official end of Solana airdrop season. JLP is the true innovation.',
         supply: 1350000000
     },
     WEN: {
@@ -117,8 +117,8 @@ export const TOKENS = {
         coingeckoId: 'wen-4',
         initialPrice: 0.0001,
         airdropAmount: 643652,
-        desc1: 'Pioneer of decentralized exchange protocols.',
-        desc2: 'Setting the standard for automated market making and token swaps.',
+        desc1: 'A meme. Testing out Jupiters airdrop mechanism.',
+        desc2: 'Dumped by most. Cherished by some. Who the fuck is still holding?',
         supply: 727600000000
     },
     AEVO: {
@@ -128,8 +128,8 @@ export const TOKENS = {
         coingeckoId: 'aevo-exchange',
         initialPrice: 3.22,
         airdropAmount: 120,
-        desc1: 'Pioneer of decentralized exchange protocols.',
-        desc2: 'Setting the standard for automated market making and token swaps.',
+        desc1: 'Ribbon. More like robbin.',
+        desc2: 'Create a new token, lock up the old one for a couple months. Allow your VC frens to exit. Gud tech.',
         supply: 902000000
     }
 }; 

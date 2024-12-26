@@ -1305,12 +1305,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function updateChart(token, timeRange) {
-    console.log('Updating chart for:', token, timeRange);
+    console.log('Script: Updating chart for token:', token, 'timeRange:', timeRange);
     window.currentToken = token;
-    const event = new CustomEvent('tokenChange');
+    
+    // Dispatch token change event
+    const event = new CustomEvent('tokenChange', { 
+        detail: { token, timeRange } 
+    });
     window.dispatchEvent(event);
+    
+    // Update chart
     if (window.chartUpdateAndPrefetch) {
+        console.log('Script: Calling chartUpdateAndPrefetch with:', timeRange);
         await window.chartUpdateAndPrefetch(timeRange);
+    } else {
+        console.warn('Script: chartUpdateAndPrefetch not available');
     }
 }
 
@@ -1319,11 +1328,13 @@ document.querySelectorAll('.token-button').forEach(button => {
     button.addEventListener('click', async () => {
         const token = button.getAttribute('data-token');
         const timeRange = document.querySelector('.time-dropdown').value || '7D';
+        console.log('Script: Token button clicked:', token, 'timeRange:', timeRange);
         await updateChart(token, timeRange);
     });
 });
 
 // Initial chart render
+console.log('Script: Performing initial chart render');
 const initialToken = 'HYPE';
 const initialTimeRange = '7D';
 updateChart(initialToken, initialTimeRange);

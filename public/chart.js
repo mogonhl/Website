@@ -1,81 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const timeRanges = ['All-time', '30D', '7D', '24H'];
-    let currentDataset = 'dataset1';
+    const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+    const timeRanges = ['7D', '14D', '30D'];
     let currentTimeRange = '7D';
-    let hasSwitchedToTVL = false;
+    let currentDataset = 'dataset1';
+    
+    // Initialize data cache for each dataset
+    const dataCache = {
+        dataset1: {},
+        dataset3: {}
+    };
 
-    // Initialize currentToken if not already set
-    if (!window.currentToken) {
-        window.currentToken = 'HYPE';
+    // Get the container
+    const container = document.getElementById('price-chart');
+    if (!container) {
+        console.error('Price chart container not found');
+        return;
     }
 
-    // Cache object to store fetched data
-    const dataCache = {
-        dataset1: {}, // Price data cache for each timeRange
-        dataset2: {}, // TVL data cache for each timeRange
-        dataset3: {}  // Airdrop value data cache for each timeRange
-    };
-
-    // Cache expiry time (5 minutes)
-    const CACHE_EXPIRY = 5 * 60 * 1000;
-
-    // Configure step sizes for each time range (in minutes)
-    const stepSizes = {
-        '24H': 180,        // 3 hours for 24H
-        '7D': 1440,        // 1 day for 7D
-        '30D': 2880,       // 2 days for 30D
-        'All-time': 10080  // 7 days for All-time
-    };
-
-    // Format numbers with K/M/B for axis labels
-    const formatAxisNumber = (num) => {
-        if (num === 0) return '0';
-        
-        // For very small numbers (0.01 and below), show up to 3 decimal places
-        if (num > 0 && num < 0.01) {
-            return num.toFixed(3);
-        }
-        
-        // For numbers between 0.01 and 1, show two decimal places
-        if (num > 0 && num < 1) {
-            return num.toFixed(2);
-        }
-        
-        num = Math.round(num);
-        if (num >= 1e9) {
-            return Math.round(num / 1e9) + 'B';
-        } else if (num >= 1e6) {
-            return Math.round(num / 1e6) + 'M';
-        } else if (num >= 1e5) {
-            return Math.round(num / 1e3) + 'K';
-        }
-        return num.toString();
-    };
-
-    // Format numbers with dots for tooltip
-    const formatTooltipNumber = (num) => {
-        num = Math.round(num);
-        if (num === 0) return '0';
-        
-        const numStr = num.toString();
-        const parts = [];
-        for (let i = numStr.length; i > 0; i -= 3) {
-            parts.unshift(numStr.slice(Math.max(0, i - 3), i));
-        }
-        
-        return parts.join('.');
-    };
-
-    // Get the base URL for API calls
-    const getApiUrl = () => {
-        if (window.location.hostname.includes('vercel.app')) {
-            return `${window.location.origin}/api/price-data`;
-        }
-        return '/api/price-data';  // For local development, just use relative path
-    };
-
-    // Create the controls container
-    const container = document.getElementById('price-chart');
+    // Create controls container
     const controlsContainer = document.createElement('div');
     controlsContainer.className = 'flex items-center justify-between mb-4';
     container.parentNode.insertBefore(controlsContainer, container);
@@ -87,16 +29,19 @@ document.addEventListener('DOMContentLoaded', () => {
         ['Price', 'dataset1'],
         ['Airdrop', 'dataset3']
     ];
+    
+    // Create and append dataset buttons
     datasetLabels.forEach(([label, datasetId]) => {
         const button = document.createElement('button');
         button.className = `text-xs ${currentDataset === datasetId ? 'text-white' : 'text-[rgb(148,158,156)]'} hover:text-white transition-colors`;
         button.textContent = label;
         button.onclick = async () => {
-            console.log('Dataset button clicked:', datasetId);
+            console.log('Dataset button clicked:', datasetId, 'Previous dataset:', currentDataset);
             currentDataset = datasetId;
+            console.log('Dataset updated to:', currentDataset);
             updateButtonStyles();
-            updateDropdownOptions();
             await updateChart(currentTimeRange);
+            console.log('Chart update completed for dataset:', currentDataset);
         };
         buttonsContainer.appendChild(button);
     });
@@ -190,31 +135,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Handle dropdown changes
-    dropdown.addEventListener('change', (e) => {
-        currentTimeRange = e.target.value;
-        console.log('Time range changed to:', currentTimeRange);
-        updateChart(currentTimeRange);
+    dropdown.addEventListener('change', async (e) => {
+        const newTimeRange = e.target.value;
+        console.log('Time range changing from', currentTimeRange, 'to', newTimeRange);
+        currentTimeRange = newTimeRange;
+        await updateChart(currentTimeRange);
+        console.log('Chart update completed for time range:', currentTimeRange);
     });
 
     // Handle token changes
-    window.addEventListener('tokenChange', () => {
-        console.log('Token changed to:', window.currentToken);
+    window.addEventListener('tokenChange', async () => {
+        const token = window.currentToken || 'HYPE';
+        console.log('Token changed to:', token, 'Current dataset:', currentDataset, 'Current time range:', currentTimeRange);
         updateButtonStyles();
-        updateDropdownOptions();
-        updateChart(currentTimeRange);
+        await updateChart(currentTimeRange);
+        console.log('Chart update completed for token change');
     });
 
     // Initial render
+    console.log('Performing initial render with:', { 
+        timeRange: currentTimeRange, 
+        dataset: currentDataset, 
+        token: window.currentToken || 'HYPE' 
+    });
     updateChart(currentTimeRange);
 
     // Make updateChart available globally
     window.chartUpdateAndPrefetch = async function(timeRange) {
-        console.log('chartUpdateAndPrefetch called with:', timeRange);
+        console.log('chartUpdateAndPrefetch called with:', timeRange, 'Current dataset:', currentDataset);
         if (timeRange) {
             currentTimeRange = timeRange;
             dropdown.value = timeRange;
         }
         await updateChart(currentTimeRange);
+        console.log('Chart update completed for prefetch');
     };
 
     // Make clearCache available globally
