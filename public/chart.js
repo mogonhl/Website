@@ -91,11 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const button = document.createElement('button');
         button.className = `text-xs ${currentDataset === datasetId ? 'text-white' : 'text-[rgb(148,158,156)]'} hover:text-white transition-colors`;
         button.textContent = label;
-        button.onclick = () => {
+        button.onclick = async () => {
+            console.log('Dataset button clicked:', datasetId);
             currentDataset = datasetId;
-            updateChart();
             updateButtonStyles();
             updateDropdownOptions();
+            await updateChart(currentTimeRange);
         };
         buttonsContainer.appendChild(button);
     });
@@ -134,8 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchData(timeRange, retries = 3) {
+        const token = window.currentToken || 'HYPE';
+        console.log('Fetching data for:', { timeRange, token, dataset: currentDataset });
+        
         // Check local cache first
-        const cacheKey = `${timeRange}_${window.currentToken}_${currentDataset}`;
+        const cacheKey = `${timeRange}_${token}_${currentDataset}`;
         const cached = dataCache[currentDataset][cacheKey];
         if (cached && Date.now() - cached.timestamp < CACHE_EXPIRY) {
             console.log('Serving from local cache:', cacheKey);
@@ -144,8 +148,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                console.log(`Fetching data attempt ${attempt}/${retries} for:`, timeRange, 'token:', window.currentToken);
-                const response = await fetch(`/api/price-data?timeRange=${timeRange}&token=${window.currentToken}&dataset=${currentDataset}`);
+                console.log(`Fetching data attempt ${attempt}/${retries}:`, { timeRange, token, dataset: currentDataset });
+                const response = await fetch(`/api/price-data?timeRange=${timeRange}&token=${token}&dataset=${currentDataset}`);
                 
                 if (!response.ok) {
                     const text = await response.text();
@@ -155,13 +159,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
-                    // Wait before retrying (exponential backoff)
                     await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
                     continue;
                 }
                 
                 const data = await response.json();
-                console.log('Received data:', data);
+                console.log('Received data for dataset:', currentDataset, data);
                 
                 if (!data || !data.prices) {
                     console.error('Invalid data format:', data);
@@ -176,12 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 return data;
             } catch (error) {
+                console.error(`Error fetching data (attempt ${attempt}):`, error);
                 if (attempt === retries) {
-                    console.error('Error fetching data (all retries failed):', error);
                     return null;
                 }
-                console.warn(`Attempt ${attempt} failed:`, error);
-                // Wait before retrying
                 await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, attempt - 1), 5000)));
             }
         }
@@ -303,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function updateChart(timeRange = '7D') {
         try {
-            console.log('Updating chart with timeRange:', timeRange);
+            console.log('Updating chart with:', { timeRange, token: window.currentToken, dataset: currentDataset });
             const data = await fetchData(timeRange);
             if (!data || !data.prices || data.prices.length === 0) {
                 console.log('No data available');
