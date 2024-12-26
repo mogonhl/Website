@@ -400,7 +400,8 @@ const calculatePerformance = async (date, token, sold) => {
                 const firstPrice = prices[0][1];
                 console.log('Using first price from data:', firstPrice);
                 const percentageChange = ((currentPrice - firstPrice) / firstPrice * 100).toFixed(0);
-                return { value: percentageChange, success: sold ? percentageChange < 0 : percentageChange > 0 };
+                const isSuccess = sold ? currentPrice < firstPrice : currentPrice > firstPrice;
+                return { value: percentageChange, success: isSuccess };
             }
             
             console.log('Using initialPrice calculation:', {
@@ -409,7 +410,8 @@ const calculatePerformance = async (date, token, sold) => {
                 currentPrice
             });
             const percentageChange = ((currentPrice - tokenData.initialPrice) / tokenData.initialPrice * 100).toFixed(0);
-            return { value: percentageChange, success: sold ? percentageChange < 0 : percentageChange > 0 };
+            const isSuccess = sold ? currentPrice < tokenData.initialPrice : currentPrice > tokenData.initialPrice;
+            return { value: percentageChange, success: isSuccess };
         }
         
         console.log('Using price data calculation:', {
@@ -420,9 +422,15 @@ const calculatePerformance = async (date, token, sold) => {
         
         // Calculate percentage change from historical price to current price
         const percentageChange = ((currentPrice - closestPrice) / closestPrice * 100).toFixed(0);
-        // For sell tweets: success is negative change (price went down after selling)
-        // For buy tweets: success is positive change (price went up after buying)
-        return { value: percentageChange, success: sold ? percentageChange < 0 : percentageChange > 0 };
+        
+        // For sell tweets: success is when you sold before price went down (current price is lower)
+        // For buy tweets: success is when price went up after buying
+        const isSuccess = sold ? currentPrice < closestPrice : currentPrice > closestPrice;
+        
+        return { 
+            value: percentageChange, 
+            success: isSuccess
+        };
         
     } catch (error) {
         console.error('Failed to fetch token data:', error);
