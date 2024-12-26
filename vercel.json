@@ -18,6 +18,15 @@
   },
   "routes": [
     {
+      "src": "/api/redis/get-token-data",
+      "dest": "/pages/api/redis/get-token-data.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
+    },
+    {
       "src": "/api/redis/(.*)",
       "dest": "/pages/api/redis/$1.js",
       "headers": {
