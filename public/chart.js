@@ -245,4 +245,80 @@ document.addEventListener('DOMContentLoaded', () => {
             dataCache[dataset] = {};
         });
     };
+
+    function initializeChart(data) {
+        const { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } = window.Recharts;
+        const container = document.getElementById('price-chart');
+        
+        if (!container) {
+            console.error('Chart container not found');
+            return;
+        }
+
+        // Create root element
+        const root = ReactDOM.createRoot(container);
+        
+        const chart = React.createElement(ResponsiveContainer, 
+            { width: '100%', height: '95%' },
+            React.createElement(AreaChart, 
+                { 
+                    data: data,
+                    margin: { top: 10, right: 0, left: 0, bottom: 0 }
+                },
+                React.createElement(XAxis, {
+                    dataKey: 'time',
+                    stroke: '#3E3E3E',
+                    tick: false,
+                    tickLine: false,
+                    axisLine: true
+                }),
+                React.createElement(YAxis, {
+                    stroke: '#3E3E3E',
+                    fontSize: 12,
+                    tickLine: true,
+                    tickSize: 10,
+                    tick: { fill: '#FFFFFF' },
+                    axisLine: true,
+                    tickFormatter: (value) => formatAxisNumber(value)
+                }),
+                React.createElement(Tooltip, {
+                    content: ({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                            const date = new Date(label * 1000);
+                            const year = date.getFullYear();
+                            const month = date.toLocaleString('en-US', { month: 'short' });
+                            const day = date.getDate();
+                            const value = payload[0].value;
+                            return React.createElement('div', {
+                                style: {
+                                    backgroundColor: '#041815',
+                                    padding: '8px 12px',
+                                    fontSize: '12px',
+                                    whiteSpace: 'nowrap',
+                                    border: 'none'
+                                }
+                            }, `${year} ${month} ${day}: $${formatTooltipNumber(value)}`);
+                        }
+                        return null;
+                    },
+                    cursor: {
+                        stroke: '#3E3E3E'
+                    },
+                    wrapperStyle: { zIndex: 1000 }
+                }),
+                React.createElement(Area, {
+                    type: 'stepAfter',
+                    dataKey: 'value',
+                    stroke: '#FFFFFF',
+                    strokeWidth: 2,
+                    fill: 'none',
+                    dot: false,
+                    activeDot: false
+                })
+            )
+        );
+
+        root.render(chart);
+        window.chart = { update: (newData) => root.render(chart) };
+    }
 });
