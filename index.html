@@ -10,135 +10,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="icon" type="image/x-icon" href="/assets/logo.png">
     
-    <style>
-        body {
-            background-color: #002420;
-            color: white;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-        .tab-indicator {
-            height: 1px;
-            bottom: -1px;
-        }
-        .airdrop-icon {
-            border: 2px solid transparent;
-            transition: border-color 0.3s ease;
-        }
-        .airdrop-icon.selected {
-            border-color: #10B981;
-        }
-
-        /* Chart container styles */
-        #price-chart {
-            min-height: 300px;
-            height: 100%;
-            width: 100%;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-        .content-right {
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-        }
-        .content-right > div {
-            flex: 1;
-            min-height: 300px;
-        }
-
-        .category-select option {
-            background: #041815;
-            color: white;
-            font-size: 1.5rem;
-            padding: 0.5rem;
-        }
-
-        .category-select {
-            background: transparent;
-            border: none;
-            font-size: 3rem;
-            font-family: inherit;
-            color: rgba(72, 255, 225, 0.9);
-            text-shadow: 0 0 1px rgba(72, 255, 225, 0.9);
-            font-weight: bold;
-            padding: 0;
-            padding-left: 1.75rem;
-            margin-right: 0.25rem;
-            cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(72, 255, 225, 0.9)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='9 6 15 12 9 18'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: left 0.25rem center;
-            background-size: 1.25rem;
-            transition: color 0.2s ease;
-        }
-
-        .category-select:hover {
-            color: rgba(72, 255, 225, 1);
-        }
-
-        .category-select:focus {
-            outline: none;
-        }
-
-        .category-select option {
-            background: #041815;
-            color: white;
-            font-size: 1.5rem;
-            padding: 0.5rem;
-        }
-
-        /* Performance ranking styles */
-        .performance-ranking {
-            position: relative;
-        }
-        .performance-ranking > div:not(.flex) {
-            transition: all 0.2s ease;
-            padding: 4px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .performance-ranking > div:not(.flex):hover {
-            background: rgba(16, 185, 129, 0.1);
-        }
-        .performance-ranking > div:not(.flex):hover::after {
-            content: attr(title);
-            position: absolute;
-            top: -40px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #041815;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            z-index: 10;
-            pointer-events: none;
-            border: none;
-        }
-        .performance-ranking img {
-            transition: transform 0.2s ease;
-        }
-        .performance-ranking > div:not(.flex):hover img {
-            transform: scale(1.1);
-        }
-    </style>
-    
-    <!-- Move tokens.js before other scripts that might depend on it -->
-    <script src="/app/types/tokens.js" type="module"></script>
-    
-    <!-- Add Babel production transform -->
+    <!-- Base dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
-    <!-- Import TweetList component with correct path -->
+    <!-- Add TOKENS data -->
+    <script type="module">
+        import { TOKENS } from '/app/types/tokens.js';
+        window.TOKENS = TOKENS;
+    </script>
+    
+    <!-- Import our components -->
     <script type="text/babel" data-type="module" src="/app/components/TweetList.js"></script>
     
     <!-- Add chart.js before script.js -->
     <script src="/chart.js"></script>
-    <script src="/script.js" type="module"></script>
+    <script type="module" src="/script.js"></script>
 </head>
 <body>
     <div id="dropdown-backdrop" class="dropdown-backdrop"></div>
