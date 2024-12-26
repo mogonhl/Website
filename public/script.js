@@ -1,5 +1,5 @@
 // Import TOKENS from the JavaScript file
-import { TOKENS } from '../app/types/tokens.js';
+import { TOKENS } from '/app/types/tokens.js';
 
 // Make TOKENS and currentToken available globally
 window.TOKENS = TOKENS;
