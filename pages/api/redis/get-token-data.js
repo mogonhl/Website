@@ -1,15 +1,34 @@
 import { Redis } from '@upstash/redis';
 
 // Log Redis connection details (without tokens)
+console.log('API Route: get-token-data called');
 console.log('Redis URL available:', !!process.env.UPSTASH_REDIS_REST_URL);
 console.log('Redis token available:', !!process.env.UPSTASH_REDIS_REST_TOKEN);
 
 const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
+    console.log('Request received:', {
+        method: req.method,
+        query: req.query,
+        headers: req.headers
+    });
+
+    // Enable CORS
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
     const { token } = req.query;
 
     if (!token) {
+        console.log('No token provided in request');
         return res.status(400).json({ error: 'Token parameter is required' });
     }
 

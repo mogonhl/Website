@@ -362,11 +362,31 @@ const formatDate = (date) => {
 
 const calculatePerformance = async (date, token, sold) => {
     try {
+        console.log('Fetching token data for:', token);
         const response = await fetch(`/api/redis/get-token-data?token=${token}`);
+        console.log('Response status:', response.status);
+        
+        // Log the raw response text for debugging
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}, body: ${responseText}`);
         }
-        const data = await response.json();
+        
+        // Parse the response text
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse response:', parseError);
+            throw new Error(`Failed to parse response: ${parseError.message}`);
+        }
+        
+        if (!data || !data.prices || !Array.isArray(data.prices)) {
+            console.error('Invalid data format:', data);
+            throw new Error('Invalid data format received from API');
+        }
         
         const tweetTimestamp = new Date(date).getTime();
         const prices = data.prices;
