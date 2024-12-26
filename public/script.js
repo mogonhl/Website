@@ -910,23 +910,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const icon = document.createElement('img');
             let imagePath;
             switch(token.symbol) {
+                case 'HYPE':
+                    imagePath = '/assets/Logos/Hype.png';
+                    break;
+                case 'FRIEND':
+                    imagePath = '/assets/Logos/Friend.png';
+                    break;
                 case 'UNI':
-                    imagePath = 'assets/Logos/Uniswap.png';
+                    imagePath = '/assets/Logos/Uniswap.png';
                     break;
                 case 'PENGU':
-                    imagePath = 'assets/Logos/Pengu.jpeg';
+                    imagePath = '/assets/Logos/Pengu.jpeg';
                     break;
                 case 'JTO':
-                    imagePath = 'assets/Logos/Jito.png';
+                    imagePath = '/assets/Logos/Jito.png';
                     break;
                 case 'ARB':
-                    imagePath = 'assets/Logos/Arbitrum.png';
+                    imagePath = '/assets/Logos/Arbitrum.png';
                     break;
                 case 'ME':
-                    imagePath = 'assets/Logos/MagicalEden.png';
+                    imagePath = '/assets/Logos/MagicalEden.png';
                     break;
                 default:
-                    imagePath = `assets/Logos/${token.symbol}.png`;
+                    imagePath = `/assets/Logos/${token.symbol}.png`;
             }
             icon.src = imagePath;
             icon.alt = token.symbol;
