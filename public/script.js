@@ -1140,10 +1140,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update price data and metrics
         updatePriceData();
         
-        // Update chart
+        // Update chart with current token and timerange
+        const timeRange = document.querySelector('.time-dropdown')?.value || '7D';
         if (window.updateChartAndPrefetch) {
-            const timeRange = document.querySelector('.time-dropdown')?.value || '7D';
             window.updateChartAndPrefetch(timeRange);
+        }
+        if (window.updateChart) {
+            window.updateChart(token, timeRange);
         }
         
         // Refresh tweets
