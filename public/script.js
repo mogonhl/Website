@@ -62,6 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
     audio.loop = true;
     audio.volume = 0.1; // Start at 10%
 
+    // Check if device is mobile
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     // Single click handler for centerLogo
     if (centerLogo) {
         centerLogo.addEventListener('click', () => {
@@ -70,10 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const fadeInAudio = () => {
+        // Don't play audio on mobile
+        if (isMobile) return;
+
         let currentVolume = 0.1;
         const targetVolume = 1.0;
-        const steps = 50; // More steps = smoother transition
-        const timeInterval = 3000 / steps; // 5000ms = 5 seconds
+        const steps = 50;
+        const timeInterval = 3000 / steps;
         const volumeIncrease = (targetVolume - currentVolume) / steps;
 
         const fadeInterval = setInterval(() => {
@@ -102,8 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
         'Vibe'
     ];
 
-    // Create initial typed instance with just the cursor
+    // Create initial typed instances with just the cursor for both desktop and mobile
     let typed = new Typed('#dynamic-text', {
+        strings: [''],
+        typeSpeed: 0,
+        showCursor: true,
+        cursorChar: '|',
+        loop: false,
+        autoInsertCss: true,
+        contentType: 'text',
+        position: 'relative'
+    });
+
+    let typedMobile = new Typed('#dynamic-text-mobile', {
         strings: [''],
         typeSpeed: 0,
         showCursor: true,
@@ -116,7 +133,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const startAnimation = () => {
         typed.destroy();
+        typedMobile.destroy();
+
         typed = new Typed('#dynamic-text', {
+            strings: words,
+            typeSpeed: 100,
+            backSpeed: 50,
+            startDelay: 0,
+            backDelay: 1500,
+            loop: true,
+            showCursor: true,
+            cursorChar: '|',
+            autoInsertCss: true,
+            contentType: 'text',
+            position: 'relative'
+        });
+
+        typedMobile = new Typed('#dynamic-text-mobile', {
             strings: words,
             typeSpeed: 100,
             backSpeed: 50,
@@ -177,14 +210,16 @@ document.addEventListener('DOMContentLoaded', () => {
             buttonContainer.classList.add('visible');
         }, 1000);
 
-        // Show volume control after 1.5 seconds
-        setTimeout(() => {
-            volumeControl.classList.add('visible');
-        }, 1500);
+        // Show volume control after 1.5 seconds, but only on desktop
+        if (!isMobile) {
+            setTimeout(() => {
+                volumeControl.classList.add('visible');
+            }, 1500);
 
-        // Start audio with fade in
-        audio.play();
-        fadeInAudio();
+            // Start audio with fade in (only on desktop)
+            audio.play();
+            fadeInAudio();
+        }
     });
 
     // Volume control logic
@@ -1026,6 +1061,50 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             document.querySelector('.scroll-indicator').classList.add('visible');
         }, 350);
+    });
+
+    // Add wheel event listener for scrolling
+    window.addEventListener('wheel', (e) => {
+        if (e.deltaY > 0 && isLogoVisible) {  // Scrolling down
+            document.getElementById('logo-section').classList.add('inactive');
+            document.getElementById('ticker-section').classList.add('active');
+            isLogoVisible = false;
+            
+            // Update chart when scrolling to ticker section
+            if (window.updateChartAndPrefetch) {
+                window.updateChartAndPrefetch();
+            }
+        } else if (e.deltaY < 0 && !isLogoVisible) {  // Scrolling up
+            document.getElementById('logo-section').classList.remove('inactive');
+            document.getElementById('ticker-section').classList.remove('active');
+            isLogoVisible = true;
+        }
+    });
+
+    // Also handle touch events for mobile
+    let touchStartY;
+    window.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    });
+
+    window.addEventListener('touchend', (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const deltaY = touchStartY - touchEndY;
+
+        if (deltaY > 50 && isLogoVisible) {  // Scrolling down
+            document.getElementById('logo-section').classList.add('inactive');
+            document.getElementById('ticker-section').classList.add('active');
+            isLogoVisible = false;
+            
+            // Update chart when scrolling to ticker section
+            if (window.updateChartAndPrefetch) {
+                window.updateChartAndPrefetch();
+            }
+        } else if (deltaY < -50 && !isLogoVisible) {  // Scrolling up
+            document.getElementById('logo-section').classList.remove('inactive');
+            document.getElementById('ticker-section').classList.remove('active');
+            isLogoVisible = true;
+        }
     });
 });
 

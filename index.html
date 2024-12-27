@@ -157,7 +157,8 @@
 
     <div id="main-content" class="main-content">
         <div class="section logo-section active" id="logo-section">
-            <div class="text-wrapper">
+            <!-- Desktop Layout -->
+            <div class="text-wrapper desktop-only">
                 <div class="dynamic-text-container">
                     <span id="dynamic-text"></span>
                 </div>
@@ -166,6 +167,20 @@
                     <span class="static-text">Everyone.</span>
                 </div>
             </div>
+
+            <!-- Mobile Layout -->
+            <div class="text-wrapper mobile-only">
+                <img src="/assets/logo.png" alt="Token Logo" class="center-logo" />
+                <div class="text-line">
+                    <div class="dynamic-text-container">
+                        <span id="dynamic-text-mobile"></span>
+                    </div>
+                    <div class="static-text-container">
+                        <span class="static-text">Everyone.</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="button-container">
                 <a href="https://hypurr.fun" target="_blank" class="action-button trade-button">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -173,7 +188,7 @@
                     </svg>
                     Trade on Hypurr Fun
                 </a>
-                <a href="https://x.com/MOGonHL" target="_blank" class="action-button twitter-button">
+                <a href="https://x.com/mogonhype" target="_blank" class="action-button twitter-button">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
