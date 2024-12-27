@@ -974,15 +974,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 refreshButton.onclick = (e) => {
                     const target = e.target.closest('svg');
-                    if (!target) return;
+                    if (!target || isRefreshAnimating) return;
                     
-                    // Refresh button logic
-                    if (isRefreshAnimating) return;
-                    const svg = target;
                     isRefreshAnimating = true;
+                    const svg = target;
                     svg.style.transform = 'rotate(360deg)';
                     svg.style.transition = 'transform 0.5s ease';
-                    if (window.refreshTweet) window.refreshTweet();
+                    
+                    // Call the refresh function
+                    window.refreshTweet();
+                    
                     setTimeout(() => {
                         svg.style.transform = 'rotate(0deg)';
                         setTimeout(() => {
@@ -1123,10 +1124,69 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update the current token
         window.currentToken = token;
         
-        // Update the chart and price data
+        // Get token data from TOKENS
+        const tokenData = window.TOKENS[token];
+        
+        // Update descriptions
+        document.getElementById('desc1').textContent = tokenData.desc1;
+        document.getElementById('desc2').textContent = tokenData.desc2;
+        
+        // Update airdrop amount under "Average Airdrop in $"
+        const airdropAmountElement = document.querySelector('.hover\\:underline.cursor-help');
+        if (airdropAmountElement) {
+            airdropAmountElement.textContent = `${tokenData.airdropAmount.toLocaleString()} ${token}`;
+        }
+        
+        // Update price data and metrics
         updatePriceData();
+        
+        // Update chart
         if (window.updateChartAndPrefetch) {
-            window.updateChartAndPrefetch();
+            const timeRange = document.querySelector('.time-dropdown')?.value || '7D';
+            window.updateChartAndPrefetch(timeRange);
+        }
+        
+        // Refresh tweets
+        const bagsFumbledContent = document.querySelector('.bag-fumbled-content');
+        if (bagsFumbledContent && window.TweetList) {
+            // Clear existing content
+            bagsFumbledContent.innerHTML = '';
+            
+            // Create new root and render
+            window.tweetRoot = ReactDOM.createRoot(bagsFumbledContent);
+            window.tweetRoot.render(React.createElement(window.TweetList, { 
+                token: token.toLowerCase(),
+                key: Date.now() // Force re-render
+            }));
+            
+            // Trigger refresh animation
+            const refreshButton = document.querySelector('.refresh-button svg');
+            if (refreshButton) {
+                refreshButton.style.transform = 'rotate(360deg)';
+                refreshButton.style.transition = 'transform 0.5s ease';
+                setTimeout(() => {
+                    refreshButton.style.transform = 'rotate(0deg)';
+                    setTimeout(() => {
+                        refreshButton.style.transition = 'none';
+                    }, 50);
+                }, 500);
+            }
+        }
+    };
+
+    // Add this function to handle refresh button click
+    window.refreshTweet = function() {
+        const bagsFumbledContent = document.querySelector('.bag-fumbled-content');
+        if (bagsFumbledContent && window.TweetList) {
+            // Clear existing content
+            bagsFumbledContent.innerHTML = '';
+            
+            // Create new root and render
+            window.tweetRoot = ReactDOM.createRoot(bagsFumbledContent);
+            window.tweetRoot.render(React.createElement(window.TweetList, { 
+                token: window.currentToken.toLowerCase(),
+                key: Date.now() // Force re-render
+            }));
         }
     };
 });
