@@ -1106,6 +1106,29 @@ document.addEventListener('DOMContentLoaded', () => {
             isLogoVisible = true;
         }
     });
+
+    // Add this function to handle icon selection
+    window.selectIcon = function(element) {
+        // Remove selected class from all icons
+        document.querySelectorAll('.airdrop-icon').forEach(icon => {
+            icon.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked icon
+        element.classList.add('selected');
+        
+        // Get the token symbol from the alt attribute
+        const token = element.alt;
+        
+        // Update the current token
+        window.currentToken = token;
+        
+        // Update the chart and price data
+        updatePriceData();
+        if (window.updateChartAndPrefetch) {
+            window.updateChartAndPrefetch();
+        }
+    };
 });
 
 async function updateChart(token, timeRange) {
