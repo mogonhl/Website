@@ -44,177 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             indicator.style.display = 'block';
         }
     }
-});
 
-// Make these functions available globally
-window.updateChartAndPrefetch = async function(timeRange) {
-    try {
-        console.log('Updating chart for:', window.currentToken, timeRange);
-        // Don't need to fetch data here since chart.js handles that
-        // Just trigger the chart update
-        if (window.chartUpdateAndPrefetch) {
-            window.chartUpdateAndPrefetch(timeRange);
-        }
-    } catch (error) {
-        console.error('Error updating chart:', error);
-    }
-};
-
-window.fetchChartData = async function(timeRange) {
-    try {
-        console.log('Fetching chart data for:', window.currentToken, timeRange);
-        const response = await fetch(`/api/price-data?timeRange=${timeRange}&token=${window.currentToken}`);
-        if (!response.ok) {
-            console.error('Failed to fetch price data:', response.status);
-            throw new Error('Failed to fetch price data');
-        }
-        const data = await response.json();
-        console.log('Raw API response:', data); // Debug log
-        return processData(data);
-    } catch (error) {
-        console.error('Error fetching chart data:', error);
-        return [];
-    }
-};
-
-window.processData = function(data) {
-    if (!data || !data.prices) return [];
-    return data.prices.map(([timestamp, price]) => ({
-        time: new Date(timestamp).getTime() / 1000,
-        value: price
-    }));
-};
-
-// Define selectIcon in the global scope
-window.selectIcon = function(element) {
-    // Get token symbol from the alt text
-    const tokenSymbol = element.alt;
-    
-    // Show loading state
-    document.querySelector('.market-cap').textContent = 'Loading...';
-    document.querySelector('.performance').textContent = 'Loading...';
-    document.querySelector('.multiplier').textContent = '...';
-    document.querySelector('.airdrop-value').textContent = 'Loading...';
-    
-    // Update visual selection
-    document.querySelectorAll('.airdrop-icon').forEach(icon => {
-        icon.classList.remove('selected');
-    });
-    element.classList.add('selected');
-    
-    // Update current token and refresh data
-    window.currentToken = tokenSymbol;
-    
-    // Reset to price dataset if switching away from HYPE
-    if (tokenSymbol !== 'HYPE') {
-        window.currentDataset = 'dataset1';
-    }
-    
-    // Dispatch token change event
-    window.dispatchEvent(new Event('tokenChange'));
-    
-    // Update token info
-    const token = TOKENS[window.currentToken];
-    
-    // Update descriptions
-    document.getElementById('desc1').textContent = token.desc1;
-    document.getElementById('desc2').textContent = token.desc2;
-    
-    // Update airdrop amount text
-    const airdropText = document.querySelector('.text-xs a[href*="binance.com"]');
-    if (airdropText) {
-        airdropText.textContent = `${token.airdropAmount} ${token.symbol}`;
-    }
-    
-    // Update chart data
-    if (window.chartUpdateAndPrefetch) {
-        window.chartUpdateAndPrefetch(currentTimeRange);
-    }
-    
-    // Refresh price data
-    if (window.updatePriceData) {
-        window.updatePriceData();
-    }
-
-    // Re-render TweetList with new token if in Bags Fumbled tab
-    const bagFumbledContent = document.querySelector('.bag-fumbled-content');
-    if (bagFumbledContent && bagFumbledContent.style.display !== 'none' && tweetRoot) {
-        tweetRoot.render(React.createElement(TweetList, { token: tokenSymbol.toLowerCase() }));
-    }
-};
-
-window.addEventListener('wheel', (e) => {
-    if (e.deltaY > 0 && isLogoVisible) {  // Scrolling down
-        document.getElementById('logo-section').classList.add('inactive');
-        document.getElementById('ticker-section').classList.add('active');
-        isLogoVisible = false;
-        
-        // Update chart when scrolling to ticker section
-        if (window.updateChartAndPrefetch) {
-            window.updateChartAndPrefetch();
-        }
-    } else if (e.deltaY < 0 && !isLogoVisible) {  // Scrolling up
-        document.getElementById('logo-section').classList.remove('inactive');
-        document.getElementById('ticker-section').classList.remove('active');
-        isLogoVisible = true;
-    }
-});
-
-// Also handle touch events
-window.addEventListener('touchend', (e) => {
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaY = touchStartY - touchEndY;
-
-    if (deltaY > 50 && isLogoVisible) {  // Scrolling down
-        document.getElementById('logo-section').classList.add('inactive');
-        document.getElementById('ticker-section').classList.add('active');
-        isLogoVisible = false;
-        
-        // Update chart when scrolling to ticker section
-        if (window.updateChartAndPrefetch) {
-            window.updateChartAndPrefetch();
-        }
-    } else if (deltaY < -50 && !isLogoVisible) {  // Scrolling up
-        document.getElementById('logo-section').classList.remove('inactive');
-        document.getElementById('ticker-section').classList.remove('active');
-        isLogoVisible = true;
-    }
-});
-
-// Add these constants at the top with other constants
-const CATEGORIES = ['Airdrops', 'Layer 1s', 'Shitcoins'];
-let currentCategoryIndex = 0;
-let isTyping = false;
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function typeText(text, element, cursor) {
-    isTyping = true;
-    element.textContent = '';
-    
-    // Type out the text
-    for (let i = 0; i < text.length; i++) {
-        element.textContent += text[i];
-        cursor.style.left = `${element.offsetWidth}px`;
-        await sleep(100); // Typing speed
-    }
-    
-    await sleep(1500); // Pause at the end
-    
-    // Delete the text
-    for (let i = text.length; i > 0; i--) {
-        element.textContent = text.substring(0, i - 1);
-        cursor.style.left = `${element.offsetWidth}px`;
-        await sleep(50); // Deletion speed
-    }
-    
-    isTyping = false;
-}
-
-// Initialize typing on page load
-document.addEventListener('DOMContentLoaded', () => {
     const glasses = document.getElementById('glasses');
     const intro = document.getElementById('intro');
     const mainContent = document.getElementById('main-content');
@@ -231,6 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const audio = new Audio('assets/song.mp3');
     audio.loop = true;
     audio.volume = 0.1; // Start at 10%
+
+    // Single click handler for centerLogo
+    if (centerLogo) {
+        centerLogo.addEventListener('click', () => {
+            createRandomFist(false);
+        });
+    }
 
     const fadeInAudio = () => {
         let currentVolume = 0.1;
@@ -334,11 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
         intro.classList.add('hidden');
         mainContent.classList.add('visible');
         startAnimation();
-        
-        // Start the click demonstration after a short delay
-        setTimeout(() => {
-            startClickDemo();
-        }, 800);
         
         // Show buttons after 1 second
         setTimeout(() => {
@@ -548,46 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             fistQueue = [];
         }, CLEANUP_DELAY);
-    }
-
-    // Update the click handler for the logo
-    function startClickDemo() {
-        if (hasUserClicked) return;
-        
-        const logo = document.querySelector('.center-logo');
-        if (!logo) return;
-        
-        let clickCount = 0;
-        const maxClicks = 10;
-        
-        function simulateClick() {
-            if (hasUserClicked || clickCount >= maxClicks) return;
-            
-            const rect = logo.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            
-            createClickIndicator(centerX, centerY);
-            
-            setTimeout(() => {
-                if (hasUserClicked) return;
-                
-                logo.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    logo.style.transform = 'scale(1)';
-                }, 50);
-                
-                createRandomFist(true); // Skip logo animation during demo
-            }, 100);
-            
-            clickCount++;
-            
-            if (clickCount < maxClicks) {
-                setTimeout(simulateClick, 500);
-            }
-        }
-        
-        simulateClick();
     }
 
     // Add this event listener
@@ -1235,73 +1027,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.scroll-indicator').classList.add('visible');
         }, 350);
     });
-
-    // Add these functions for the click demonstration
-    let hasUserClicked = false;
-    let demoInterval;
-    let clickCount = 0;
-
-    function createClickIndicator(x, y) {
-        const indicator = document.createElement('div');
-        indicator.className = 'click-indicator';
-        indicator.style.left = `${x}px`;
-        indicator.style.top = `${y}px`;
-        document.body.appendChild(indicator);
-        
-        setTimeout(() => {
-            indicator.remove();
-        }, 300);
-    }
-
-    function startClickDemo() {
-        if (hasUserClicked) return;
-        
-        const logo = document.querySelector('.center-logo');
-        if (!logo) return;
-        
-        let clickCount = 0;
-        const maxClicks = 10;
-        
-        function simulateClick() {
-            if (hasUserClicked || clickCount >= maxClicks) return;
-            
-            const rect = logo.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            
-            createClickIndicator(centerX, centerY);
-            
-            setTimeout(() => {
-                if (hasUserClicked) return;
-                
-                logo.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    logo.style.transform = 'scale(1)';
-                }, 50);
-                
-                createRandomFist(true); // Skip logo animation during demo
-            }, 100);
-            
-            clickCount++;
-            
-            if (clickCount < maxClicks) {
-                setTimeout(simulateClick, 500);
-            }
-        }
-        
-        simulateClick();
-    }
-
-    // Update the click handler for the logo
-    centerLogo.addEventListener('click', () => {
-        if (!hasUserClicked) {
-            hasUserClicked = true;
-        } else {
-            createRandomFist(false); // Include logo animation for manual clicks
-        }
-    });
-
-    // Rest of your existing DOMContentLoaded code...
 });
 
 async function updateChart(token, timeRange) {

@@ -147,6 +147,12 @@ h1 {
 .main-content {
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .main-content.visible {
@@ -174,11 +180,12 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 40px;
 }
 
 .dynamic-text-container {
     position: absolute;
-    right: calc(50% + 120px);
+    right: calc(50% + 160px);
     text-align: right;
     display: flex;
     align-items: center;
@@ -186,7 +193,7 @@ h1 {
 
 .static-text-container {
     position: absolute;
-    left: calc(50% + 120px);
+    left: calc(50% + 160px);
     text-align: left;
 }
 
@@ -195,7 +202,7 @@ h1 {
     height: 180px;
     z-index: 2;
     transition: transform 0.15s ease;
-    margin: 0 60px;
+    margin: 0 80px;
 }
 
 #dynamic-text {
@@ -331,16 +338,13 @@ h1 {
 }
 
 .button-container {
-    position: fixed;
-    left: 50%;
-    bottom: 80px;
-    transform: translateX(-50%);
     display: flex;
     gap: 1rem;
     font-family: 'Roboto', sans-serif;
     z-index: 10;
     opacity: 0;
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    transition: opacity 0.5s ease;
+    margin-top: 60px;
 }
 
 .button-container.visible {
@@ -606,52 +610,6 @@ h1 {
 @keyframes simple-bounce {
     0%, 100% { transform: rotate(45deg) translate(-4px, -4px); }
     50% { transform: rotate(45deg) translate(4px, 4px); }
-}
-
-/* Click indicator styles */
-.click-indicator {
-    position: absolute;
-    width: 32px;
-    height: 32px;
-    pointer-events: none;
-    z-index: 1000;
-    background: none;
-    transform: translate(-50%, -50%);
-}
-
-.click-indicator::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 2px solid rgba(72, 255, 225, 0.9);
-    border-radius: 50%;
-    animation: click-ripple 0.4s ease-out;
-}
-
-.click-indicator::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 8px;
-    height: 8px;
-    background: rgba(72, 255, 225, 0.9);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-}
-
-@keyframes click-ripple {
-    0% {
-        transform: scale(0.35);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1);
-        opacity: 0;
-    }
 }
 
 .center-logo {
