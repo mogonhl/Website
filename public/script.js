@@ -1140,14 +1140,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update price data and metrics
         updatePriceData();
         
-        // Update chart with current token and timerange
+        // Update chart
         const timeRange = document.querySelector('.time-dropdown')?.value || '7D';
-        if (window.updateChartAndPrefetch) {
-            window.updateChartAndPrefetch(timeRange);
+        if (window.chartUpdateAndPrefetch) {
+            window.chartUpdateAndPrefetch(timeRange);
         }
-        if (window.updateChart) {
-            window.updateChart(token, timeRange);
-        }
+        updateChart(token, timeRange);
+        
+        // Dispatch token change event for chart
+        const event = new CustomEvent('tokenChange', { 
+            detail: { token, timeRange } 
+        });
+        window.dispatchEvent(event);
         
         // Refresh tweets
         const bagsFumbledContent = document.querySelector('.bag-fumbled-content');
