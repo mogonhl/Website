@@ -389,29 +389,17 @@ const formatDate = (date) => {
 
 const calculatePerformance = async (date, token, sold) => {
     try {
-        console.log('Fetching token data for:', token);
         const response = await fetch(`/api/redis/get-token-data?token=${token}`);
-        console.log('Response status:', response.status);
-        
-        // Log the raw response text for debugging
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}, body: ${responseText}`);
-        }
         
         // Parse the response text
         let data;
         try {
-            data = JSON.parse(responseText);
+            data = JSON.parse(await response.text());
         } catch (parseError) {
-            console.error('Failed to parse response:', parseError);
             throw new Error(`Failed to parse response: ${parseError.message}`);
         }
         
         if (!data || !data.prices || !Array.isArray(data.prices)) {
-            console.error('Invalid data format:', data);
             throw new Error('Invalid data format received from API');
         }
         
@@ -435,37 +423,19 @@ const calculatePerformance = async (date, token, sold) => {
         
         // Use initialPrice if tweet is before our data OR if closest price is the first price point
         if (tweetTimestamp < prices[0][0] || closestTimestamp === prices[0][0]) {
-            console.log('Window.TOKENS:', window.TOKENS);
-            console.log('Token uppercase:', token.toUpperCase());
-            console.log('Token data:', window.TOKENS && window.TOKENS[token.toUpperCase()]);
-            
             const tokenData = window.TOKENS && window.TOKENS[token.toUpperCase()];
             if (!tokenData || !tokenData.initialPrice) {
-                console.log('No initial price found for token:', token.toUpperCase());
-                console.log('Token data object:', tokenData);
                 // If we don't have an initial price, use the first price from our data
                 const firstPrice = prices[0][1];
-                console.log('Using first price from data:', firstPrice);
                 const percentageChange = ((currentPrice - firstPrice) / firstPrice * 100).toFixed(0);
                 const isSuccess = sold ? currentPrice < firstPrice : currentPrice > firstPrice;
                 return { value: percentageChange, success: isSuccess };
             }
             
-            console.log('Using initialPrice calculation:', {
-                reason: tweetTimestamp < prices[0][0] ? 'tweet before data' : 'closest to first price point',
-                initialPrice: tokenData.initialPrice,
-                currentPrice
-            });
             const percentageChange = ((currentPrice - tokenData.initialPrice) / tokenData.initialPrice * 100).toFixed(0);
             const isSuccess = sold ? currentPrice < tokenData.initialPrice : currentPrice > tokenData.initialPrice;
             return { value: percentageChange, success: isSuccess };
         }
-        
-        console.log('Using price data calculation:', {
-            closestPrice,
-            currentPrice,
-            sold
-        });
         
         // Calculate percentage change from historical price to current price
         const percentageChange = ((currentPrice - closestPrice) / closestPrice * 100).toFixed(0);
@@ -480,7 +450,6 @@ const calculatePerformance = async (date, token, sold) => {
         };
         
     } catch (error) {
-        console.error('Failed to fetch token data:', error);
         return { value: '?', success: false };
     }
 };
@@ -494,15 +463,12 @@ const Tweet = ({ tweet, token }) => {
 
     // Fetch performance data when tweet changes
     React.useEffect(() => {
-        console.log('Calculating performance for:', { date: tweet.date, token, sold: tweet.sold });
         if (tweet.date && token) {
             calculatePerformance(tweet.date, token, tweet.sold)
                 .then(result => {
-                    console.log('Performance calculation result:', result);
                     setPerformance(result);
                 })
                 .catch(error => {
-                    console.error('Performance calculation error:', error);
                     setPerformance({ value: '?', success: false });
                 });
         }
@@ -688,52 +654,22 @@ const TweetList = ({ token }) => {
     const [tweet, setTweet] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState(null);
-    const [remainingTweets, setRemainingTweets] = React.useState([]);
-    
-    // Reset and shuffle tweets when token changes
+
+    // Force new tweet selection every time component mounts
     React.useEffect(() => {
-        console.log('Token changed to:', token);
         if (tweetData.length > 0) {
-            const shuffled = [...tweetData].sort(() => Math.random() - 0.5);
-            setRemainingTweets(shuffled.slice(1));  // All except first
-            setCurrentTweetData(shuffled[0]);       // Set first as current
-            window.dispatchEvent(new Event('tweetRefresh'));
+            const randomTweet = tweetData[Math.floor(Math.random() * tweetData.length)];
+            setCurrentTweetData(randomTweet);
         } else {
             setCurrentTweetData(null);
-            setRemainingTweets([]);
         }
-    }, [token]);  // Only depend on token changes
+    }, [token, tweetData]);
 
-    const handleRefresh = React.useCallback(() => {
-        if (tweetData.length <= 1) {
-            console.log('Not enough tweets to refresh');
-            return;
-        }
-
-        const updatedRemaining = remainingTweets.filter(t => t.id !== currentTweetData.id);
-        
-        if (updatedRemaining.length === 0) {
-            const newShuffled = [...tweetData]
-                .filter(t => t.id !== currentTweetData.id)
-                .sort(() => Math.random() - 0.5);
-            setRemainingTweets(newShuffled);
-            setCurrentTweetData(newShuffled[0]);
-        } else {
-            setRemainingTweets(updatedRemaining);
-            setCurrentTweetData(updatedRemaining[0]);
-        }
-        
-        window.dispatchEvent(new Event('tweetRefresh'));
-    }, [tweetData, currentTweetData, remainingTweets, token]);
-
+    // Fetch tweet data when currentTweetData changes
     React.useEffect(() => {
-        const fetchTweet = async () => {
-            if (!currentTweetData) {
-                setError('No tweets available for this token');
-                setLoading(false);
-                return;
-            }
+        if (!currentTweetData) return;
 
+        const fetchTweet = async () => {
             setLoading(true);
             setError(null);
             try {
@@ -750,7 +686,6 @@ const TweetList = ({ token }) => {
                     sold: currentTweetData.sold
                 });
             } catch (error) {
-                console.error('Error fetching tweet:', error);
                 setError(error.message || 'Failed to load tweet');
             } finally {
                 setLoading(false);
@@ -760,15 +695,11 @@ const TweetList = ({ token }) => {
         fetchTweet();
     }, [currentTweetData]);
 
-    // Make refresh function available globally for the tab system
-    React.useEffect(() => {
-        console.log('Setting up refresh function');
-        window.refreshTweet = handleRefresh;
-        return () => {
-            console.log('Cleaning up refresh function');
-            window.refreshTweet = null;
-        };
-    }, [handleRefresh]);
+    if (!tweetData.length) {
+        return React.createElement('div', { 
+            className: "w-full flex justify-center items-center min-h-[300px] text-[rgb(148,158,156)]" 
+        }, "No tweets available");
+    }
 
     return React.createElement('div', { 
         className: "w-full flex justify-center items-center min-h-[300px]"
