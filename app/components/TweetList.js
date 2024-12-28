@@ -116,6 +116,35 @@ const TWEETS_BY_TOKEN = {
         { id: '1767864902159405212', sold: false },
         { id: '1764275029183692897', sold: false },
         { id: '1772982403356586484', sold: false }
+    ],
+    'ena': [
+        { id: '1775079668695306618', sold: true },
+        { id: '1819836877811126634', sold: true },  
+        { id: '1773209821505843349', sold: false } 
+    ],
+    'w': [
+        { id: '1786613613744271424', sold: false },  // Placeholder 1
+        { id: '1775644342662857122', sold: true }    // Placeholder 2
+    ],
+    'ethfi': [
+        { id: '1769057269222633977', sold: true },  // Placeholder 1
+        { id: '1772899447288086656', sold: false }    // Placeholder 2
+    ],
+    'zro': [
+        { id: '1807414549316026546', sold: false },  // Placeholder 1
+        { id: '1814733164188672016', sold: false }    // Placeholder 2
+    ],
+    'strk': [
+        { id: '1863953499773698250', sold: false },  // Placeholder 1
+        { id: '1759926304558997759', sold: false }    // Placeholder 2
+    ],
+    'eigen': [
+        { id: '1844826708030931080', sold: false },  // Placeholder 1
+        { id: '1847112989612429326', sold: true }    // Placeholder 2
+    ],
+    'dbr': [
+        { id: '1823251587625533922', sold: true },  // Placeholder 1
+        { id: '1846923071799648468', sold: false }    // Placeholder 2
     ]
 };
 

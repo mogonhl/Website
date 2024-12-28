@@ -131,5 +131,82 @@ export const TOKENS = {
         desc1: 'Ribbon. More like robbin.',
         desc2: 'Create a new token, lock up the old one for a couple months. Allow your VC frens to exit. Gud tech.',
         supply: 902000000
+    },
+    ENA: {
+        id: 'ethena',
+        symbol: 'ENA',
+        name: 'Ethena',
+        coingeckoId: 'ethena',
+        initialPrice: 0.787,
+        airdropAmount: 780,
+        desc1: 'Either this cycles Anchor or a revolutionary yield protocol. Why not both?',
+        desc2: 'A new money block to build other shit on top of. Fun until it topples but that is crypto for you.',
+        supply: 2937500000
+    },
+    W: {
+        id: 'w',
+        symbol: 'W',
+        name: 'Wormhole',
+        coingeckoId: 'wormhole',
+        initialPrice: 1.33,
+        airdropAmount: 1420,
+        desc1: 'Cross-chain messaging protocol that got hacked for 320M. Now it is worth close to a bil.',
+        desc2: 'TGE came out of nowhere making this one pretty big. Could have retired.',
+        supply: 2790000000
+    },
+    ETHFI: {
+        id: 'ethfi',
+        symbol: 'ETHFI',
+        name: 'Ether.Fi',
+        coingeckoId: 'ether-fi',
+        initialPrice: 3.14,
+        airdropAmount: 575,
+        desc1: 'The airdrop that made everyone fomo into liquid staking. Eigenlayer who?',
+        desc2: 'Think 2008 housing crisis but on chain and you get a seat at the table.',
+        supply: 217000000
+    },
+    ZRO: {
+        id: 'zro',
+        symbol: 'ZRO',
+        name: 'LayerZero',
+        coingeckoId: 'layerzero',
+        initialPrice: 3.44,
+        airdropAmount: 67,
+        desc1: 'The OG omnichain protocol everyone loves (or not). Being first and having a moat is worth a lot.',
+        desc2: 'Publicly screening for farmers and putting more work into that than in the protocol itself is a weird move.',
+        supply: 111000000
+    },
+    STRK: {
+        id: 'strk',
+        symbol: 'STRK',
+        name: 'Starknet',
+        coingeckoId: 'starknet',
+        initialPrice: 1.95,
+        airdropAmount: 675,
+        desc1: 'The tech is good. Supposedly...',
+        desc2: 'Does not matter if you lack vibes. Cairo, zkSNARKs, Gaming, Brother.',
+        supply: 2260000000
+    },
+    EIGEN: {
+        id: 'eigen',
+        symbol: 'EIGEN',
+        name: 'Eigenlayer',
+        coingeckoId: 'eigenlayer',
+        initialPrice: 4.42,
+        airdropAmount: 110,
+        desc1: 'Restaking your restaked stake to restake some more. Then restake that on ETHFI. Black hole tech.',
+        desc2: 'They waited just enough for the hype to die down. Sick strategy.',
+        supply: 211000000
+    },
+    DBR: {
+        id: 'dbr',
+        symbol: 'DBR',
+        name: 'deBridge',
+        coingeckoId: 'debridge',
+        initialPrice: 0.04,
+        airdropAmount: 1200,
+        desc1: 'First intent-based bridge. The first one to do it right. Good product. No value.',
+        desc2: 'Jumping on the Points meta waggon is a dumb move. Especially for easy-to-farm bridges. See Orbiter.',
+        supply: 1800000000
     }
-}; 
+};

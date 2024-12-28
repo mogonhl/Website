@@ -51,8 +51,54 @@ const TOKENS = {
     'AEVO': {
         coingeckoId: 'aevo-exchange',
         symbol: 'AEVO'
+    },
+    'ENA': {
+        coingeckoId: 'ethena',
+        symbol: 'ENA'
+    },
+    'W': {
+        coingeckoId: 'wormhole',
+        symbol: 'W'
+    },
+    'ETHFI': {
+        coingeckoId: 'ether-fi',
+        symbol: 'ETHFI'
+    },
+    'ZRO': {
+        coingeckoId: 'layerzero',
+        symbol: 'ZRO'
+    },
+    'STRK': {
+        coingeckoId: 'starknet',
+        symbol: 'STRK'
+    },
+    'EIGEN': {
+        coingeckoId: 'eigenlayer',
+        symbol: 'EIGEN'
+    },
+    'DBR': {
+        coingeckoId: 'debridge',
+        symbol: 'DBR'
     }
 };
+
+// Get tokens to process from command line arguments
+const tokensToProcess = process.argv.slice(2).map(t => t.toUpperCase());
+const NEW_TOKENS = ['ENA', 'W', 'ETHFI', 'ZRO', 'STRK', 'EIGEN', 'DBR'];
+
+if (tokensToProcess.length === 0) {
+    console.log('No tokens specified, using default list of all tokens...');
+    tokensToProcess.push(...Object.keys(TOKENS));
+} else {
+    // Validate tokens
+    for (const token of tokensToProcess) {
+        if (!TOKENS[token]) {
+            console.error(`Invalid token: ${token}`);
+            console.error('Available tokens:', Object.keys(TOKENS).join(', '));
+            process.exit(1);
+        }
+    }
+}
 
 // Validate environment variables first
 if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
@@ -154,6 +200,17 @@ async function fetchTVLWithDelay(timeRange) {
     return filteredTvl; // Return array of {date, tvl} objects
 }
 
+async function checkRedisData(symbol, timeRange) {
+    const cacheKey = `price_data_${timeRange}_${symbol.toLowerCase()}`;
+    try {
+        const data = await redis.get(cacheKey);
+        return data !== null;
+    } catch (error) {
+        console.error(`Error checking Redis data for ${cacheKey}:`, error.message);
+        return false;
+    }
+}
+
 async function populateToken(symbol) {
     const token = TOKENS[symbol];
     if (!token) {
@@ -171,15 +228,17 @@ async function populateToken(symbol) {
         { days: '365', key: 'All-time' }
     ];
 
-    const tvlTimeRanges = [
-        { days: '7', key: '7D' },
-        { days: '30', key: '30D' },
-        { days: '365', key: 'All-time' }
-    ];
-    
     // Handle price data first
     for (const range of priceTimeRanges) {
         const cacheKey = `price_data_${range.key}_${symbol.toLowerCase()}`;
+        
+        // Check if data already exists
+        const hasData = await checkRedisData(symbol, range.key);
+        if (hasData) {
+            console.log(`Data already exists for ${cacheKey}, skipping...`);
+            continue;
+        }
+
         let retryCount = 0;
         const maxRetries = 3;
         
@@ -218,82 +277,19 @@ async function populateToken(symbol) {
             }
         }
     }
-
-    // Handle TVL data for HYPE separately
-    if (symbol === 'HYPE') {
-        for (const range of tvlTimeRanges) {
-            const tvlCacheKey = `tvl_data_${range.key}_${symbol.toLowerCase()}`;
-            let retryCount = 0;
-            const maxRetries = 3;
-            
-            while (retryCount < maxRetries) {
-                try {
-                    console.log(`\nProcessing ${symbol} TVL data for ${range.key} (attempt ${retryCount + 1}/${maxRetries})`);
-                    
-                    const tvlData = await fetchTVLWithDelay(range.days);
-                    if (!Array.isArray(tvlData) || tvlData.length === 0) {
-                        throw new Error('Invalid TVL data received from DeFiLlama');
-                    }
-
-                    console.log('TVL data to be stored:', {
-                        type: typeof tvlData,
-                        isArray: Array.isArray(tvlData),
-                        sampleTVL: tvlData.slice(0, 2),
-                        dataPoints: tvlData.length
-                    });
-
-                    await redis.set(tvlCacheKey, JSON.stringify(tvlData), { ex: 86400 });
-                    console.log(`Successfully populated ${tvlCacheKey}`);
-                    break; // Success, exit retry loop
-                    
-                } catch (error) {
-                    console.error(`Error populating TVL data (attempt ${retryCount + 1}/${maxRetries}):`, error.message);
-                    retryCount++;
-                    
-                    if (retryCount < maxRetries) {
-                        const waitTime = retryCount * 30000; // Wait longer for each retry
-                        console.log(`Waiting ${waitTime/1000} seconds before retry...`);
-                        await new Promise(resolve => setTimeout(resolve, waitTime));
-                    } else {
-                        console.log(`Failed to populate TVL data after ${maxRetries} attempts, moving on...`);
-                        break;
-                    }
-                }
-            }
-        }
-    }
 }
 
-async function populateAll() {
-    const tokens = Object.keys(TOKENS);
-    console.log('\nStarting population for all tokens:', tokens.join(', '));
-    
-    for (let i = 0; i < tokens.length; i++) {
-        const symbol = tokens[i];
-        
-        try {
-            await populateToken(symbol);
-            
-            // If this isn't the last token, wait before processing the next one
-            if (i < tokens.length - 1) {
-                console.log('\nWaiting 1 minute before next token...');
-                await new Promise(resolve => setTimeout(resolve, 60000));
-            }
-        } catch (error) {
-            console.error(`\nError processing ${symbol}:`, error);
-            console.log('Moving on to next token...');
+// Main execution
+console.log('Starting population for specified tokens:', tokensToProcess.join(', '));
+
+(async () => {
+    for (const symbol of tokensToProcess) {
+        await populateToken(symbol);
+        // Wait 1 minute between tokens to avoid rate limits
+        if (tokensToProcess.indexOf(symbol) !== tokensToProcess.length - 1) {
+            console.log('\nWaiting 1 minute before next token...');
+            await new Promise(resolve => setTimeout(resolve, 60000));
         }
     }
-}
-
-// Start the population
-console.log('Starting automatic population of all tokens...');
-populateAll()
-    .then(() => {
-        console.log('\nAll tokens processed successfully!');
-        process.exit(0);
-    })
-    .catch(error => {
-        console.error('\nFatal error:', error);
-        process.exit(1);
-    }); 
+    console.log('\nPopulation complete!');
+})(); 

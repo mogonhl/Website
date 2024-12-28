@@ -685,7 +685,93 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Function to update performance ranking
+    // Add CSS for styling - Move this outside the updatePerformanceRanking function
+    const rankingStyle = document.createElement('style');
+    rankingStyle.textContent = `
+        .performance-ranking {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth;
+            padding: 0 12px;
+        }
+        .performance-ranking::-webkit-scrollbar {
+            display: none;
+        }
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(16, 25, 31, 0.8);
+            color: rgb(148, 158, 156);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            z-index: 10;
+            font-size: 18px;
+            transition: color 0.2s;
+        }
+        .nav-arrow:hover {
+            color: #10B981;
+        }
+        .nav-arrow.prev {
+            left: -12px;
+        }
+        .nav-arrow.next {
+            right: -12px;
+        }
+        .icon-container {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 8px;
+            position: relative;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .icon-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            pointer-events: none;
+            user-select: none;
+            display: block;
+        }
+        .icon-container.selected {
+            outline: 2px solid #10B981;
+            outline-offset: 2px;
+        }
+        .separator-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 4px;
+            height: 40px;
+            pointer-events: none;
+            user-select: none;
+            color: rgb(148, 158, 156);
+            opacity: 0.5;
+            font-size: 14px;
+        }
+    `;
+    document.head.appendChild(rankingStyle);
+
     function updatePerformanceRanking(prices) {
         // Calculate metrics for all tokens
         const tokenMetrics = Object.entries(TOKENS).map(([symbol, token]) => {
@@ -707,8 +793,6 @@ document.addEventListener('DOMContentLoaded', () => {
             tokenMetrics.sort((a, b) => b.performance - a.performance);
         }
 
-        const bestPerformer = tokenMetrics[0];
-
         // Get the ranking container
         const rankingContainer = document.querySelector('.performance-ranking');
         if (!rankingContainer) return;
@@ -716,99 +800,110 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear existing content
         rankingContainer.innerHTML = '';
 
-        // Calculate sizes
-        const containerWidth = rankingContainer.offsetWidth;
-        const minSpacing = 16;
-        const totalElements = tokenMetrics.length * 2 - 1;
-        const totalSpacing = minSpacing * (totalElements - 1);
-        const availableWidth = containerWidth - totalSpacing - 40;
-        const iconSize = Math.floor(Math.min(40, availableWidth / totalElements));
-
-        // Create ranking list
+        // Create and append tokens
         tokenMetrics.forEach((token, index) => {
-            // Create icon container with dynamic square dimensions
-            const iconContainer = document.createElement('div');
-            iconContainer.className = 'flex-shrink-0';
-            iconContainer.style.width = `${iconSize}px`;
-            iconContainer.style.height = `${iconSize}px`;
-            iconContainer.style.position = 'relative';
-            
-            // Create token icon with corrected image paths
-            const icon = document.createElement('img');
-            let imagePath;
-            switch(token.symbol) {
-                case 'HYPE':
-                    imagePath = '/assets/Logos/Hype.png';
-                    break;
-                case 'FRIEND':
-                    imagePath = '/assets/Logos/Friend.png';
-                    break;
-                case 'UNI':
-                    imagePath = '/assets/Logos/Uniswap.png';
-                    break;
-                case 'PENGU':
-                    imagePath = '/assets/Logos/Pengu.jpeg';
-                    break;
-                case 'JTO':
-                    imagePath = '/assets/Logos/Jito.png';
-                    break;
-                case 'ARB':
-                    imagePath = '/assets/Logos/Arbitrum.png';
-                    break;
-                case 'ME':
-                    imagePath = '/assets/Logos/MagicalEden.png';
-                    break;
-                default:
-                    imagePath = `/assets/Logos/${token.symbol}.png`;
-            }
-            icon.src = imagePath;
-            icon.alt = token.symbol;
-            icon.style.position = 'absolute';
-            icon.style.top = '0';
-            icon.style.left = '0';
-            icon.style.width = '100%';
-            icon.style.height = '100%';
-            icon.style.objectFit = 'cover';
-            icon.style.borderRadius = '50%';
-            icon.className = 'airdrop-icon';
-            icon.onclick = function() { selectIcon(this); };
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'icon-container';
             if (token.symbol === window.currentToken) {
-                icon.classList.add('selected');
+                iconDiv.className += ' selected';
             }
+            iconDiv.title = `${token.performance.toFixed(1)}% (${token.multiplier.toFixed(1)}x)`;
+
+            const img = document.createElement('img');
+            img.alt = token.symbol;
+            img.draggable = false;
+
+            const specialCases = {
+                'PENGU': 'assets/Logos/Pengu.jpeg',
+                'HYPE': 'assets/Logos/Hype.png',
+                'ARB': 'assets/Logos/Arbitrum.png',
+                'FRIEND': 'assets/Logos/Friend.png',
+                'JTO': 'assets/Logos/Jito.png',
+                'ME': 'assets/Logos/MagicalEden.png',
+                'UNI': 'assets/Logos/Uniswap.png',
+                'TIA': 'assets/Logos/TIA.png',
+                'ENS': 'assets/Logos/ENS.png',
+                'JUP': 'assets/Logos/JUP.png',
+                'WEN': 'assets/Logos/WEN.png',
+                'AEVO': 'assets/Logos/AEVO.png',
+                'ENA': 'assets/Logos/ENA.png',
+                'W': 'assets/Logos/W.png',
+                'ETHFI': 'assets/Logos/ETHFI.png',
+                'ZRO': 'assets/Logos/ZRO.png',
+                'STRK': 'assets/Logos/STRK.png',
+                'EIGEN': 'assets/Logos/EIGEN.png',
+                'DBR': 'assets/Logos/DBR.png'
+            };
+
+            img.src = specialCases[token.symbol] || `assets/Logos/${token.symbol}.png`;
             
-            // Add hover tooltip
-            if (currentSortOrder === 'performance') {
-                if (token !== bestPerformer) {
-                    const multiplierDiff = bestPerformer.multiplier / token.multiplier;
-                    iconContainer.title = `${multiplierDiff.toFixed(1)}x less`;
+            // Add click handler
+            iconDiv.addEventListener('click', () => {
+                // Update all airdrop icons
+                document.querySelectorAll('.airdrop-icon').forEach(icon => {
+                    icon.classList.remove('selected');
+                    if (icon.alt === token.symbol) {
+                        icon.classList.add('selected');
+                    }
+                });
+                
+                // Update all performance ranking icons
+                document.querySelectorAll('.performance-ranking .icon-container').forEach(icon => {
+                    icon.classList.remove('selected');
+                });
+                iconDiv.classList.add('selected');
+                
+                // Call the existing selectIcon function
+                const airdropIcon = document.querySelector(`.airdrop-icon[alt="${token.symbol}"]`);
+                if (airdropIcon) {
+                    window.selectIcon(airdropIcon);
                 }
-            } else if (currentSortOrder === 'size') {
-                const value = formatNumber(token.size, true);
-                iconContainer.title = `$${value}`;
-            }
+            });
 
-            iconContainer.appendChild(icon);
-            rankingContainer.appendChild(iconContainer);
+            iconDiv.appendChild(img);
+            rankingContainer.appendChild(iconDiv);
 
-            // Add separator if not last
             if (index < tokenMetrics.length - 1) {
-                const separator = document.createElement('div');
-                separator.style.width = `${iconSize}px`;
-                separator.style.height = `${iconSize}px`;
-                separator.className = 'flex-shrink-0 flex items-center justify-center';
-                const separatorText = document.createElement('span');
-                separatorText.className = 'text-gray-600';
-                separatorText.textContent = '>';
-                separator.appendChild(separatorText);
-                rankingContainer.appendChild(separator);
+                const separatorDiv = document.createElement('div');
+                separatorDiv.className = 'separator-container';
+                separatorDiv.textContent = '>';
+                rankingContainer.appendChild(separatorDiv);
             }
         });
 
-        // Apply flex layout with fixed spacing
-        rankingContainer.style.display = 'flex';
-        rankingContainer.style.alignItems = 'center';
-        rankingContainer.style.justifyContent = 'center';
-        rankingContainer.style.gap = `${minSpacing}px`;
+        // Create navigation arrows
+        const prevArrow = document.createElement('div');
+        prevArrow.className = 'nav-arrow prev';
+        prevArrow.innerHTML = '‹';
+        prevArrow.onclick = () => {
+            rankingContainer.scrollTo({ left: 0, behavior: 'smooth' });
+        };
+
+        const nextArrow = document.createElement('div');
+        nextArrow.className = 'nav-arrow next';
+        nextArrow.innerHTML = '›';
+        nextArrow.onclick = () => {
+            rankingContainer.scrollTo({ 
+                left: rankingContainer.scrollWidth - rankingContainer.clientWidth,
+                behavior: 'smooth'
+            });
+        };
+
+        // Add navigation arrows
+        rankingContainer.parentNode.appendChild(prevArrow);
+        rankingContainer.parentNode.appendChild(nextArrow);
+
+        // Show/hide arrows based on scroll position
+        const updateArrows = () => {
+            prevArrow.style.display = rankingContainer.scrollLeft > 0 ? 'flex' : 'none';
+            nextArrow.style.display = 
+                rankingContainer.scrollLeft < (rankingContainer.scrollWidth - rankingContainer.clientWidth - 10) 
+                ? 'flex' : 'none';
+        };
+
+        rankingContainer.addEventListener('scroll', updateArrows);
+        window.addEventListener('resize', updateArrows);
+        updateArrows(); // Initial check
     }
 
     // Function to clear all caches for a token
