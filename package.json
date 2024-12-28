@@ -6,6 +6,7 @@
   "scripts": {
     "static": "http-server . -p 3000",
     "dev": "vercel dev",
+    "build": "next build",
     "deploy": "vercel deploy",
     "server": "node server.js"
   },

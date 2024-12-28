@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script>
+        // Mobile detection and redirect
+        (function() {
+            // Don't redirect if already on mobile page
+            if (window.location.pathname === '/mobile') return;
+            
+            // Check if device is mobile
+            const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|Windows Phone|Mobile|Tablet/i.test(navigator.userAgent) 
+                || window.matchMedia("(max-width: 768px)").matches;
+            
+            // Redirect if mobile
+            if (isMobile) {
+                window.location.href = '/mobile';
+            }
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PURRG</title>

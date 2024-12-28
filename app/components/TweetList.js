@@ -14,7 +14,9 @@ const TWEETS_BY_TOKEN = {
         { id: '1871303939536380397', sold: true },  // buy/hold
         { id: '1871475922974753252', sold: true },
         { id: '1871221424872186234', sold: true },  // buy/hold
-        { id: '1870867292491563159', sold: true }
+        { id: '1870867292491563159', sold: true },
+        { id: '1872546598666031196', sold: true },
+        { id: '1872288005303701521', sold: false }
     ],
     'arb': [
         { id: '1638906224174579713', sold: false },
@@ -151,11 +153,11 @@ const TWEETS_BY_TOKEN = {
 const STICKERS = [
     'assets/Sticker/1.png',
     'assets/Sticker/2.png',
-    'assets/Sticker/2 2.png',
+    'assets/Sticker/22.png',
     'assets/Sticker/3.png',
-    'assets/Sticker/3 2.png',
+    'assets/Sticker/32.png',
     'assets/Sticker/4.png',
-    'assets/Sticker/4 2.png',
+    'assets/Sticker/42.png',
     'assets/Sticker/5.png',
     'assets/Sticker/6.png',
     'assets/Sticker/7.png',
@@ -389,17 +391,29 @@ const formatDate = (date) => {
 
 const calculatePerformance = async (date, token, sold) => {
     try {
+        console.log('Fetching token data for:', token);
         const response = await fetch(`/api/redis/get-token-data?token=${token}`);
+        console.log('Response status:', response.status);
+        
+        // Log the raw response text for debugging
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}, body: ${responseText}`);
+        }
         
         // Parse the response text
         let data;
         try {
-            data = JSON.parse(await response.text());
+            data = JSON.parse(responseText);
         } catch (parseError) {
+            console.error('Failed to parse response:', parseError);
             throw new Error(`Failed to parse response: ${parseError.message}`);
         }
         
         if (!data || !data.prices || !Array.isArray(data.prices)) {
+            console.error('Invalid data format:', data);
             throw new Error('Invalid data format received from API');
         }
         
@@ -423,19 +437,37 @@ const calculatePerformance = async (date, token, sold) => {
         
         // Use initialPrice if tweet is before our data OR if closest price is the first price point
         if (tweetTimestamp < prices[0][0] || closestTimestamp === prices[0][0]) {
+            console.log('Window.TOKENS:', window.TOKENS);
+            console.log('Token uppercase:', token.toUpperCase());
+            console.log('Token data:', window.TOKENS && window.TOKENS[token.toUpperCase()]);
+            
             const tokenData = window.TOKENS && window.TOKENS[token.toUpperCase()];
             if (!tokenData || !tokenData.initialPrice) {
+                console.log('No initial price found for token:', token.toUpperCase());
+                console.log('Token data object:', tokenData);
                 // If we don't have an initial price, use the first price from our data
                 const firstPrice = prices[0][1];
+                console.log('Using first price from data:', firstPrice);
                 const percentageChange = ((currentPrice - firstPrice) / firstPrice * 100).toFixed(0);
                 const isSuccess = sold ? currentPrice < firstPrice : currentPrice > firstPrice;
                 return { value: percentageChange, success: isSuccess };
             }
             
+            console.log('Using initialPrice calculation:', {
+                reason: tweetTimestamp < prices[0][0] ? 'tweet before data' : 'closest to first price point',
+                initialPrice: tokenData.initialPrice,
+                currentPrice
+            });
             const percentageChange = ((currentPrice - tokenData.initialPrice) / tokenData.initialPrice * 100).toFixed(0);
             const isSuccess = sold ? currentPrice < tokenData.initialPrice : currentPrice > tokenData.initialPrice;
             return { value: percentageChange, success: isSuccess };
         }
+        
+        console.log('Using price data calculation:', {
+            closestPrice,
+            currentPrice,
+            sold
+        });
         
         // Calculate percentage change from historical price to current price
         const percentageChange = ((currentPrice - closestPrice) / closestPrice * 100).toFixed(0);
@@ -450,6 +482,7 @@ const calculatePerformance = async (date, token, sold) => {
         };
         
     } catch (error) {
+        console.error('Failed to fetch token data:', error);
         return { value: '?', success: false };
     }
 };
@@ -463,12 +496,15 @@ const Tweet = ({ tweet, token }) => {
 
     // Fetch performance data when tweet changes
     React.useEffect(() => {
+        console.log('Calculating performance for:', { date: tweet.date, token, sold: tweet.sold });
         if (tweet.date && token) {
             calculatePerformance(tweet.date, token, tweet.sold)
                 .then(result => {
+                    console.log('Performance calculation result:', result);
                     setPerformance(result);
                 })
                 .catch(error => {
+                    console.error('Performance calculation error:', error);
                     setPerformance({ value: '?', success: false });
                 });
         }
@@ -654,14 +690,27 @@ const TweetList = ({ token }) => {
     const [tweet, setTweet] = React.useState(null);
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState(null);
+    const lastTweetId = React.useRef(null);
 
     // Force new tweet selection every time component mounts
     React.useEffect(() => {
+        console.log('Selecting new tweet for token:', token);
         if (tweetData.length > 0) {
-            const randomTweet = tweetData[Math.floor(Math.random() * tweetData.length)];
+            let availableTweets = tweetData;
+            
+            // If we have more than one tweet and have a last tweet ID, filter it out
+            if (tweetData.length > 1 && lastTweetId.current) {
+                availableTweets = tweetData.filter(t => t.id !== lastTweetId.current);
+            }
+            
+            const randomTweet = availableTweets[Math.floor(Math.random() * availableTweets.length)];
+            console.log('Previous tweet ID:', lastTweetId.current);
+            console.log('Selected tweet ID:', randomTweet.id);
+            lastTweetId.current = randomTweet.id;
             setCurrentTweetData(randomTweet);
         } else {
             setCurrentTweetData(null);
+            lastTweetId.current = null;
         }
     }, [token, tweetData]);
 
@@ -673,6 +722,7 @@ const TweetList = ({ token }) => {
             setLoading(true);
             setError(null);
             try {
+                console.log('Fetching tweet data for ID:', currentTweetData.id);
                 const response = await fetch(`/api/tweet-proxy?tweetId=${currentTweetData.id}`);
                 const data = await response.json();
                 
@@ -686,6 +736,7 @@ const TweetList = ({ token }) => {
                     sold: currentTweetData.sold
                 });
             } catch (error) {
+                console.error('Error fetching tweet:', error);
                 setError(error.message || 'Failed to load tweet');
             } finally {
                 setLoading(false);

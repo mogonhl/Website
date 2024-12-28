@@ -2,15 +2,14 @@
   "version": 2,
   "builds": [
     { 
-      "src": "pages/api/**/*.js", 
-      "use": "@vercel/node",
-      "config": {
-        "maxDuration": 60
-      }
+      "src": "server.js",
+      "use": "@vercel/node"
     },
+    { "src": "pages/api/**/*.js", "use": "@vercel/node" },
     { "src": "public/**", "use": "@vercel/static" },
     { "src": "app/**", "use": "@vercel/static" },
-    { "src": "index.html", "use": "@vercel/static" }
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "pages/mobile/**", "use": "@vercel/static" }
   ],
   "env": {
     "UPSTASH_REDIS_REST_URL": "https://witty-dassie-40050.upstash.io",
@@ -18,8 +17,19 @@
   },
   "routes": [
     {
+      "src": "/mobile",
+      "dest": "/pages/mobile/index.html",
+      "headers": {
+        "Cache-Control": "s-maxage=0"
+      }
+    },
+    {
+      "src": "/mobile/(.*)",
+      "dest": "/pages/mobile/$1"
+    },
+    {
       "src": "/api/redis/get-token-data",
-      "dest": "pages/api/redis/get-token-data.js",
+      "dest": "/pages/api/redis/get-token-data.js",
       "methods": ["GET", "OPTIONS"],
       "headers": {
         "Access-Control-Allow-Origin": "*",
@@ -29,7 +39,7 @@
     },
     {
       "src": "/api/redis/(.*)",
-      "dest": "pages/api/redis/$1.js",
+      "dest": "/pages/api/redis/$1.js",
       "methods": ["GET", "OPTIONS"],
       "headers": {
         "Access-Control-Allow-Origin": "*",
@@ -39,7 +49,7 @@
     },
     {
       "src": "/api/(.*)",
-      "dest": "pages/api/$1.js",
+      "dest": "/pages/api/$1.js",
       "methods": ["GET", "OPTIONS"],
       "headers": {
         "Access-Control-Allow-Origin": "*",
@@ -60,7 +70,22 @@
       "dest": "/public/$1"
     },
     {
+      "src": "/check-mobile",
+      "dest": "/server.js"
+    },
+    {
       "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*Mobile.*"
+        }
+      ],
+      "dest": "/pages/mobile/index.html"
     },
     {
       "src": "/(.*)",

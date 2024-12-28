@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PURRG Mobile</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #002420;
+            height: 100vh;
+            overflow: hidden;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        #intro {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: black;
+            z-index: 50;
+            transition: opacity 0.5s ease;
+        }
+
+        .glasses {
+            position: absolute;
+            width: 40%;
+            max-width: 150px;
+        }
+
+        .glasses-blur {
+            animation: pulse-blur 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-blur {
+            0% { filter: blur(5px); opacity: 0.5; }
+            50% { filter: blur(15px); opacity: 0.7; }
+            100% { filter: blur(5px); opacity: 0.5; }
+        }
+
+        .intro.clicked {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .intro.clicked .glasses-blur {
+            animation: none;
+        }
+
+        .intro.clicked .glasses {
+            transform: scale(1.1);
+            transition: transform 0.5s ease;
+        }
+
+        #main-content {
+            min-height: 100vh;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            background-image: url('/assets/back.svg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        #main-content.visible {
+            opacity: 1;
+        }
+
+        #main-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 36, 32, 0.7);
+            z-index: 1;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem;
+            width: 100%;
+            transform: translateY(-10vh);
+        }
+
+        .logo-scroll-container {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            height: 120px;
+        }
+
+        .logo-row {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .logo-wrapper {
+            flex-shrink: 0;
+            width: 60px;
+            margin: 0 1rem;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            width: 100%;
+            height: auto;
+            animation: 
+                floatY 6s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+                floatRotate 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .logo-wrapper.active {
+            width: 90px;
+            opacity: 1;
+        }
+
+        .logo-wrapper.active .logo {
+            opacity: 1;
+        }
+
+        .side-logo {
+            width: 60px;
+            opacity: 0.5;
+            pointer-events: none;
+            animation: 
+                floatY 6s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+                floatRotate 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            animation-delay: -2s;
+        }
+
+        @keyframes floatY {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-6px);
+            }
+        }
+
+        @keyframes floatRotate {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            25% {
+                transform: rotate(-2deg);
+            }
+            75% {
+                transform: rotate(2deg);
+            }
+        }
+
+        .logo:hover {
+            animation-play-state: paused;
+            transform: scale(1.1) rotate(5deg);
+            filter: brightness(1.2) drop-shadow(0 0 10px rgba(72, 255, 225, 0.3));
+        }
+
+        .text-line {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .dynamic-text-wrapper {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        #dynamic-text-mobile {
+            font-size: 3.125rem;
+            min-height: 3.75rem;
+            color: rgba(72, 255, 225, 0.9);
+            text-shadow: 
+                0 0 15px rgba(72, 255, 225, 0.3),
+                0 0 1px rgba(72, 255, 225, 0.9);
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .static-text {
+            font-size: 2.5rem;
+            color: white;
+            text-shadow: 0 0 1px white;
+        }
+
+        .typed-cursor {
+            font-size: 3.125rem;
+            color: rgba(72, 255, 225, 0.9);
+            text-shadow: 0 0 15px rgba(72, 255, 225, 0.3);
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        .button.launch {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: rgba(72, 255, 225, 0.1);
+            color: rgba(72, 255, 225, 0.9);
+            border: 1px solid rgba(72, 255, 225, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .button.launch:hover {
+            background: rgba(72, 255, 225, 0.2);
+            border-color: rgba(72, 255, 225, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .x-logo {
+            width: 18px;
+            height: 18px;
+            opacity: 0.8;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 2rem;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            z-index: 3;
+        }
+
+        .footer-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+
+        .footer-link:hover {
+            opacity: 1;
+        }
+
+        .footer-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .footer-divider {
+            width: 1px;
+            height: 1rem;
+            background-color: rgba(255, 255, 255, 0.3);
+            margin: 0 0.5rem;
+        }
+
+        .message-bubble {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%);
+            background: rgba(72, 255, 225, 0.1);
+            border: 1px solid rgba(72, 255, 225, 0.2);
+            backdrop-filter: blur(5px);
+            color: rgba(72, 255, 225, 0.9);
+            padding: 0.8rem 1.2rem;
+            border-radius: 20px;
+            font-size: 1rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .message-bubble.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="message-bubble">Launching Tomorrow.</div>
+    <div id="intro" class="intro">
+        <img src="/assets/fast.png" alt="Glasses Blur" class="glasses glasses-blur">
+        <img src="/assets/fast.png" alt="Glasses" class="glasses">
+    </div>
+
+    <div id="main-content">
+        <div class="content-wrapper">
+            <div class="logo-scroll-container">
+                <div class="logo-row">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="text-line">
+                <div class="dynamic-text-wrapper">
+                    <span id="dynamic-text-mobile"></span>
+                </div>
+                <span class="static-text">Everyone.</span>
+            </div>
+            <div class="button-container">
+                <a href="#" class="button launch">Launch App</a>
+            </div>
+        </div>
+        <div class="footer">
+            <a href="https://app.hypurr.fun/launch/7561" class="footer-link" target="_blank">
+                <svg class="footer-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                </svg>
+                Trade on Hypurr
+            </a>
+            <div class="footer-divider"></div>
+            <a href="https://x.com/purrg_hl" class="footer-link" target="_blank">
+                <svg class="footer-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <script>
+        const intro = document.getElementById('intro');
+        const mainContent = document.getElementById('main-content');
+        
+        intro.addEventListener('click', () => {
+            intro.classList.add('clicked');
+            setTimeout(() => {
+                mainContent.classList.add('visible');
+                initTyped();
+            }, 300);
+        });
+
+        function initTyped() {
+            const words = [
+                'Purrg',
+                'Outwork',
+                'Outperform',
+                'Flip',
+                'Buy',
+                'Mog',
+                'Moon',
+                'Degen',
+                'Ape',
+                'Pump',
+                'Grind',
+                'Wagmi',
+                'Vibe'
+            ];
+
+            new Typed('#dynamic-text-mobile', {
+                strings: words,
+                typeSpeed: 100,
+                backSpeed: 50,
+                startDelay: 0,
+                backDelay: 1500,
+                loop: true,
+                showCursor: true,
+                cursorChar: '|',
+                autoInsertCss: true,
+                contentType: 'text'
+            });
+
+            // Initialize carousel
+            const container = document.querySelector('.logo-scroll-container');
+            const row = document.querySelector('.logo-row');
+            
+            const availableStickers = [
+                '/assets/Sticker/1.png',
+                '/assets/Sticker/2.png',
+                '/assets/Sticker/22.png',
+                '/assets/Sticker/3.png',
+                '/assets/Sticker/32.png',
+                '/assets/Sticker/4.png',
+                '/assets/Sticker/42.png',
+                '/assets/Sticker/5.png',
+                '/assets/Sticker/6.png',
+                '/assets/Sticker/7.png',
+                '/assets/Sticker/9.png',
+                '/assets/Sticker/10.png',
+                '/assets/Sticker/12.png',
+                '/assets/Sticker/13.png',
+                '/assets/Sticker/14.png',
+                '/assets/Sticker/15.png',
+                '/assets/Sticker/16.png',
+                '/assets/Sticker/17.png',
+                '/assets/Sticker/69.png',
+                '/assets/Sticker/70.png'
+            ];
+
+            function getRandomSticker() {
+                return availableStickers[Math.floor(Math.random() * availableStickers.length)];
+            }
+            
+            function createCarousel() {
+                row.innerHTML = '';
+                
+                // Create left sticker
+                const leftWrapper = document.createElement('div');
+                leftWrapper.className = 'logo-wrapper';
+                const leftImg = document.createElement('img');
+                leftImg.src = getRandomSticker();
+                leftImg.className = 'logo';
+                leftImg.alt = 'Sticker';
+                leftImg.style.animationDelay = '-2s';
+                leftWrapper.appendChild(leftImg);
+                
+                // Create center logo
+                const centerWrapper = document.createElement('div');
+                centerWrapper.className = 'logo-wrapper active';
+                const centerImg = document.createElement('img');
+                centerImg.src = '/assets/logo.png';
+                centerImg.className = 'logo';
+                centerImg.alt = 'Logo';
+                centerWrapper.appendChild(centerImg);
+                
+                // Create right sticker
+                const rightWrapper = document.createElement('div');
+                rightWrapper.className = 'logo-wrapper';
+                const rightImg = document.createElement('img');
+                rightImg.src = getRandomSticker();
+                rightImg.className = 'logo';
+                rightImg.alt = 'Sticker';
+                rightImg.style.animationDelay = '-4s';
+                rightWrapper.appendChild(rightImg);
+                
+                // Add all to row
+                row.appendChild(leftWrapper);
+                row.appendChild(centerWrapper);
+                row.appendChild(rightWrapper);
+            }
+            
+            createCarousel();
+
+            let startX = 0;
+            let currentX = 0;
+            let isDragging = false;
+
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                row.style.transition = 'none';
+            });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                const deltaX = e.touches[0].clientX - startX;
+                row.style.transform = `translateX(${deltaX}px)`;
+            });
+
+            container.addEventListener('touchend', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                row.style.transition = 'transform 0.3s ease-out';
+                
+                const deltaX = e.changedTouches[0].clientX - startX;
+                
+                if (Math.abs(deltaX) > 50) {
+                    // Swipe threshold met
+                    if (deltaX > 0) {
+                        // Swipe right
+                        currentIndex = (currentIndex - 1 + logos.length) % logos.length;
+                    } else {
+                        // Swipe left
+                        currentIndex = (currentIndex + 1) % logos.length;
+                    }
+                }
+                
+                row.style.transform = 'translateX(0)';
+                setTimeout(createCarousel, 300);
+            });
+
+            // Launch button messages
+            const launchButton = document.querySelector('.button.launch');
+            const messageBubble = document.querySelector('.message-bubble');
+            let clickCount = 0;
+            const messages = [
+                'Launching Tomorrow.',
+                'Sorry bro.',
+                'Get a laptop.'
+            ];
+
+            launchButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Update message
+                clickCount = (clickCount + 1) % messages.length;
+                messageBubble.textContent = messages[clickCount];
+                
+                // Show message
+                messageBubble.classList.add('visible');
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    messageBubble.classList.remove('visible');
+                }, 3000);
+            });
+        }
+    </script>
+</body>
+</html> 

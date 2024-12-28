@@ -1,0 +1,30 @@
+/* Mobile-specific styles */
+.mobile-container {
+    min-height: 100vh;
+    background: #1a1a1a;
+    color: #fff;
+    padding: 20px;
+}
+
+.text-wrapper {
+    padding: 20px;
+    text-align: center;
+}
+
+.text-line {
+    margin: 20px 0;
+}
+
+.dynamic-text-container {
+    font-size: 24px;
+    line-height: 1.4;
+}
+
+/* Preserve any specific mobile styles you want to keep */
+.center-logo {
+    width: 120px;
+    height: 120px;
+    margin: 20px auto;
+}
+
+/* Add any new mobile-specific styles here */ 
