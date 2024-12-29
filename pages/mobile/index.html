@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PURRG Mobile</title>
+    
+    <!-- Add React dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+    
+    <!-- Import TweetList component -->
+    <script type="text/babel" data-type="module" src="/app/components/TweetList.js"></script>
+    
+    <!-- Import TOKENS data -->
+    <script type="module">
+        import { TOKENS } from '/app/types/tokens.js';
+        window.TOKENS = TOKENS;
+    </script>
+    
+    <!-- Add our new mobile chart script -->
+    <script src="/mobile-chart.js"></script>
+    
     <style>
         body {
             margin: 0;
@@ -303,10 +323,12 @@
             opacity: 0;
             flex-direction: column;
             padding: 0;
+            padding-bottom: env(safe-area-inset-bottom, 20px);
             z-index: 10;
             transition: opacity 0.3s ease;
             pointer-events: none;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             background-image: url('/assets/back.svg');
             background-size: cover;
             background-position: center;
@@ -356,6 +378,9 @@
 
         .app-main {
             padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .app-title {
@@ -396,15 +421,15 @@
         }
 
         .return-value span:first-child {
-            color: rgba(72, 255, 225, 0.9);
+            color: #34d399 !important;
             font-size: 1.25rem;
         }
 
         .apr-badge {
-            background: rgba(72, 255, 225, 0.1);
+            background: rgba(52, 211, 153, 0.1);
             padding: 0.1rem 0.3rem;
             border-radius: 4px;
-            color: rgba(72, 255, 225, 0.9);
+            color: #34d399;
             font-size: 0.7rem;
         }
 
@@ -412,7 +437,7 @@
             background: #0f1a1f;
             border: 1px solid #0a2622;
             border-radius: 8px;
-            padding: 1.5rem;
+            padding: 1rem;
             margin-bottom: 1rem;
         }
 
@@ -600,6 +625,62 @@
         .airdrop-icon.selected {
             border-color: #10B981;
         }
+
+        .airdrop-label {
+            font-size: 14px;
+            line-height: 15px;
+            margin: 0;
+        }
+
+        .airdrop-value {
+            font-size: 1.25rem;
+            color: #34d399;
+            margin: 0;
+        }
+
+        .token-amount {
+            font-size: 0.75rem;
+            color: rgb(148 158 156);
+            margin: 0;
+        }
+
+        .token-amount-text {
+            cursor: help;
+        }
+
+        .token-amount-text:hover {
+            text-decoration: underline;
+        }
+
+        .info-label {
+            font-size: 14px;
+            line-height: 15px;
+            margin: 0;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: rgb(148 158 156);
+            margin: 0;
+        }
+
+        .ticker-value {
+            color: #34d399 !important;
+            font-size: 1.25rem;
+        }
+
+        .return-value span:first-child {
+            color: #34d399 !important;
+            font-size: 1.25rem;
+        }
+
+        .apr-badge {
+            background: rgba(52, 211, 153, 0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            color: #34d399;
+            font-size: 0.7rem;
+        }
     </style>
 </head>
 <body>
@@ -664,7 +745,7 @@
                     </div>
                     <div class="stat-item" style="flex: 1;">
                         <h3>Ticker</h3>
-                        <div class="ticker-value" style="color: rgba(72, 255, 225, 0.9); font-size: 1.25rem;">$HYPE</div>
+                        <div class="ticker-value" style="color: #34d399 !important; font-size: 1.25rem;">$HYPE</div>
                     </div>
                 </div>
                 <div class="bottom-stats">
@@ -699,7 +780,7 @@
                 </div>
                 <hr style="border: none; height: 1px; background-color: rgb(55, 65, 81); margin: 1rem 0;">
                 <div id="airdropRows" style="overflow: hidden; transition: max-height 0.3s ease-out; max-height: 52px;">
-                    <div style="display: grid; grid-template-columns: repeat(6, 40px); gap: 12px; width: 100%; justify-content: space-between;">
+                    <div style="display: grid; grid-template-columns: repeat(6, minmax(40px, 1fr)); gap: 8px; width: calc(100% - 16px); margin: 0 8px;">
                         <img src="/assets/Logos/Hype.png" alt="HYPE" class="airdrop-icon selected" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/Arbitrum.png" alt="ARB" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/Friend.png" alt="FRIEND" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
@@ -707,7 +788,7 @@
                         <img src="/assets/Logos/MagicalEden.png" alt="ME" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/Pengu.jpeg" alt="PENGU" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(6, 40px); gap: 12px; width: 100%; justify-content: space-between; margin-top: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(6, minmax(40px, 1fr)); gap: 8px; width: calc(100% - 16px); margin: 8px 8px 0;">
                         <img src="/assets/Logos/Uniswap.png" alt="UNI" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/TIA.png" alt="TIA" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/ENS.png" alt="ENS" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
@@ -715,7 +796,7 @@
                         <img src="/assets/Logos/WEN.png" alt="WEN" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/AEVO.png" alt="AEVO" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(6, 40px); gap: 12px; width: 100%; justify-content: space-between; margin-top: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(6, minmax(40px, 1fr)); gap: 8px; width: calc(100% - 16px); margin: 8px 8px 0;">
                         <img src="/assets/Logos/ENA.png" alt="ENA" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/W.png" alt="W" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/ETHFI.png" alt="ETHFI" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
@@ -723,16 +804,44 @@
                         <img src="/assets/Logos/STRK.png" alt="STRK" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                         <img src="/assets/Logos/EIGEN.png" alt="EIGEN" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(6, 40px); gap: 12px; width: 100%; justify-content: space-between; margin-top: 12px;">
+                    <div style="display: grid; grid-template-columns: repeat(6, minmax(40px, 1fr)); gap: 8px; width: calc(100% - 16px); margin: 8px 8px 0;">
                         <img src="/assets/Logos/DBR.png" alt="DBR" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
                     </div>
                 </div>
             </div>
 
             <div class="app-section">
-                <div class="section-title">About</div>
-                <div class="description">
-                    The special one. The one to rule them all. The one illuminating the path forward.
+                <div class="border-b border-gray-700 mb-4 relative" style="cursor: default; -webkit-tap-highlight-color: transparent; user-select: none;">
+                    <div class="flex items-center" style="width: 100%; position: relative;">
+                        <div style="display: flex;">
+                            <span class="text-sm text-white pb-2" style="position: relative; -webkit-tap-highlight-color: transparent; cursor: pointer; --tw-text-opacity: 1;" onclick="selectTab(this, 'about')">
+                                About
+                                <div style="position: absolute; left: 0; bottom: -17px; width: 100%; height: 1px; background-color: rgb(16, 185, 129); z-index: 1;"></div>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <hr style="border: none; height: 1px; background-color: rgb(55, 65, 81); margin: 1rem 0;">
+                <div class="about-content">
+                    <div style="display: flex; flex-direction: column; gap: 25px;">
+                        <!-- Average Airdrop section -->
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <p class="airdrop-label">Average Airdrop</p>
+                            <div>
+                                <p class="text-xl text-emerald-400 airdrop-value">$79,550</p>
+                                <p class="token-amount">
+                                    <span class="hover:underline cursor-help token-amount-text">2915 HYPE</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Information section -->
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <p class="info-label">Information</p>
+                            <p class="info-text" id="desc1"></p>
+                            <p class="info-text" id="desc2"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -762,6 +871,7 @@
     <script>
         const intro = document.getElementById('intro');
         const mainContent = document.getElementById('main-content');
+        let tweetRoot = null;
         
         intro.addEventListener('click', () => {
             intro.classList.add('clicked');
@@ -770,6 +880,52 @@
                 initTyped();
             }, 300);
         });
+
+        // Add selectTab function
+        window.selectTab = function(element, tabName) {
+            // Get all tabs
+            const aboutTab = document.querySelector('span[onclick*="selectTab"][onclick*="about"]');
+            const bagsFumbledTab = document.querySelector('span[onclick*="selectTab"][onclick*="bagFumbled"]');
+            
+            // Reset all tabs
+            [aboutTab, bagsFumbledTab].forEach(tab => {
+                if (tab) {
+                    tab.classList.remove('text-white');
+                    tab.style.color = 'rgb(148 158 156 / var(--tw-text-opacity, 1))';
+                    const indicator = tab.querySelector('div[style*="background-color: rgb(16, 185, 129)"]');
+                    if (indicator) {
+                        indicator.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Highlight selected tab
+            element.style.color = 'white';
+            const indicator = element.querySelector('div[style*="background-color: rgb(16, 185, 129)"]');
+            if (indicator) {
+                indicator.style.display = 'block';
+            }
+            
+            // Show/hide content
+            const aboutContent = document.querySelector('.about-content');
+            const bagFumbledContent = document.querySelector('.bag-fumbled-content');
+            
+            if (tabName === 'about') {
+                aboutContent.style.display = 'block';
+                bagFumbledContent.style.display = 'none';
+            } else if (tabName === 'bagFumbled') {
+                aboutContent.style.display = 'none';
+                bagFumbledContent.style.display = 'block';
+                
+                // Initialize tweet list if needed
+                if (window.TweetList && !tweetRoot) {
+                    tweetRoot = ReactDOM.createRoot(document.getElementById('tweet-list-container'));
+                    tweetRoot.render(React.createElement(window.TweetList, { 
+                        token: window.currentToken.toLowerCase() 
+                    }));
+                }
+            }
+        };
 
         function initTyped() {
             const words = [
@@ -970,8 +1126,99 @@
             airdropRows.style.maxHeight = isExpanded ? '250px' : '52px';
         }
 
-        // Add selectToken function to window scope
-        window.selectToken = function(element) {
+        // Constants for price fetching
+        const CACHE_KEY = 'bulk_price_data';
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // Function to fetch all token prices at once
+        async function fetchAllPrices() {
+            try {
+                // Check cache first
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { prices, timestamp } = JSON.parse(cached);
+                    if (Date.now() - timestamp < CACHE_DURATION) {
+                        return prices;
+                    }
+                }
+
+                // Fetch all prices in one call
+                const tokenIds = Object.values(TOKENS).map(token => token.coingeckoId);
+                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds.join(',')}&vs_currencies=usd`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch prices from CoinGecko');
+                }
+                
+                const data = await response.json();
+                
+                // Transform data into our format
+                const prices = {};
+                Object.entries(TOKENS).forEach(([symbol, token]) => {
+                    const price = data[token.coingeckoId]?.usd;
+                    prices[symbol] = price || token.initialPrice;
+                });
+
+                // Cache the prices
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    prices,
+                    timestamp: Date.now()
+                }));
+
+                return prices;
+            } catch (error) {
+                console.error('Error fetching prices:', error);
+                // Return initial prices as fallback
+                return Object.entries(TOKENS).reduce((acc, [symbol, token]) => {
+                    acc[symbol] = token.initialPrice;
+                    return acc;
+                }, {});
+            }
+        }
+
+        // Update the updateTokenInfo function to use real prices
+        async function updateTokenInfo(token) {
+            const tokenData = TOKENS[token];
+            if (!tokenData) return;
+
+            // Update descriptions
+            document.getElementById('desc1').textContent = tokenData.desc1;
+            document.getElementById('desc2').textContent = tokenData.desc2;
+
+            try {
+                // Get latest prices
+                const prices = await fetchAllPrices();
+                const currentPrice = prices[token];
+                
+                // Update airdrop value and amount
+                const airdropValueElement = document.querySelector('.airdrop-value');
+                const airdropAmountElement = document.querySelector('.hover\\:underline.cursor-help');
+                
+                if (airdropValueElement && airdropAmountElement) {
+                    const airdropValue = currentPrice * tokenData.airdropAmount;
+                    airdropValueElement.textContent = `$${formatNumber(airdropValue, true)}`;
+                    airdropAmountElement.textContent = `${tokenData.airdropAmount.toLocaleString()} ${token}`;
+                }
+            } catch (error) {
+                console.error('Error updating token info:', error);
+            }
+        }
+
+        // Update prices periodically
+        setInterval(async () => {
+            if (window.currentToken) {
+                await updateTokenInfo(window.currentToken);
+            }
+        }, 60000); // Update every minute
+
+        // Initialize with default token (HYPE)
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTokenInfo('HYPE');
+        });
+
+        // Update selectToken to be async
+        window.selectToken = async function(element) {
             // Remove selected class from all icons
             document.querySelectorAll('.airdrop-icon').forEach(icon => {
                 icon.classList.remove('selected');
@@ -980,12 +1227,43 @@
             // Add selected class to clicked icon
             element.classList.add('selected');
             
-            // Update current token
-            window.currentToken = element.alt;
+            // Get the token symbol from the alt attribute
+            const token = element.alt;
             
-            // Update price data and metrics
-            updatePriceData();
+            // Update the current token
+            window.currentToken = token;
+            
+            // Update token information
+            await updateTokenInfo(token);
+            
+            // Update price data and stats
+            await updatePriceData();
+
+            // Update tweet list if the "Bags Fumbled" tab is active
+            if (document.querySelector('.bag-fumbled-content').style.display !== 'none' && window.TweetList && tweetRoot) {
+                tweetRoot.render(React.createElement(window.TweetList, { 
+                    token: window.currentToken.toLowerCase() 
+                }));
+            }
         };
+
+        // Helper function to format numbers with dots
+        function formatNumber(num, useFullInteger = false) {
+            if (useFullInteger) {
+                return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+            
+            if (num >= 1e9) {
+                return (num / 1e9).toFixed(2) + 'B';
+            }
+            if (num >= 1e6) {
+                return (num / 1e6).toFixed(2) + 'M';
+            }
+            if (num >= 1e3) {
+                return (num / 1e3).toFixed(2) + 'K';
+            }
+            return num.toFixed(2);
+        }
     </script>
     <script type="module">
         import { TOKENS } from '/app/types/tokens.js';
@@ -1006,7 +1284,7 @@
         // Helper function to format large numbers
         function formatNumber(num, useFullInteger = false) {
             if (useFullInteger) {
-                return formatNumberWithDots(num);
+                return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             }
             
             if (num >= 1e9) {
@@ -1033,7 +1311,7 @@
                 const cached = localStorage.getItem(CACHE_KEY);
                 if (cached) {
                     const { prices, timestamp } = JSON.parse(cached);
-                    if (isCacheValid(timestamp)) {
+                    if (Date.now() - timestamp < CACHE_DURATION) {
                         return prices;
                     }
                 }
