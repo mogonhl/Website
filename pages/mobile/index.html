@@ -97,6 +97,12 @@
             padding: 2rem;
             width: 100%;
             transform: translateY(-10vh);
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .content-wrapper.fade-out {
+            opacity: 0;
         }
 
         .logo-scroll-container {
@@ -286,33 +292,317 @@
             margin: 0 0.5rem;
         }
 
-        .message-bubble {
+        #app-content {
             position: fixed;
-            top: 2rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100%);
-            background: rgba(72, 255, 225, 0.1);
-            border: 1px solid rgba(72, 255, 225, 0.2);
-            backdrop-filter: blur(5px);
-            color: rgba(72, 255, 225, 0.9);
-            padding: 0.8rem 1.2rem;
-            border-radius: 20px;
-            font-size: 1rem;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #002420;
+            display: flex;
             opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 100;
-            text-align: center;
-            white-space: nowrap;
+            flex-direction: column;
+            padding: 0;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            overflow-y: auto;
+            background-image: url('/assets/back.svg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
         }
 
-        .message-bubble.visible {
-            transform: translateX(-50%) translateY(0);
+        #app-content::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 36, 32, 0.5);
+            z-index: -1;
+        }
+
+        #app-content.visible {
             opacity: 1;
+            pointer-events: auto;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #111a1e;
+            position: relative;
+        }
+
+        .menu-icon {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            stroke-width: 1.5;
+        }
+
+        .header-logo {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 24px;
+            width: auto;
+        }
+
+        .app-main {
+            padding: 1rem;
+        }
+
+        .app-title {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .bottom-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-item h3 {
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.2rem;
+            font-size: 0.8rem;
+            font-weight: normal;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            color: white;
+        }
+
+        .return-value {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .return-value span:first-child {
+            color: rgba(72, 255, 225, 0.9);
+            font-size: 1.25rem;
+        }
+
+        .apr-badge {
+            background: rgba(72, 255, 225, 0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            color: rgba(72, 255, 225, 0.9);
+            font-size: 0.7rem;
+        }
+
+        .app-section {
+            background: #0f1a1f;
+            border: 1px solid #0a2622;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            color: #7fe7d8;
+            font-size: 1rem;
+            font-weight: normal;
+            margin-bottom: 0.5rem;
+        }
+
+        .description {
+            color: #999;
+            line-height: 1.4;
+            font-size: 0.9rem;
+        }
+
+        .title-wrapper {
+            font-size: 2.5rem;
+            margin-bottom: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .category-select {
+            background: transparent;
+            border: none;
+            font-size: 2.5rem;
+            font-family: inherit;
+            color: rgba(72, 255, 225, 0.9);
+            text-shadow: 0 0 1px rgba(72, 255, 225, 0.9);
+            font-weight: bold;
+            padding: 0;
+            padding-left: 2rem;
+            margin-right: 0.25rem;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(72, 255, 225, 0.9)' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='9 6 15 12 9 18'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: left 0.25rem center;
+            background-size: 1.5rem;
+            transition: color 0.2s ease;
+            position: relative;
+        }
+
+        .category-select:focus {
+            outline: none;
+        }
+
+        .category-select option {
+            background: #041815;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+            position: absolute;
+            top: 100%;
+            left: 0;
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+        }
+
+        .menu-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .menu-content {
+            position: fixed;
+            top: 0;
+            left: -250px;
+            width: 250px;
+            height: 100%;
+            background: #111a1e;
+            padding: 1.5rem;
+            transition: left 0.3s ease;
+            z-index: 101;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-overlay.visible .menu-content {
+            left: 0;
+        }
+
+        .menu-sticker {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            margin-left: 1.5rem;
+        }
+
+        .menu-item {
+            color: white;
+            padding: 1rem;
+            padding-left: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .menu-item.disabled {
+            opacity: 0.5;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .menu-item .tba-badge {
+            background: rgba(72, 255, 225, 0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            color: rgba(72, 255, 225, 0.9);
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+
+        .menu-item:hover:not(.disabled) {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+            width: 100%;
+        }
+
+        .menu-footer {
+            padding: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .menu-footer-link {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.2s ease;
+        }
+
+        .menu-footer-link:hover {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .menu-item:hover {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .menu-item.active {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .tab-indicator {
+            position: absolute;
+            height: 2px;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            background-color: #10B981;
+            display: block;
+        }
+
+        .airdrop-icon {
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .airdrop-icon.selected {
+            border-color: #10B981;
         }
     </style>
 </head>
 <body>
-    <div class="message-bubble">Launching Tomorrow.</div>
     <div id="intro" class="intro">
         <img src="/assets/fast.png" alt="Glasses Blur" class="glasses glasses-blur">
         <img src="/assets/fast.png" alt="Glasses" class="glasses">
@@ -332,7 +622,7 @@
                 <span class="static-text">Everyone.</span>
             </div>
             <div class="button-container">
-                <a href="#" class="button launch">Launch App</a>
+                <a href="https://app.hypurr.fun/launch/7561" class="button launch" target="_blank">Launch App</a>
             </div>
             <div class="footer">
                 <a href="https://app.hypurr.fun/launch/7561" class="footer-link" target="_blank">
@@ -347,6 +637,123 @@
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-content">
+        <header class="app-header">
+            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M3 12h18M3 6h18M3 18h18" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <img src="/assets/logo.png" alt="PURRG" class="header-logo">
+        </header>
+        
+        <main class="app-main">
+            <h1 class="title-wrapper">
+                <span style="color: rgba(72, 255, 225, 0.9); font-weight: bold; text-shadow: 0 0 1px rgba(72, 255, 225, 0.9);">Airdrops</span>
+                <span style="color: white; font-weight: bold;">Purrged</span>
+            </h1>
+            <p style="color: #9ca3af; font-size: 1.125rem; margin-bottom: 1.5rem; margin-top: -0.25rem;">HYPE is the special one. Nice try.</p>
+            
+            <div class="stats-grid">
+                <div style="display: flex; gap: 1rem;">
+                    <div class="stat-item" style="flex: 1;">
+                        <h3>Market Cap</h3>
+                        <div class="stat-value">$43.4B</div>
+                    </div>
+                    <div class="stat-item" style="flex: 1;">
+                        <h3>Ticker</h3>
+                        <div class="ticker-value" style="color: rgba(72, 255, 225, 0.9); font-size: 1.25rem;">$HYPE</div>
+                    </div>
+                </div>
+                <div class="bottom-stats">
+                    <div class="stat-item">
+                        <h3>Since Launch</h3>
+                        <div class="return-value">
+                            <span>6400%</span>
+                            <span class="apr-badge">13.7x</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Mog Counter</h3>
+                        <div class="stat-value" style="display: flex; align-items: center; gap: 8px;">
+                            <img src="/assets/Sticker/32.png" alt="Mog" style="width: 30px; height: 30px; object-fit: contain;">
+                            <span>5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-section">
+                <div class="border-b border-gray-700 mb-4 relative" style="cursor: pointer; -webkit-tap-highlight-color: transparent; user-select: none;" onclick="toggleAirdrops()">
+                    <div class="flex items-center" style="width: 100%; position: relative;">
+                        <span class="text-sm text-white pb-2" style="position: relative; -webkit-tap-highlight-color: transparent;">
+                            Airdrops
+                            <div style="position: absolute; left: 0; bottom: -17px; width: 100%; height: 1px; background-color: rgb(16, 185, 129); z-index: 1;"></div>
+                        </span>
+                        <svg id="expandIcon" class="w-5 h-5 cursor-pointer transition-transform" style="width: 16px; height: 16px; stroke: currentColor; transform: rotate(0deg); opacity: 0.5; position: absolute; right: 0; top: 0;" viewBox="0 0 24 24" fill="none">
+                            <path d="M19 9l-7 7-7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <hr style="border: none; height: 1px; background-color: rgb(55, 65, 81); margin: 1rem 0;">
+                <div id="airdropRows" style="overflow: hidden; transition: max-height 0.3s ease-out; max-height: 52px;">
+                    <div style="display: grid; grid-template-columns: repeat(6, 40px); gap: 12px; width: 100%; justify-content: space-between;">
+                        <img src="/assets/Logos/Hype.png" alt="HYPE" class="airdrop-icon selected" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/Arbitrum.png" alt="ARB" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/Friend.png" alt="FRIEND" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/Jito.png" alt="JTO" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/MagicalEden.png" alt="ME" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/Pengu.jpeg" alt="PENGU" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(6, 40px); gap: 12px; width: 100%; justify-content: space-between; margin-top: 12px;">
+                        <img src="/assets/Logos/Uniswap.png" alt="UNI" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/TIA.png" alt="TIA" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/ENS.png" alt="ENS" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/JUP.png" alt="JUP" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/WEN.png" alt="WEN" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/AEVO.png" alt="AEVO" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(6, 40px); gap: 12px; width: 100%; justify-content: space-between; margin-top: 12px;">
+                        <img src="/assets/Logos/ENA.png" alt="ENA" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/W.png" alt="W" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/ETHFI.png" alt="ETHFI" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/ZRO.png" alt="ZRO" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/STRK.png" alt="STRK" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                        <img src="/assets/Logos/EIGEN.png" alt="EIGEN" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(6, 40px); gap: 12px; width: 100%; justify-content: space-between; margin-top: 12px;">
+                        <img src="/assets/Logos/DBR.png" alt="DBR" class="airdrop-icon" style="width: 40px; height: 40px; border-radius: 50%; background-color: #1e2c33; cursor: pointer;" onclick="selectToken(this)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-section">
+                <div class="section-title">About</div>
+                <div class="description">
+                    The special one. The one to rule them all. The one illuminating the path forward.
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="menu-overlay">
+        <div class="menu-content">
+            <img src="" alt="Menu Sticker" class="menu-sticker">
+            <div class="menu-item">Airdrops</div>
+            <div class="menu-item disabled">
+                Layer 1s
+                <span class="tba-badge">TBA</span>
+            </div>
+            <div class="menu-item disabled">
+                Shitcoins
+                <span class="tba-badge">TBA</span>
+            </div>
+            <div class="menu-divider"></div>
+            <div class="menu-footer">
+                <a href="https://x.com/purrg_hl" class="menu-footer-link" target="_blank">Twitter</a>
+                <a href="https://app.hypurr.fun/launch/7561" class="menu-footer-link" target="_blank">Hypurr Fun</a>
             </div>
         </div>
     </div>
@@ -504,32 +911,232 @@
                 setTimeout(createCarousel, 300);
             });
 
-            // Launch button messages
+            // Launch button handling
             const launchButton = document.querySelector('.button.launch');
-            const messageBubble = document.querySelector('.message-bubble');
-            let clickCount = 0;
-            const messages = [
-                'Launching Tomorrow.',
-                'Sorry bro.',
-                'Get a laptop.'
-            ];
+            const appContent = document.querySelector('#app-content');
+            const contentWrapper = document.querySelector('.content-wrapper');
 
             launchButton.addEventListener('click', (e) => {
                 e.preventDefault();
-                
-                // Update message
-                clickCount = (clickCount + 1) % messages.length;
-                messageBubble.textContent = messages[clickCount];
-                
-                // Show message
-                messageBubble.classList.add('visible');
-                
-                // Hide after 3 seconds
+                contentWrapper.classList.add('fade-out');
                 setTimeout(() => {
-                    messageBubble.classList.remove('visible');
-                }, 3000);
+                    appContent.classList.add('visible');
+                }, 300);
             });
+
+            // Menu handling
+            const menuIcon = document.querySelector('.menu-icon');
+            const menuOverlay = document.querySelector('.menu-overlay');
+            const menuItems = document.querySelectorAll('.menu-item');
+
+            menuIcon.addEventListener('click', () => {
+                menuOverlay.classList.add('visible');
+                // Update random sticker
+                const menuSticker = document.querySelector('.menu-sticker');
+                menuSticker.src = getRandomSticker();
+            });
+
+            menuOverlay.addEventListener('click', (e) => {
+                if (e.target === menuOverlay) {
+                    menuOverlay.classList.remove('visible');
+                }
+            });
+
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if (!item.classList.contains('disabled')) {
+                        menuOverlay.classList.remove('visible');
+                    }
+                });
+            });
+
+            // Set initial random sticker for menu
+            const menuSticker = document.querySelector('.menu-sticker');
+            menuSticker.src = getRandomSticker();
         }
+
+        // Add expand/collapse functionality
+        const expandIcon = document.getElementById('expandIcon');
+        const airdropRows = document.getElementById('airdropRows');
+        let isExpanded = false;
+
+        function toggleAirdrops(event) {
+            // Prevent the event from bubbling up if it came from the tab click
+            if (event && event.target.closest('.text-sm')) {
+                return;
+            }
+            isExpanded = !isExpanded;
+            expandIcon.style.transform = isExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+            airdropRows.style.maxHeight = isExpanded ? '250px' : '52px';
+        }
+
+        // Add selectToken function to window scope
+        window.selectToken = function(element) {
+            // Remove selected class from all icons
+            document.querySelectorAll('.airdrop-icon').forEach(icon => {
+                icon.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked icon
+            element.classList.add('selected');
+            
+            // Update current token
+            window.currentToken = element.alt;
+            
+            // Update price data and metrics
+            updatePriceData();
+        };
+    </script>
+    <script type="module">
+        import { TOKENS } from '/app/types/tokens.js';
+        
+        // Make TOKENS and currentToken available globally
+        window.TOKENS = TOKENS;
+        window.currentToken = 'HYPE';  // Default token
+
+        // Constants for price fetching
+        const CACHE_KEY = 'bulk_price_data';
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // Helper function to format numbers with dots
+        function formatNumberWithDots(num) {
+            return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        // Helper function to format large numbers
+        function formatNumber(num, useFullInteger = false) {
+            if (useFullInteger) {
+                return formatNumberWithDots(num);
+            }
+            
+            if (num >= 1e9) {
+                return (num / 1e9).toFixed(2) + 'B';
+            }
+            if (num >= 1e6) {
+                return (num / 1e6).toFixed(2) + 'M';
+            }
+            if (num >= 1e3) {
+                return (num / 1e3).toFixed(2) + 'K';
+            }
+            return num.toFixed(2);
+        }
+
+        // Helper function to check if cache is valid
+        function isCacheValid(timestamp) {
+            return Date.now() - timestamp < CACHE_DURATION;
+        }
+
+        // Function to fetch all token prices at once
+        async function fetchAllPrices() {
+            try {
+                // Check cache first
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { prices, timestamp } = JSON.parse(cached);
+                    if (isCacheValid(timestamp)) {
+                        return prices;
+                    }
+                }
+
+                // Fetch all prices in one call
+                const tokenIds = Object.values(TOKENS).map(token => token.coingeckoId);
+                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds.join(',')}&vs_currencies=usd`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch prices from CoinGecko');
+                }
+                
+                const data = await response.json();
+                
+                // Transform data into our format
+                const prices = {};
+                Object.entries(TOKENS).forEach(([symbol, token]) => {
+                    const price = data[token.coingeckoId]?.usd;
+                    prices[symbol] = price || token.initialPrice;
+                });
+
+                // Cache the prices
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    prices,
+                    timestamp: Date.now()
+                }));
+
+                return prices;
+            } catch (error) {
+                console.error('Error fetching prices:', error);
+                // Return initial prices as fallback
+                return Object.entries(TOKENS).reduce((acc, [symbol, token]) => {
+                    acc[symbol] = token.initialPrice;
+                    return acc;
+                }, {});
+            }
+        }
+
+        // Update the UI update function to use bulk prices
+        async function updatePriceData() {
+            try {
+                const prices = await fetchAllPrices();
+                const currentPrice = prices[window.currentToken];
+                if (!currentPrice) return;
+
+                const token = TOKENS[window.currentToken];
+                
+                // Calculate metrics
+                const metrics = {
+                    marketCap: currentPrice * token.supply,
+                    performancePercent: ((currentPrice - token.initialPrice) / token.initialPrice) * 100,
+                    multiplier: currentPrice / token.initialPrice,
+                    airdropValue: currentPrice * token.airdropAmount
+                };
+
+                // Calculate mog counter
+                let moggedCount = 0;
+                Object.entries(TOKENS).forEach(([symbol, otherToken]) => {
+                    if (symbol !== window.currentToken) {
+                        const otherPrice = prices[symbol];
+                        const otherAirdropValue = otherPrice * otherToken.airdropAmount;
+                        if (otherAirdropValue < metrics.airdropValue) {
+                            moggedCount++;
+                        }
+                    }
+                });
+
+                // Update UI with the metrics
+                const marketCapElement = document.querySelector('.stat-value');
+                const tickerElement = document.querySelector('.ticker-value');
+                const sincelaunchElement = document.querySelector('.return-value span:first-child');
+                const multiplierBadge = document.querySelector('.apr-badge');
+                const mogCounterElement = document.querySelector('.bottom-stats .stat-item:last-child .stat-value span');
+
+                if (marketCapElement) marketCapElement.textContent = `$${formatNumber(metrics.marketCap, true)}`;
+                if (tickerElement) tickerElement.textContent = `$${window.currentToken}`;
+                if (sincelaunchElement) sincelaunchElement.textContent = `${Math.round(metrics.performancePercent)}%`;
+                if (multiplierBadge) multiplierBadge.textContent = `${metrics.multiplier.toFixed(1)}x`;
+                if (mogCounterElement) mogCounterElement.textContent = moggedCount.toString();
+
+            } catch (error) {
+                console.error('Error in updatePriceData:', error);
+            }
+        }
+
+        // Make updatePriceData available globally
+        window.updatePriceData = updatePriceData;
+
+        // Initialize when app content becomes visible
+        const appContent = document.getElementById('app-content');
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.target.classList.contains('visible')) {
+                    updatePriceData();
+                    // Update prices every minute
+                    setInterval(updatePriceData, 60000);
+                    observer.disconnect();
+                }
+            });
+        });
+
+        observer.observe(appContent, { attributes: true, attributeFilter: ['class'] });
     </script>
 </body>
 </html> 

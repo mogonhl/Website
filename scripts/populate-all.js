@@ -1,6 +1,16 @@
 const { Redis } = require('@upstash/redis');
 const fetch = require('node-fetch');
 require('dotenv').config();
+const readline = require('readline');
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+function askQuestion(query) {
+    return new Promise(resolve => rl.question(query, resolve));
+}
 
 // Token configurations
 const TOKENS = {
@@ -204,7 +214,11 @@ async function checkRedisData(symbol, timeRange) {
     const cacheKey = `price_data_${timeRange}_${symbol.toLowerCase()}`;
     try {
         const data = await redis.get(cacheKey);
-        return data !== null;
+        if (data !== null) {
+            const answer = await askQuestion(`Data exists for ${cacheKey}. Overwrite? (y/n): `);
+            return answer.toLowerCase() !== 'y';
+        }
+        return false;
     } catch (error) {
         console.error(`Error checking Redis data for ${cacheKey}:`, error.message);
         return false;
@@ -283,13 +297,17 @@ async function populateToken(symbol) {
 console.log('Starting population for specified tokens:', tokensToProcess.join(', '));
 
 (async () => {
-    for (const symbol of tokensToProcess) {
-        await populateToken(symbol);
-        // Wait 1 minute between tokens to avoid rate limits
-        if (tokensToProcess.indexOf(symbol) !== tokensToProcess.length - 1) {
-            console.log('\nWaiting 1 minute before next token...');
-            await new Promise(resolve => setTimeout(resolve, 60000));
+    try {
+        for (const symbol of tokensToProcess) {
+            await populateToken(symbol);
+            // Wait 1 minute between tokens to avoid rate limits
+            if (tokensToProcess.indexOf(symbol) !== tokensToProcess.length - 1) {
+                console.log('\nWaiting 1 minute before next token...');
+                await new Promise(resolve => setTimeout(resolve, 60000));
+            }
         }
+        console.log('\nPopulation complete!');
+    } finally {
+        rl.close();
     }
-    console.log('\nPopulation complete!');
 })(); 
