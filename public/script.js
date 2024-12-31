@@ -1154,23 +1154,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // After the buttons become visible
     document.querySelector('.button-container').addEventListener('transitionend', () => {
-        setTimeout(() => {
-            document.querySelector('.scroll-indicator').classList.add('visible');
-        }, 350);
+        // Remove scroll indicator visibility
+        // document.querySelector('.scroll-indicator').classList.add('visible');
     });
 
-    // Add wheel event listener for scrolling
+    // Remove scroll event listeners
+    /*
     window.addEventListener('wheel', (e) => {
-        if (e.deltaY > 0 && isLogoVisible) {  // Scrolling down
+        if (e.deltaY > 0 && isLogoVisible) {
             document.getElementById('logo-section').classList.add('inactive');
             document.getElementById('ticker-section').classList.add('active');
             isLogoVisible = false;
             
-            // Update chart when scrolling to ticker section
             if (window.updateChartAndPrefetch) {
                 window.updateChartAndPrefetch();
             }
-        } else if (e.deltaY < 0 && !isLogoVisible) {  // Scrolling up
+        } else if (e.deltaY < 0 && !isLogoVisible) {
             document.getElementById('logo-section').classList.remove('inactive');
             document.getElementById('ticker-section').classList.remove('active');
             isLogoVisible = true;
@@ -1187,21 +1186,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const touchEndY = e.changedTouches[0].clientY;
         const deltaY = touchStartY - touchEndY;
 
-        if (deltaY > 50 && isLogoVisible) {  // Scrolling down
+        if (deltaY > 50 && isLogoVisible) {
             document.getElementById('logo-section').classList.add('inactive');
             document.getElementById('ticker-section').classList.add('active');
             isLogoVisible = false;
             
-            // Update chart when scrolling to ticker section
             if (window.updateChartAndPrefetch) {
                 window.updateChartAndPrefetch();
             }
-        } else if (deltaY < -50 && !isLogoVisible) {  // Scrolling up
+        } else if (deltaY < -50 && !isLogoVisible) {
             document.getElementById('logo-section').classList.remove('inactive');
             document.getElementById('ticker-section').classList.remove('active');
             isLogoVisible = true;
         }
     });
+    */
 
     // Add this function to handle icon selection
     window.selectIcon = function(element) {

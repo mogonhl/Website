@@ -9,13 +9,28 @@
     { "src": "public/**", "use": "@vercel/static" },
     { "src": "app/**", "use": "@vercel/static" },
     { "src": "index.html", "use": "@vercel/static" },
-    { "src": "pages/mobile/**", "use": "@vercel/static" }
+    { "src": "pages/mobile/**", "use": "@vercel/static" },
+    { "src": "pages/explorer/**", "use": "@vercel/static" },
+    { "src": "pages/airdrops/**", "use": "@vercel/static" },
+    { "src": "pages/chat/**", "use": "@vercel/static" }
   ],
   "env": {
     "UPSTASH_REDIS_REST_URL": "https://witty-dassie-40050.upstash.io",
     "UPSTASH_REDIS_REST_TOKEN": "AZxyAAIjcDE3Mzk2MTJkNzJjMDg0Yzk0ODMyZWE3YmRjOGRmZTQxZHAxMA"
   },
   "routes": [
+    {
+      "src": "/airdrops",
+      "dest": "/pages/airdrops/index.html"
+    },
+    {
+      "src": "/chat",
+      "dest": "/pages/chat/index.html"
+    },
+    {
+      "src": "/explorer",
+      "dest": "/pages/explorer/index.html"
+    },
     {
       "src": "/mobile",
       "dest": "/pages/mobile/index.html",
@@ -88,7 +103,7 @@
       "dest": "/pages/mobile/index.html"
     },
     {
-      "src": "/(.*)",
+      "src": "/",
       "dest": "/index.html"
     }
   ]

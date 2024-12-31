@@ -20,6 +20,14 @@ const nextConfig = {
                 destination: '/index.html'
             },
             {
+                source: '/mobile',
+                destination: '/pages/mobile/index.html'
+            },
+            {
+                source: '/airdrops',
+                destination: '/pages/airdrops/index.html'
+            },
+            {
                 source: '/api/:path*',
                 destination: '/api/:path*'
             },

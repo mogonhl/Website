@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/public/js/loadNavbar.js"></script>
+    <style>
+        html, body {
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #002420;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-size: 13px;
+            margin: 0 6px;
+        }
+
+        .nav-link:hover {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .nav-link.active {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .search-bar {
+            padding: 8px 12px;
+            width: 300px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid #1a4f44;
+            border-radius: 4px;
+            color: #ffffff;
+        }
+
+        .section {
+            background: #0f1a1f;
+            border: 1px solid #0a2622;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .section:hover {
+            background: rgba(15, 26, 31, 0.9);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 0;
+            color: #8b9c99;
+            font-weight: normal;
+            font-size: 12px;
+        }
+
+        td {
+            padding: 12px 0;
+            font-size: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hash-link {
+            color: rgba(72, 255, 225, 0.9);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-size: 12px;
+        }
+
+        .hash-link:hover {
+            color: rgba(72, 255, 225, 1);
+        }
+
+        .time {
+            color: #8b9c99;
+            font-size: 12px;
+        }
+
+        .view-all {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .view-all-button {
+            color: rgba(72, 255, 225, 0.9);
+            text-decoration: none;
+            font-size: 12px;
+            transition: color 0.2s ease;
+        }
+
+        .view-all-button:hover {
+            color: rgba(72, 255, 225, 1);
+        }
+
+        .pagination {
+            color: #8b9c99;
+            font-size: 12px;
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 36, 32, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            z-index: 50;
+        }
+
+        .modal {
+            position: absolute;
+            top: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: transparent;
+            padding: 0;
+            width: 1280px;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-content {
+            background: #0f1a1f;
+            border: 1px solid #0a2622;
+            border-radius: 8px;
+            padding: 24px;
+            height: auto;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal table {
+            margin-bottom: 0;
+        }
+
+        .modal tbody {
+            display: table;
+            width: 100%;
+        }
+
+        .modal thead, .modal tbody tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .modal thead {
+            width: 100%;
+        }
+
+        .modal tr {
+            height: 42px;
+        }
+
+        .modal th {
+            padding: 8px 0;
+        }
+
+        .modal td {
+            padding: 8px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal .text-xl {
+            margin-bottom: 12px;
+        }
+
+        .modal .view-all {
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            color: #8b9c99;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        /* Add smooth transition for modal */
+        .modal-backdrop.active {
+            display: block;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Add styles for Coming Soon button and sorry popup */
+        .coming-soon {
+            transition: transform 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .coming-soon:hover {
+            transform: scale(1.05);
+        }
+
+        .sorry-popup {
+            position: absolute;
+            pointer-events: none;
+            z-index: 60;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .sorry-popup.active {
+            opacity: 1;
+        }
+
+        .sorry-popup img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(var(--rotation)); }
+            100% { transform: scale(1) rotate(var(--rotation)); }
+        }
+
+        .coming-soon-text {
+            position: absolute;
+            background: rgba(15, 26, 31, 0.95);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            animation: popupAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+        }
+
+        .coming-soon-link {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <nav class="bg-[#0f1a1f] border-b border-[#0a2622]">
+        <div class="flex justify-between items-center h-16 px-6">
+            <div class="flex items-center">
+                <a href="/" class="flex items-center justify-center h-16">
+                    <img src="/assets/Purrgem.png" alt="Logo" class="h-8 w-17 object-contain">
+                </a>
+                <div class="flex items-center gap-8 ml-8 mt-0.5">
+                    <a href="/airdrops" class="nav-link">Airdrops</a>
+                    <span class="text-[13px] text-white/50 mx-[6px]">[Shitcoins]</span>
+                    <span class="text-[13px] text-white/50 mx-[6px]">[Layer 1's]</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-[13px] text-white/50 mx-[6px]">[Chat]</span>
+                <a href="/explorer" class="text-[#0f1a1f] bg-[rgba(72,255,225,0.9)] px-3 py-1 rounded text-[13px] hover:bg-[rgba(140,255,235,0.9)] transition-colors">Explorer</a>
+                <a href="https://x.com/purrg_hl" target="_blank" class="flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="min-h-screen pt-12">
+        <div class="max-w-7xl mx-auto px-8 pt-20">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-[rgba(72,255,225,0.9)] text-4xl font-bold">Explorer</h1>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="section">
+                    <div class="section-content">
+                        <div class="text-xl mb-4">Latest Blocks</div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Block</th>
+                                        <th>Time</th>
+                                        <th>Transactions</th>
+                                        <th>Proposer</th>
+                                        <th>Hash</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="blocks">
+                                    <!-- Blocks will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="view-all mt-4">
+                            <a href="#" class="view-all-button">View All Blocks</a>
+                            <div class="flex items-center gap-2">
+                                <span class="pagination" id="blocks-pagination">1-15 of 300</span>
+                                <div class="flex gap-1">
+                                    <button onclick="changePage('blocks', -1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="blocks-prev">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M15 18l-6-6 6-6"/>
+                                        </svg>
+                                    </button>
+                                    <button onclick="changePage('blocks', 1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="blocks-next">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M9 18l6-6-6-6"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-content">
+                        <div class="text-xl mb-4 flex items-center gap-2">
+                            Latest Transactions
+                            <div class="sorry-popup">
+                                <img src="/assets/sorry.png" alt="Sorry">
+                            </div>
+                            <span class="text-xs text-[rgba(72,255,225,0.9)] bg-[rgba(72,255,225,0.1)] px-2 py-1 rounded coming-soon" onclick="showSorry(this)">Coming Soon</span>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Hash</th>
+                                        <th>Action</th>
+                                        <th>Block</th>
+                                        <th>Time</th>
+                                        <th>User</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactions">
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0xb26e...fbb2</a></td>
+                                        <td>Cancel order</td>
+                                        <td><a href="#" class="hash-link">440793742</a></td>
+                                        <td class="time">0 sec ago</td>
+                                        <td>0x023a...2355</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x4dc8...d017</a></td>
+                                        <td>CancelByCbId</td>
+                                        <td><a href="#" class="hash-link">440793741</a></td>
+                                        <td class="time">0 sec ago</td>
+                                        <td>0x585a...9d5d</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0xa7f1...e3c9</a></td>
+                                        <td>Place order</td>
+                                        <td><a href="#" class="hash-link">440793740</a></td>
+                                        <td class="time">1 sec ago</td>
+                                        <td>0x7b2c...1f8e</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x9e3d...b4a5</a></td>
+                                        <td>Withdraw</td>
+                                        <td><a href="#" class="hash-link">440793739</a></td>
+                                        <td class="time">1 sec ago</td>
+                                        <td>0x3f1d...8c7a</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0xc5f2...a8d6</a></td>
+                                        <td>Place order</td>
+                                        <td><a href="#" class="hash-link">440793738</a></td>
+                                        <td class="time">1 sec ago</td>
+                                        <td>0x9e4b...2d5f</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x2b8d...f7e1</a></td>
+                                        <td>Deposit</td>
+                                        <td><a href="#" class="hash-link">440793737</a></td>
+                                        <td class="time">2 sec ago</td>
+                                        <td>0x4a7c...6b3e</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0xe6a4...c2b9</a></td>
+                                        <td>Cancel order</td>
+                                        <td><a href="#" class="hash-link">440793736</a></td>
+                                        <td class="time">2 sec ago</td>
+                                        <td>0x8d5e...4f2a</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x1f7c...d9e4</a></td>
+                                        <td>Place order</td>
+                                        <td><a href="#" class="hash-link">440793735</a></td>
+                                        <td class="time">2 sec ago</td>
+                                        <td>0x2c9b...7a4d</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x8a3b...e5c7</a></td>
+                                        <td>CancelByCbId</td>
+                                        <td><a href="#" class="hash-link">440793734</a></td>
+                                        <td class="time">3 sec ago</td>
+                                        <td>0x6f1e...9c8b</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0xd4e2...b1f8</a></td>
+                                        <td>Place order</td>
+                                        <td><a href="#" class="hash-link">440793733</a></td>
+                                        <td class="time">3 sec ago</td>
+                                        <td>0x1a8d...5e3c</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x7b9c...a4d2</a></td>
+                                        <td>Withdraw</td>
+                                        <td><a href="#" class="hash-link">440793732</a></td>
+                                        <td class="time">3 sec ago</td>
+                                        <td>0xc4f7...2b6a</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x3e5f...c8b1</a></td>
+                                        <td>Place order</td>
+                                        <td><a href="#" class="hash-link">440793731</a></td>
+                                        <td class="time">4 sec ago</td>
+                                        <td>0x9b2e...7d4c</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0xf2a7...e6d9</a></td>
+                                        <td>Cancel order</td>
+                                        <td><a href="#" class="hash-link">440793730</a></td>
+                                        <td class="time">4 sec ago</td>
+                                        <td>0x5d8a...1f3b</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x6c1d...b9e4</a></td>
+                                        <td>Deposit</td>
+                                        <td><a href="#" class="hash-link">440793729</a></td>
+                                        <td class="time">4 sec ago</td>
+                                        <td>0xe2b7...8a5c</td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="#" class="hash-link">0x9a4b...d2c7</a></td>
+                                        <td>Place order</td>
+                                        <td><a href="#" class="hash-link">440793728</a></td>
+                                        <td class="time">5 sec ago</td>
+                                        <td>0x7f3c...4e1d</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="view-all mt-4">
+                            <a href="#" class="view-all-button">View All Transactions</a>
+                            <span class="pagination">1-15 of 300</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-backdrop" id="blocksModal">
+        <div class="modal">
+            <div class="modal-content">
+                <div class="text-xl mb-4">All Blocks</div>
+                <div class="modal-close" onclick="closeModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Block</th>
+                            <th>Time</th>
+                            <th>Transactions</th>
+                            <th>Proposer</th>
+                            <th>Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalBlocks">
+                        <!-- Blocks will be inserted here -->
+                    </tbody>
+                </table>
+                <div class="view-all">
+                    <div></div>
+                    <div class="flex items-center gap-2">
+                        <span class="pagination" id="modal-pagination">1-15 of 300</span>
+                        <div class="flex gap-1">
+                            <button onclick="changeModalPage(-1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="modal-prev">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M15 18l-6-6 6-6"/>
+                                </svg>
+                            </button>
+                            <button onclick="changeModalPage(1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="modal-next">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 18l6-6-6-6"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store blocks in memory
+        let allBlocks = [];
+        let currentPage = 1;
+        const blocksPerPage = 15;
+        const maxBlocks = 300;
+        let isPaused = false;
+        let queuedBlocks = [];
+        let timeUpdateInterval;
+        let modalCurrentPage = 1;
+
+        // Format timestamp to "X sec ago"
+        const formatTimeAgo = (timestamp) => {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            return `${seconds} sec ago`;
+        }
+
+        // Update all visible timestamps
+        const updateTimestamps = () => {
+            const timeElements = document.querySelectorAll('td.time');
+            timeElements.forEach(element => {
+                const timestamp = parseInt(element.dataset.timestamp);
+                if (timestamp) {
+                    element.textContent = formatTimeAgo(timestamp);
+                }
+            });
+        }
+
+        // Truncate hash
+        const truncateHash = (hash) => {
+            return hash.slice(0, 6) + '...' + hash.slice(-4);
+        }
+
+        // Update pagination text and buttons
+        const updatePagination = () => {
+            const start = (currentPage - 1) * blocksPerPage + 1;
+            const end = Math.min(currentPage * blocksPerPage, allBlocks.length);
+            
+            document.getElementById('blocks-pagination').textContent = `${start}-${end} of 300`;
+            document.getElementById('blocks-prev').disabled = currentPage === 1;
+            document.getElementById('blocks-next').disabled = end >= allBlocks.length;
+        }
+
+        // Change page
+        const changePage = (type, direction) => {
+            const newPage = currentPage + direction;
+            const totalPages = Math.ceil(allBlocks.length / blocksPerPage);
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                displayBlocks();
+                updatePagination();
+            }
+        }
+
+        // Display current page of blocks
+        const displayBlocks = () => {
+            const tbody = document.getElementById('blocks');
+            tbody.innerHTML = '';
+            
+            const start = (currentPage - 1) * blocksPerPage;
+            const end = start + blocksPerPage;
+            const pageBlocks = allBlocks.slice(start, end);
+            
+            pageBlocks.forEach(block => {
+                const row = document.createElement('tr');
+                row.innerHTML = createBlockRow(block);
+                tbody.appendChild(row);
+            });
+        }
+
+        // Create block row HTML
+        const createBlockRow = (block) => `
+            <tr>
+                <td>
+                    <div class="flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" stroke="rgba(72, 255, 225, 0.9)" fill="none" stroke-width="2">
+                            <path d="M4 7L12 3L20 7L12 11L4 7Z" />
+                            <path d="M4 7V17L12 21V11" />
+                            <path d="M20 7V17L12 21" />
+                        </svg>
+                        <a href="#" class="hash-link">${block.height}</a>
+                    </div>
+                </td>
+                <td class="time" data-timestamp="${block.blockTime}">${formatTimeAgo(block.blockTime)}</td>
+                <td>${block.numTxs}</td>
+                <td>${truncateHash(block.proposer)}</td>
+                <td>${truncateHash(block.hash)}</td>
+            </tr>
+        `;
+
+        // Add new block
+        const addBlock = (block) => {
+            if (isPaused) {
+                queuedBlocks.push(block);
+                return;
+            }
+
+            // Add to the beginning of the array
+            allBlocks.unshift(block);
+            
+            // Keep only the last 300 blocks
+            if (allBlocks.length > maxBlocks) {
+                allBlocks = allBlocks.slice(0, maxBlocks);
+            }
+            
+            // If we're on the first page, update the display
+            if (currentPage === 1) {
+                displayBlocks();
+            }
+            // Update modal if it's open and on first page
+            if (modal.classList.contains('active') && modalCurrentPage === 1) {
+                displayModalBlocks();
+                updateModalPagination();
+            }
+            updatePagination();
+        }
+
+        // Process queued blocks
+        const processQueuedBlocks = () => {
+            if (queuedBlocks.length > 0) {
+                queuedBlocks.forEach(block => {
+                    allBlocks.unshift(block);
+                });
+                
+                // Keep only the last 300 blocks
+                if (allBlocks.length > maxBlocks) {
+                    allBlocks = allBlocks.slice(0, maxBlocks);
+                }
+                
+                if (currentPage === 1) {
+                    displayBlocks();
+                }
+                updatePagination();
+                
+                queuedBlocks = [];
+            }
+        }
+
+        // Initialize WebSocket connection
+        const init = async () => {
+            // Set up hover pause functionality
+            const blocksSection = document.querySelector('.section');
+            blocksSection.addEventListener('mouseenter', () => {
+                isPaused = true;
+            });
+            
+            blocksSection.addEventListener('mouseleave', () => {
+                isPaused = false;
+                processQueuedBlocks();
+            });
+
+            // Start timestamp update interval
+            timeUpdateInterval = setInterval(updateTimestamps, 1000);
+
+            const ws = new WebSocket('wss://api.hyperliquid.xyz/ws');
+
+            ws.onopen = () => {
+                console.log('Connected to Hyperliquid WebSocket API');
+                ws.send(JSON.stringify({
+                    method: "subscribe",
+                    subscription: {
+                        type: "explorerBlock"
+                    }
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const blockData = JSON.parse(event.data);
+                    // Skip subscription confirmation
+                    if (blockData.channel === "subscriptionResponse") {
+                        console.log('Successfully subscribed to block updates');
+                        return;
+                    }
+                    // Update blocks table
+                    if (Array.isArray(blockData)) {
+                        blockData.forEach(block => {
+                            addBlock(block);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error parsing block data:', error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from Hyperliquid WebSocket API');
+                clearInterval(timeUpdateInterval);
+            };
+        };
+
+        // Start the application
+        init();
+
+        // Modal functionality
+        const modal = document.getElementById('blocksModal');
+        
+        function openModal() {
+            modal.classList.add('active');
+            modalCurrentPage = 1;
+            displayModalBlocks();
+            updateModalPagination();
+        }
+        
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Display blocks in modal
+        function displayModalBlocks() {
+            const tbody = document.getElementById('modalBlocks');
+            tbody.innerHTML = '';
+            
+            const start = (modalCurrentPage - 1) * blocksPerPage;
+            const end = start + blocksPerPage;
+            const pageBlocks = allBlocks.slice(start, end);
+            
+            pageBlocks.forEach(block => {
+                const row = document.createElement('tr');
+                row.innerHTML = createBlockRow(block);
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update the view all blocks link
+        document.querySelector('.view-all-button').onclick = (e) => {
+            e.preventDefault();
+            openModal();
+        };
+
+        // Change modal page
+        function changeModalPage(direction) {
+            const newPage = modalCurrentPage + direction;
+            const totalPages = Math.ceil(allBlocks.length / blocksPerPage);
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                modalCurrentPage = newPage;
+                displayModalBlocks();
+                updateModalPagination();
+            }
+        }
+
+        // Update modal pagination
+        function updateModalPagination() {
+            const start = (modalCurrentPage - 1) * blocksPerPage + 1;
+            const end = Math.min(modalCurrentPage * blocksPerPage, allBlocks.length);
+            
+            document.getElementById('modal-pagination').textContent = `${start}-${end} of 300`;
+            document.getElementById('modal-prev').disabled = modalCurrentPage === 1;
+            document.getElementById('modal-next').disabled = end >= allBlocks.length;
+        }
+
+        let activePopups = [];
+        let popupTimeout;
+
+        function showSorry(element) {
+            // Create new popup
+            const popup = document.createElement('div');
+            popup.className = 'sorry-popup';
+            
+            // Random position around the button
+            const rect = element.getBoundingClientRect();
+            const radius = 100; // Max distance from button
+            const angle = Math.random() * Math.PI * 2;
+            const x = Math.cos(angle) * (Math.random() * radius);
+            const y = Math.sin(angle) * (Math.random() * radius);
+            
+            // Random rotation and size
+            const rotation = -30 + Math.random() * 60; // -30 to +30 degrees
+            const scale = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
+            
+            popup.style.cssText = `
+                left: ${rect.left + rect.width/2 + x}px;
+                top: ${rect.top + rect.height/2 + y}px;
+                transform: translate(-50%, -50%) scale(${scale}) rotate(${rotation}deg);
+                animation: popIn 0.3s ease forwards;
+                --rotation: ${rotation}deg;
+            `;
+            
+            const img = document.createElement('img');
+            img.src = '/assets/sorry.png';
+            img.alt = 'Sorry';
+            popup.appendChild(img);
+            
+            document.body.appendChild(popup);
+            requestAnimationFrame(() => popup.classList.add('active'));
+            
+            // Add to active popups
+            activePopups.push(popup);
+            
+            // Clear existing timeout and set new one
+            clearTimeout(popupTimeout);
+            popupTimeout = setTimeout(clearPopups, 1000);
+        }
+
+        function clearPopups() {
+            activePopups.forEach(popup => {
+                popup.style.opacity = '0';
+                setTimeout(() => popup.remove(), 300);
+            });
+            activePopups = [];
+        }
+
+        function showComingSoon(element, event) {
+            event.preventDefault();
+            
+            // Remove any existing popup
+            const existingPopup = document.querySelector('.coming-soon-text');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+
+            // Create popup
+            const popup = document.createElement('div');
+            popup.textContent = 'Coming Soon';
+            popup.className = 'coming-soon-text';
+            
+            // Position the popup relative to the link
+            popup.style.left = '50%';
+            popup.style.transform = 'translateX(-50%)';
+            popup.style.top = '100%';
+            
+            // Add to the link
+            element.appendChild(popup);
+            
+            // Remove after animation
+            setTimeout(() => {
+                popup.remove();
+            }, 800);
+        }
+    </script>
+</body>
+</html> 

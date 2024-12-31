@@ -10,7 +10,6 @@ const TWEETS_BY_TOKEN = {
         { id: '1865073437284392994', sold: true },  // buy/hold
         { id: '1867805748434284793', sold: true },
         { id: '1867839698032636040', sold: true },  // buy/hold
-        { id: '1868169228706365886', sold: true },
         { id: '1871303939536380397', sold: true },  // buy/hold
         { id: '1871475922974753252', sold: true },
         { id: '1871221424872186234', sold: true },  // buy/hold
@@ -167,7 +166,14 @@ const STICKERS = [
     'assets/Sticker/14.png',
     'assets/Sticker/15.png',
     'assets/Sticker/16.png',
-    'assets/Sticker/17.png'
+    'assets/Sticker/17.png',
+    'assets/Sticker/18.png',
+    'assets/Sticker/69.png',
+    'assets/Sticker/20.png',
+    'assets/Sticker/21.png',
+    'assets/Sticker/70.png',
+    'assets/Sticker/8.png',
+    'assets/Sticker/12.png'
 ];
 
 const STICKER_CONFIG = {
@@ -510,38 +516,13 @@ const Tweet = ({ tweet, token }) => {
         }
     }, [tweet.date, token, tweet.sold]);
 
-    // Handle falling sticker spawning
-    React.useEffect(() => {
-        const spawnSticker = () => {
-            if (fallingStickers.length < FALLING_STICKER_CONFIG.maxStickers) {
-                setFallingStickers(prev => [...prev, nextStickerId.current++]);
-            }
-        };
-
-        const interval = setInterval(spawnSticker, FALLING_STICKER_CONFIG.spawnRate);
-        return () => clearInterval(interval);
-    }, [fallingStickers.length]);
-
-    // Handle sticker removal when animation ends
-    const handleStickerAnimationEnd = (stickerId) => {
-        setFallingStickers(prev => prev.filter(id => id !== stickerId));
-    };
-
     const stickers = Array(TOTAL_STICKERS).fill(null);
 
     return React.createElement('div', {
         className: 'relative mx-auto w-full max-w-4xl'
     },
-        // Add both keyframe styles
+        // Add float keyframe style only
         React.createElement('style', null, `
-            @keyframes fall {
-                from {
-                    transform: translate(-50%, -50%) rotate(var(--start-rotation));
-                }
-                to {
-                    transform: translate(-50%, 1000%) rotate(var(--end-rotation));
-                }
-            }
             @keyframes float {
                 0%, 100% {
                     transform: translate(-50%, -50%) rotate(var(--rotation)) translateY(0);
@@ -576,19 +557,12 @@ const Tweet = ({ tweet, token }) => {
                 backgroundSize: '100% 100%'
             }
         },
-            // Static stickers
+            // Static stickers only
             stickers.map((_, index) => 
                 React.createElement(Sticker, { 
                     key: `${refreshKey}-${index}`,
                     index: index,
                     style: { zIndex: 1 }
-                })
-            ),
-            // Falling stickers
-            fallingStickers.map(id => 
-                React.createElement(FallingSticker, {
-                    key: id,
-                    onAnimationEnd: () => handleStickerAnimationEnd(id)
                 })
             )
         ),

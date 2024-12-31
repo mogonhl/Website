@@ -18,6 +18,9 @@ app.prepare().then(() => {
             req.path.startsWith('/_next') ||
             req.path.startsWith('/assets') ||
             req.path === '/mobile' ||
+            req.path === '/explorer' ||
+            req.path === '/airdrops' ||
+            req.path === '/chat' ||
             req.path.includes('.') // Skip for static files
         ) {
             return next();
@@ -37,7 +40,31 @@ app.prepare().then(() => {
     });
 
     // Serve static files
-    server.use(express.static(path.join(__dirname)));
+    server.use('/assets', express.static(path.join(__dirname, 'public')));
+    server.use('/public', express.static(path.join(__dirname, 'public')));
+    server.use('/js', express.static(path.join(__dirname, 'public/js')));
+    server.use('/components', express.static(path.join(__dirname, 'public/components')));
+
+    // Handle static routes
+    server.get('/', (req, res) => {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    });
+
+    server.get('/mobile', (req, res) => {
+        res.sendFile(path.join(__dirname, 'pages/mobile/index.html'));
+    });
+
+    server.get('/explorer', (req, res) => {
+        res.sendFile(path.join(__dirname, 'pages/explorer/index.html'));
+    });
+
+    server.get('/airdrops', (req, res) => {
+        res.sendFile(path.join(__dirname, 'pages/airdrops/index.html'));
+    });
+
+    server.get('/chat', (req, res) => {
+        res.sendFile(path.join(__dirname, 'pages/chat/index.html'));
+    });
 
     // Let next handle everything else
     server.all('*', (req, res) => {

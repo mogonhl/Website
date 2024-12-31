@@ -141,6 +141,98 @@
             background-position: center;
             background-repeat: no-repeat;
         }
+
+        .twitter-button {
+            background-color: transparent;
+            padding: 10px;
+        }
+        .explorer-button {
+            background-color: transparent;
+            padding: 10px;
+            color: rgba(72, 255, 225, 0.9);
+            transition: color 0.2s ease;
+        }
+        .explorer-button:hover {
+            color: rgba(72, 255, 225, 1);
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .launch-button {
+            width: 100%;
+            max-width: 500px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background: rgba(72, 255, 225, 0.1);
+            color: rgba(72, 255, 225, 0.9);
+            border: 1px solid rgba(72, 255, 225, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .launch-button:hover {
+            background: rgba(72, 255, 225, 0.2);
+            border-color: rgba(72, 255, 225, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .footer-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+            padding: 0.5rem;
+        }
+
+        .footer-link:hover {
+            opacity: 1;
+        }
+
+        .footer-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .footer-divider {
+            width: 1px;
+            height: 1rem;
+            background-color: rgba(255, 255, 255, 0.3);
+            margin: 0 0.25rem;
+        }
+
+        .footer-link svg {
+            opacity: 0.9;
+        }
     </style>
     
     <!-- Base dependencies -->
@@ -198,17 +290,23 @@
             </div>
 
             <div class="button-container">
-                <a href="https://app.hypurr.fun/launch/7561" target="_blank" class="action-button trade-button">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-                    </svg>
-                    Trade on Hypurr Fun
+                <a href="/airdrops" class="action-button launch-button">
+                    Launch App
                 </a>
-                <a href="https://x.com/purrg_hl" target="_blank" class="action-button twitter-button">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                </a>
+                <div class="footer">
+                    <a href="https://app.hypurr.fun/launch/7561" class="footer-link" target="_blank">
+                        <svg class="footer-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                        </svg>
+                        Trade on Hypurr
+                    </a>
+                    <div class="footer-divider"></div>
+                    <a href="https://x.com/purrg_hl" class="footer-link" target="_blank">
+                        <svg class="footer-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </a>
+                </div>
             </div>
             <div class="scroll-indicator">
                 <div class="scroll-arrow"></div>

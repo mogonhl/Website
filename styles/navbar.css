@@ -1,0 +1,27 @@
+.nav-link {
+    color: white;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.nav-link:hover {
+    color: rgba(72, 255, 225, 0.9);
+}
+
+/* Active state for regular nav links */
+a[href="/airdrops"].nav-link.active {
+    color: rgba(72, 255, 225, 0.9);
+}
+
+/* Special styling for Explorer button */
+a[href="/explorer"].nav-link {
+    color: #0f1a1f;
+    background: rgba(72, 255, 225, 0.9);
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+a[href="/explorer"].nav-link:hover {
+    background: rgba(140, 255, 235, 0.9);
+} 

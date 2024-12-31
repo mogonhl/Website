@@ -84,19 +84,26 @@ export default async function handler(req, res) {
             const altResponseText = await altResponse.text();
             
             if (!altResponse.ok) {
-                return res.status(404).json({ 
-                    error: 'Tweet not found',
-                    details: 'The tweet may have been deleted or is not publicly accessible'
+                // If both fail, return default data
+                const tweetDate = new Date(Number(BigInt(tweetId) >> 22n) + 1288834974657);
+                return res.status(200).json({
+                    author: {
+                        name: 'The Crypto Dog',
+                        handle: 'TheCryptoDog',
+                        avatar: '/assets/GF_DID_A_LOGO.png'
+                    },
+                    content: 'Tweet not available',
+                    date: tweetDate.toISOString()
                 });
             }
             
             const altData = JSON.parse(altResponseText);
-            const handle = altData.author_url ? altData.author_url.split('/').pop() : '';
+            const handle = altData.author_url ? altData.author_url.split('/').pop() : 'TheCryptoDog';
             const contentMatch = altData.html.match(/<p[^>]*>(.*?)<\/p>/s);
             
             const structured = {
                 author: {
-                    name: altData.author_name || 'Unknown',
+                    name: altData.author_name || 'The Crypto Dog',
                     handle: handle,
                     avatar: `https://unavatar.io/twitter/${handle}`,
                 },
@@ -109,7 +116,7 @@ export default async function handler(req, res) {
         }
 
         const data = JSON.parse(responseText);
-        const handle = data.author_url ? data.author_url.split('/').pop() : '';
+        const handle = data.author_url ? data.author_url.split('/').pop() : 'TheCryptoDog';
         const contentMatch = data.html.match(/<p[^>]*>(.*?)<\/p>/s);
         
         // Extract date from tweet ID
@@ -117,7 +124,7 @@ export default async function handler(req, res) {
         
         const structured = {
             author: {
-                name: data.author_name || 'Unknown',
+                name: data.author_name || 'The Crypto Dog',
                 handle: handle,
                 avatar: `https://unavatar.io/twitter/${handle}`,
             },
@@ -129,9 +136,16 @@ export default async function handler(req, res) {
         res.status(200).json(structured);
     } catch (error) {
         console.error('Error in tweet-proxy:', error);
-        res.status(500).json({ 
-            error: 'Failed to fetch tweet',
-            details: error.message 
+        // Return default data on error
+        const tweetDate = new Date(Number(BigInt(tweetId) >> 22n) + 1288834974657);
+        res.status(200).json({
+            author: {
+                name: 'The Crypto Dog',
+                handle: 'TheCryptoDog',
+                avatar: '/assets/GF_DID_A_LOGO.png'
+            },
+            content: 'Tweet not available',
+            date: tweetDate.toISOString()
         });
     }
 } 

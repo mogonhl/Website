@@ -1,0 +1,180 @@
+<html>
+<head>
+    <title>Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            background-color: #003329;
+            color: #ffffff;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .search-bar {
+            padding: 8px 12px;
+            width: 300px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid #1a4f44;
+            border-radius: 4px;
+            color: #ffffff;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .section {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px 0;
+            color: #8b9c99;
+            font-weight: normal;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 12px 0;
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hash-link {
+            color: #00c6a2;
+            text-decoration: none;
+        }
+
+        .time {
+            color: #8b9c99;
+        }
+
+        .view-all {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .view-all-button {
+            color: #00c6a2;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .pagination {
+            color: #8b9c99;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Explorer</div>
+        <input type="text" class="search-bar" placeholder="Search by Block, Transaction Hash or User Address">
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <div class="section-title">Latest Blocks</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Block</th>
+                        <th>Time</th>
+                        <th>Transactions</th>
+                        <th>Proposer</th>
+                        <th>Hash</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="#" class="hash-link">440713059</a></td>
+                        <td class="time">0 sec ago</td>
+                        <td>619</td>
+                        <td>0x5ec9...b487</td>
+                        <td>0xf658...18f8</td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="hash-link">440713058</a></td>
+                        <td class="time">0 sec ago</td>
+                        <td>665</td>
+                        <td>0xdf35...51e8</td>
+                        <td>0x1083...2f34</td>
+                    </tr>
+                    <!-- Additional rows following the same pattern -->
+                </tbody>
+            </table>
+            <div class="view-all">
+                <a href="#" class="view-all-button">View All Blocks</a>
+                <span class="pagination">1-10 of 300</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Latest Transactions</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hash</th>
+                        <th>Action</th>
+                        <th>Block</th>
+                        <th>Time</th>
+                        <th>User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="#" class="hash-link">0xb26e...fbb2</a></td>
+                        <td>Cancel order</td>
+                        <td><a href="#" class="hash-link">440713059</a></td>
+                        <td class="time">0 sec ago</td>
+                        <td>0x023a...2355</td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="hash-link">0x4dc8...d017</a></td>
+                        <td>CancelByCbId</td>
+                        <td><a href="#" class="hash-link">440713058</a></td>
+                        <td class="time">0 sec ago</td>
+                        <td>0x585a...9d5d</td>
+                    </tr>
+                    <!-- Additional rows following the same pattern -->
+                </tbody>
+            </table>
+            <div class="view-all">
+                <a href="#" class="view-all-button">View All Transactions</a>
+                <span class="pagination">1-10 of 300</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

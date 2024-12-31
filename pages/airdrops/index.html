@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airdrops Purrged</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="/styles/navbar.css" rel="stylesheet" />
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #002420;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            transform: translateY(20%);
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.5;
+            z-index: -1;
+            transform: translateY(20%);
+        }
+
+        .section {
+            padding-top: 2rem;
+        }
+
+        .min-h-screen {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Rest of your existing styles... */
+    </style>
+    <script type="module">
+        import { TOKENS } from '/app/types/tokens.js';
+        window.TOKENS = TOKENS;
+        window.currentToken = 'HYPE';  // Default token
+
+        // Add current sort order state
+        let currentSortOrder = 'size';
+
+        // Function to update ranking order
+        window.updateRankingOrder = function(sortType) {
+            currentSortOrder = sortType;
+            
+            // Update text colors
+            document.querySelectorAll('[data-sort]').forEach(span => {
+                if (span.getAttribute('data-sort') === sortType) {
+                    span.classList.remove('text-[rgb(148,158,156)]');
+                    span.classList.add('text-white');
+                } else {
+                    span.classList.add('text-[rgb(148,158,156)]');
+                    span.classList.remove('text-white');
+                }
+            });
+
+            // Trigger ranking update
+            const cached = localStorage.getItem(window.CACHE_KEY);
+            if (cached) {
+                const { prices } = JSON.parse(cached);
+                updatePerformanceRanking(prices);
+            }
+        };
+
+        function updatePerformanceRanking(prices) {
+            // Calculate metrics for all tokens
+            const tokenMetrics = Object.entries(window.TOKENS).map(([symbol, token]) => {
+                const currentPrice = prices[symbol];
+                const performancePercent = ((currentPrice - token.initialPrice) / token.initialPrice) * 100;
+                const airdropValue = currentPrice * token.airdropAmount;
+                return {
+                    symbol,
+                    performance: performancePercent,
+                    multiplier: currentPrice / token.initialPrice,
+                    size: airdropValue
+                };
+            });
+
+            // Sort based on current sort order
+            if (currentSortOrder === 'size') {
+                tokenMetrics.sort((a, b) => b.size - a.size);
+            } else {
+                tokenMetrics.sort((a, b) => b.performance - a.performance);
+            }
+
+            // Get the ranking container
+            const rankingContainer = document.querySelector('.performance-ranking');
+            if (!rankingContainer) return;
+
+            // Clear existing content
+            rankingContainer.innerHTML = '';
+
+            // Create and append tokens
+            tokenMetrics.forEach((token, index) => {
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'icon-container';
+                if (token.symbol === window.currentToken) {
+                    iconDiv.className += ' selected';
+                }
+                iconDiv.title = `${token.performance.toFixed(1)}% (${token.multiplier.toFixed(1)}x)`;
+
+                const img = document.createElement('img');
+                img.alt = token.symbol;
+                img.draggable = false;
+
+                const specialCases = {
+                    'PENGU': 'assets/Logos/Pengu.jpeg',
+                    'HYPE': 'assets/Logos/Hype.png',
+                    'ARB': 'assets/Logos/Arbitrum.png',
+                    'FRIEND': 'assets/Logos/Friend.png',
+                    'JTO': 'assets/Logos/Jito.png',
+                    'ME': 'assets/Logos/MagicalEden.png',
+                    'UNI': 'assets/Logos/Uniswap.png',
+                    'TIA': 'assets/Logos/TIA.png',
+                    'ENS': 'assets/Logos/ENS.png',
+                    'JUP': 'assets/Logos/JUP.png',
+                    'WEN': 'assets/Logos/WEN.png',
+                    'AEVO': 'assets/Logos/AEVO.png',
+                    'ENA': 'assets/Logos/ENA.png',
+                    'W': 'assets/Logos/W.png',
+                    'ETHFI': 'assets/Logos/ETHFI.png',
+                    'ZRO': 'assets/Logos/ZRO.png',
+                    'STRK': 'assets/Logos/STRK.png',
+                    'EIGEN': 'assets/Logos/EIGEN.png',
+                    'DBR': 'assets/Logos/DBR.png'
+                };
+
+                img.src = specialCases[token.symbol] || `assets/Logos/${token.symbol}.png`;
+                
+                // Add click handler
+                iconDiv.addEventListener('click', () => {
+                    // Update all airdrop icons
+                    document.querySelectorAll('.airdrop-icon').forEach(icon => {
+                        icon.classList.remove('selected');
+                        if (icon.alt === token.symbol) {
+                            icon.classList.add('selected');
+                        }
+                    });
+                    
+                    // Update all performance ranking icons
+                    document.querySelectorAll('.performance-ranking .icon-container').forEach(icon => {
+                        icon.classList.remove('selected');
+                    });
+                    iconDiv.classList.add('selected');
+                    
+                    // Call the existing selectIcon function
+                    const airdropIcon = document.querySelector(`.airdrop-icon[alt="${token.symbol}"]`);
+                    if (airdropIcon) {
+                        window.selectIcon(airdropIcon);
+                    }
+                });
+
+                iconDiv.appendChild(img);
+                rankingContainer.appendChild(iconDiv);
+
+                if (index < tokenMetrics.length - 1) {
+                    const separatorDiv = document.createElement('div');
+                    separatorDiv.className = 'separator-container';
+                    separatorDiv.textContent = '>';
+                    rankingContainer.appendChild(separatorDiv);
+                }
+            });
+
+            // Create navigation arrows
+            const prevArrow = document.createElement('div');
+            prevArrow.className = 'nav-arrow prev';
+            prevArrow.innerHTML = '‹';
+            prevArrow.onclick = () => {
+                rankingContainer.scrollTo({ left: 0, behavior: 'smooth' });
+            };
+
+            const nextArrow = document.createElement('div');
+            nextArrow.className = 'nav-arrow next';
+            nextArrow.innerHTML = '›';
+            nextArrow.onclick = () => {
+                rankingContainer.scrollTo({ 
+                    left: rankingContainer.scrollWidth - rankingContainer.clientWidth,
+                    behavior: 'smooth'
+                });
+            };
+
+            // Add navigation arrows
+            rankingContainer.parentNode.appendChild(prevArrow);
+            rankingContainer.parentNode.appendChild(nextArrow);
+
+            // Show/hide arrows based on scroll position
+            const updateArrows = () => {
+                prevArrow.style.display = rankingContainer.scrollLeft > 0 ? 'flex' : 'none';
+                nextArrow.style.display = 
+                    rankingContainer.scrollLeft < (rankingContainer.scrollWidth - rankingContainer.clientWidth - 10) 
+                    ? 'flex' : 'none';
+            };
+
+            rankingContainer.addEventListener('scroll', updateArrows);
+            window.addEventListener('resize', updateArrows);
+            updateArrows(); // Initial check
+        }
+
+        // Initialize after TOKENS is available
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = window.TOKENS[window.currentToken];
+            if (token) {
+                document.getElementById('desc1').textContent = token.desc1;
+                document.getElementById('desc2').textContent = token.desc2;
+                window.updatePriceData();
+            }
+        });
+
+        // Constants for price fetching
+        window.CACHE_KEY = 'bulk_price_data';
+        window.GRAPH_CACHE_KEY = 'graph_data_cache';
+        window.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        window.GRAPH_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // Graph caching functions
+        async function getCachedGraphData(token, timeRange) {
+            try {
+                const cacheKey = `${window.GRAPH_CACHE_KEY}_${token}_${timeRange}`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (Date.now() - timestamp < window.GRAPH_CACHE_DURATION) {
+                        console.log(`Cache hit: Using cached graph data for ${token} ${timeRange}`);
+                        return data;
+                    } else {
+                        console.log(`Cache expired for ${token} ${timeRange}`);
+                    }
+                } else {
+                    console.log(`No cache found for ${token} ${timeRange}`);
+                }
+                return null;
+            } catch (error) {
+                console.error('Error reading graph cache:', error);
+                return null;
+            }
+        }
+
+        function setCachedGraphData(token, timeRange, data) {
+            try {
+                const cacheKey = `${window.GRAPH_CACHE_KEY}_${token}_${timeRange}`;
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    data,
+                    timestamp: Date.now()
+                }));
+                console.log(`Cached graph data for ${token} ${timeRange}`);
+            } catch (error) {
+                console.error('Error setting graph cache:', error);
+            }
+        }
+
+        // Prefetch and cache data for all tokens
+        async function prefetchTokenData(timeRange = '7D') {
+            const tokens = Object.keys(window.TOKENS);
+            for (const token of tokens) {
+                try {
+                    const cachedData = await getCachedGraphData(token, timeRange);
+                    if (!cachedData && window.updateChartAndPrefetch) {
+                        console.log(`Prefetching data for ${token}...`);
+                        // Create a promise to wait for the data
+                        await new Promise((resolve) => {
+                            const handleChartData = (event) => {
+                                if (event.detail && event.detail.data) {
+                                    const chartData = event.detail.data;
+                                    console.log(`Caching prefetched data for ${token}`, chartData);
+                                    setCachedGraphData(token, timeRange, chartData);
+                                    window.removeEventListener('chartDataReceived', handleChartData);
+                                    resolve();
+                                }
+                            };
+                            
+                            // Add event listener for chart data
+                            window.addEventListener('chartDataReceived', handleChartData);
+                            
+                            // Trigger the data fetch
+                            window.updateChartAndPrefetch(timeRange, token);
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error prefetching data for ${token}:`, error);
+                }
+            }
+        }
+
+        async function updateChartWithCache(token, timeRange = '7D') {
+            console.log(`Updating chart for ${token} with timeRange ${timeRange}`);
+            try {
+                // Try to get cached data first
+                const cachedData = await getCachedGraphData(token, timeRange);
+                if (cachedData) {
+                    console.log('Using cached data for chart update');
+                    if (window.updateChartWithData) {
+                        window.updateChartWithData(cachedData);
+                        return true;
+                    }
+                }
+
+                console.log('Fetching fresh data for chart');
+                // If no cache or updateChartWithData not available, fetch new data
+                if (window.updateChartAndPrefetch) {
+                    // Create a promise to wait for the data
+                    return new Promise((resolve) => {
+                        const handleChartData = (event) => {
+                            if (event.detail && event.detail.data) {
+                                const chartData = event.detail.data;
+                                console.log('Received fresh chart data, caching...', chartData);
+                                setCachedGraphData(token, timeRange, chartData);
+                                window.removeEventListener('chartDataReceived', handleChartData);
+                                resolve(true);
+                            }
+                        };
+                        
+                        // Add event listener for chart data
+                        window.addEventListener('chartDataReceived', handleChartData);
+                        
+                        // Trigger the data fetch
+                        window.updateChartAndPrefetch(timeRange, token);
+                    });
+                }
+                return false;
+            } catch (error) {
+                console.error('Error updating chart with cache:', error);
+                // Fallback to normal update
+                if (window.updateChartAndPrefetch) {
+                    window.updateChartAndPrefetch(timeRange, token);
+                }
+                return false;
+            }
+        }
+
+        // Helper functions
+        window.formatNumberWithDots = function(num) {
+            return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        window.formatNumber = function(num, useFullInteger = false) {
+            if (useFullInteger) {
+                return window.formatNumberWithDots(num);
+            }
+            
+            if (num >= 1e9) {
+                return (num / 1e9).toFixed(2) + 'B';
+            }
+            if (num >= 1e6) {
+                return (num / 1e6).toFixed(2) + 'M';
+            }
+            if (num >= 1e3) {
+                return (num / 1e3).toFixed(2) + 'K';
+            }
+            return num.toFixed(2);
+        }
+
+        // Function to check if cache is valid
+        function isCacheValid(timestamp) {
+            return Date.now() - timestamp < window.CACHE_DURATION;
+        }
+
+        // Function to fetch all token prices
+        async function fetchAllPrices() {
+            try {
+                // Check cache first
+                const cached = localStorage.getItem(window.CACHE_KEY);
+                if (cached) {
+                    const { prices, timestamp } = JSON.parse(cached);
+                    if (isCacheValid(timestamp)) {
+                        return prices;
+                    }
+                }
+
+                // Fetch all prices in one call
+                const tokenIds = Object.values(window.TOKENS).map(token => token.coingeckoId);
+                const url = `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds.join(',')}&vs_currencies=usd`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch prices from CoinGecko');
+                }
+                
+                const data = await response.json();
+                
+                // Transform data into our format
+                const prices = {};
+                Object.entries(window.TOKENS).forEach(([symbol, token]) => {
+                    const price = data[token.coingeckoId]?.usd;
+                    prices[symbol] = price || token.initialPrice;
+                });
+
+                // Cache the prices
+                localStorage.setItem(window.CACHE_KEY, JSON.stringify({
+                    prices,
+                    timestamp: Date.now()
+                }));
+
+                return prices;
+            } catch (error) {
+                console.error('Error fetching prices:', error);
+                // Return initial prices as fallback
+                return Object.entries(window.TOKENS).reduce((acc, [symbol, token]) => {
+                    acc[symbol] = token.initialPrice;
+                    return acc;
+                }, {});
+            }
+        }
+
+        // Function to update metrics UI
+        function updateUIWithMetrics(metrics) {
+            // Update Market Cap
+            const marketCapElement = document.querySelector('.market-cap');
+            if (marketCapElement) {
+                marketCapElement.textContent = `$${window.formatNumber(metrics.marketCap, true)}`;
+            }
+
+            // Update Performance since TGE
+            const performanceElement = document.querySelector('.performance');
+            const multiplierElement = document.querySelector('.multiplier');
+            if (performanceElement) {
+                const isNegative = metrics.performancePercent < 0;
+                performanceElement.textContent = `${Math.round(metrics.performancePercent)}%`;
+                performanceElement.className = `performance ${isNegative ? 'text-red-400' : 'text-emerald-400'}`;
+            }
+            if (multiplierElement) {
+                const isNegative = metrics.multiplier < 1;
+                multiplierElement.textContent = `${metrics.multiplier.toFixed(1)}x`;
+                multiplierElement.className = `text-sm px-2 py-1 rounded ml-2 multiplier ${isNegative ? 'bg-red-400/20 text-red-400' : 'bg-emerald-400/20 text-emerald-400'}`;
+            }
+
+            // Update Average Airdrop Value
+            const airdropValueElement = document.querySelector('.airdrop-value');
+            if (airdropValueElement) {
+                airdropValueElement.textContent = `$${window.formatNumber(metrics.airdropValue, true)}`;
+            }
+
+            // Update native token amount
+            const airdropAmountElement = document.querySelector('.hover\\:underline');
+            if (airdropAmountElement) {
+                airdropAmountElement.textContent = `${window.formatNumber(window.TOKENS[window.currentToken].airdropAmount, true)} ${window.currentToken}`;
+            }
+
+            // Update Mog Counter
+            const mogCounterValue = document.querySelector('#mogCounter + span');
+            const mogCounterImage = document.querySelector('#mogCounter');
+            if (mogCounterValue && mogCounterImage) {
+                mogCounterValue.textContent = metrics.moggedCount;
+                mogCounterImage.src = metrics.moggedCount === 0 ? '/assets/skull.webp' : '/assets/lol.png';
+                mogCounterImage.style.transform = metrics.moggedCount === 0 ? 'scale(0.75)' : '';
+            }
+        }
+
+        // Make functions globally available
+        window.updateUIWithMetrics = updateUIWithMetrics;
+        window.updatePriceData = async function() {
+            try {
+                const prices = await fetchAllPrices();
+                const currentPrice = prices[window.currentToken];
+                if (!currentPrice) return;
+
+                const token = window.TOKENS[window.currentToken];
+                
+                // Calculate metrics
+                const metrics = {
+                    performancePercent: ((currentPrice - token.initialPrice) / token.initialPrice) * 100,
+                    multiplier: currentPrice / token.initialPrice,
+                    marketCap: currentPrice * token.supply,
+                    airdropValue: currentPrice * token.airdropAmount,
+                    moggedCount: 0
+                };
+
+                // Calculate how many airdrops are worth less than the current one
+                const currentAirdropValue = currentPrice * token.airdropAmount;
+                metrics.moggedCount = Object.entries(window.TOKENS).reduce((count, [symbol, otherToken]) => {
+                    if (symbol !== window.currentToken) {
+                        const otherPrice = prices[symbol];
+                        const otherAirdropValue = otherPrice * otherToken.airdropAmount;
+                        if (otherAirdropValue < currentAirdropValue) {
+                            count++;
+                        }
+                    }
+                    return count;
+                }, 0);
+
+                // Update UI with the metrics
+                window.updateUIWithMetrics(metrics);
+
+                // Update performance ranking
+                updatePerformanceRanking(prices);
+
+            } catch (error) {
+                console.error('Error in updatePriceData:', error);
+            }
+        };
+
+        // Function to handle icon selection
+        window.selectIcon = function(element) {
+            // Remove selected class from all icons
+            document.querySelectorAll('.airdrop-icon').forEach(icon => {
+                icon.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked icon
+            element.classList.add('selected');
+            
+            // Get the token symbol from the alt attribute
+            const token = element.alt;
+            
+            // Update the current token
+            window.currentToken = token;
+            
+            // Get token data from TOKENS
+            const tokenData = window.TOKENS[token];
+            
+            // Update descriptions
+            document.getElementById('desc1').textContent = tokenData.desc1;
+            document.getElementById('desc2').textContent = tokenData.desc2;
+            
+            // Update price data and metrics
+            updatePriceData();
+
+            // Update chart with cache
+            updateChartWithCache(token, '7D');
+
+            // Dispatch token change event for chart
+            const event = new CustomEvent('tokenChange', { 
+                detail: { token, timeRange: '7D' } 
+            });
+            window.dispatchEvent(event);
+
+            // Always update the TweetList when switching tokens
+            const tweetListContainer = document.getElementById('tweet-list-container');
+            if (tweetListContainer && window.TweetList && window.ReactDOM) {
+                ReactDOM.unmountComponentAtNode(tweetListContainer);
+                ReactDOM.render(
+                    React.createElement(window.TweetList, { 
+                        key: token,
+                        token: token.toLowerCase()
+                    }),
+                    tweetListContainer
+                );
+            }
+        };
+
+        // Initialize data when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOM Content Loaded - Initializing chart');
+            // Set initial descriptions for HYPE token
+            const token = window.TOKENS[window.currentToken];
+            document.getElementById('desc1').textContent = token.desc1;
+            document.getElementById('desc2').textContent = token.desc2;
+
+            // Initial price data update
+            updatePriceData();
+
+            // Update prices periodically
+            setInterval(updatePriceData, 60000); // Update every minute
+
+            // Initialize Size as selected in performance ranking
+            document.querySelectorAll('[data-sort]').forEach(span => {
+                if (span.getAttribute('data-sort') === 'size') {
+                    span.classList.remove('text-[rgb(148,158,156)]');
+                    span.classList.add('text-white');
+                } else {
+                    span.classList.add('text-[rgb(148,158,156)]');
+                    span.classList.remove('text-white');
+                }
+            });
+
+            // Initial performance ranking update
+            const cached = localStorage.getItem(window.CACHE_KEY);
+            if (cached) {
+                const { prices } = JSON.parse(cached);
+                updatePerformanceRanking(prices);
+            }
+
+            // Initialize chart with cache and start prefetching
+            console.log('Starting initial chart update');
+            const success = await updateChartWithCache(window.currentToken, '7D');
+            console.log('Initial chart update success:', success);
+
+            // Dispatch initial token change event for chart
+            const event = new CustomEvent('tokenChange', { 
+                detail: { token: window.currentToken, timeRange: '7D' } 
+            });
+            window.dispatchEvent(event);
+
+            if (success) {
+                // If initial load successful, prefetch other tokens in background
+                console.log('Starting background prefetch of other tokens');
+                setTimeout(() => prefetchTokenData('7D'), 1000);
+            }
+
+            // Initialize TweetList
+            const initializeTweetList = () => {
+                const tweetListContainer = document.getElementById('tweet-list-container');
+                if (tweetListContainer && window.TweetList && window.ReactDOM) {
+                    const renderTweetList = () => {
+                        const currentToken = window.currentToken || 'HYPE';
+                        console.log('Main: Rendering TweetList with token:', currentToken);
+                        
+                        // Unmount previous instance if it exists
+                        if (tweetListContainer._reactRootContainer) {
+                            ReactDOM.unmountComponentAtNode(tweetListContainer);
+                        }
+                        
+                        // Create new instance with current token
+                        ReactDOM.render(
+                            React.createElement(window.TweetList, { 
+                                key: currentToken,
+                                token: currentToken.toLowerCase()
+                            }),
+                            tweetListContainer
+                        );
+                    };
+
+                    // Make the render function globally available
+                    window.selectNewTweet = renderTweetList;
+
+                    // Initial render
+                    renderTweetList();
+                    return true;
+                }
+                return false;
+            };
+
+            // Try to initialize immediately
+            if (!initializeTweetList()) {
+                // If not successful, keep trying with a small delay
+                const checkTweetList = setInterval(() => {
+                    if (initializeTweetList()) {
+                        clearInterval(checkTweetList);
+                    }
+                }, 100);
+            }
+        });
+
+        // Function to handle tab switching
+        window.selectTab = function(element, tabName) {
+            // Remove active state from all tabs
+            document.querySelectorAll('.tab-indicator').forEach(indicator => {
+                indicator.style.display = 'none';
+            });
+            
+            // Show the selected tab's indicator
+            element.querySelector('.tab-indicator').style.display = 'block';
+            
+            // Update text colors for tab text only (not affecting Size/Performance)
+            document.querySelectorAll('.flex.gap-4 > span:not([data-sort])').forEach(span => {
+                span.classList.remove('text-white');
+                span.classList.add('text-[rgb(148,158,156)]');
+            });
+            element.classList.remove('text-[rgb(148,158,156)]');
+            element.classList.add('text-white');
+            
+            // Hide all content
+            document.getElementById('about-content').classList.add('hidden');
+            document.getElementById('bagFumbled-content').classList.add('hidden');
+            
+            // Show selected content
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+            
+            // Handle refresh button visibility
+            const refreshButton = document.querySelector('.bagFumbled-refresh');
+            if (refreshButton) {
+                if (tabName === 'bagFumbled') {
+                    refreshButton.classList.remove('hidden');
+                    refreshButton.classList.add('visible');
+                } else {
+                    refreshButton.classList.add('hidden');
+                    refreshButton.classList.remove('visible');
+                }
+            }
+            
+            // If switching to bagFumbled, ensure TweetList is rendered
+            if (tabName === 'bagFumbled') {
+                const tweetListContainer = document.getElementById('tweet-list-container');
+                if (tweetListContainer && window.TweetList && window.ReactDOM && !tweetListContainer._reactRootContainer) {
+                    ReactDOM.render(
+                        React.createElement(window.TweetList, { 
+                            key: window.currentToken,
+                            token: window.currentToken.toLowerCase()
+                        }),
+                        tweetListContainer
+                    );
+                }
+            }
+        };
+
+        // Sticker animation code
+        const stickerFiles = [1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14, 15, 16, 17, 22, 32, 42, 69, 70];
+        let activeStickers = new Set();
+
+        function getRandomSticker() {
+            const randomIndex = Math.floor(Math.random() * stickerFiles.length);
+            return stickerFiles[randomIndex];
+        }
+
+        function createSticker() {
+            const container = document.getElementById('bagFumbled-content');
+            if (!container || container.classList.contains('hidden')) return;
+
+            const sticker = document.createElement('img');
+            sticker.className = 'sticker-animation';
+            sticker.src = `/assets/Sticker/${getRandomSticker()}.png`;
+
+            // Random size between 40px and 70px
+            const size = Math.random() * 30 + 40;
+            sticker.style.width = `${size}px`;
+            sticker.style.height = `${size}px`;
+
+            // Calculate random positions
+            const containerWidth = container.offsetWidth;
+            const containerHeight = container.offsetHeight;
+
+            // Determine start position (from outside the container)
+            let startX, startY, endX, endY;
+            
+            if (Math.random() > 0.5) {
+                // Start from left or right
+                startX = Math.random() > 0.5 ? -100 : containerWidth + 100;
+                startY = Math.random() * containerHeight;
+                endX = startX > 0 ? -100 : containerWidth + 100;
+                endY = Math.random() * containerHeight;
+            } else {
+                // Start from top or bottom
+                startX = Math.random() * containerWidth;
+                startY = Math.random() > 0.5 ? -100 : containerHeight + 100;
+                endX = Math.random() * containerWidth;
+                endY = startY > 0 ? -100 : containerHeight + 100;
+            }
+
+            // Set CSS variables for the animation
+            sticker.style.setProperty('--startX', `${startX}px`);
+            sticker.style.setProperty('--startY', `${startY}px`);
+            sticker.style.setProperty('--endX', `${endX}px`);
+            sticker.style.setProperty('--endY', `${endY}px`);
+            sticker.style.setProperty('--rotation', `${Math.random() * 720 - 360}deg`);
+
+            // Set initial position
+            sticker.style.left = '0';
+            sticker.style.top = '0';
+
+            // Random animation duration between 3 and 6 seconds
+            const duration = Math.random() * 3 + 3;
+            sticker.style.animation = `flyAcross ${duration}s linear forwards`;
+
+            container.appendChild(sticker);
+            activeStickers.add(sticker);
+
+            sticker.addEventListener('animationend', () => {
+                sticker.remove();
+                activeStickers.delete(sticker);
+            });
+        }
+
+        let animationInterval;
+
+        function startStickerAnimation() {
+            const container = document.getElementById('bagFumbled-content');
+            if (!container || container.classList.contains('hidden')) return;
+
+            // Clear any existing interval
+            if (animationInterval) {
+                clearInterval(animationInterval);
+            }
+
+            // Initial delay of 1 second before first sticker
+            setTimeout(() => {
+                // Create initial batch of stickers
+                for (let i = 0; i < 4; i++) {
+                    setTimeout(createSticker, Math.random() * 500);
+                }
+
+                // Create new stickers periodically with random intervals
+                function scheduleNextSticker() {
+                    const randomDelay = Math.random() * 1500 + 500; // Random delay between 0.5-2 seconds
+                    setTimeout(() => {
+                        createSticker();
+                        scheduleNextSticker();
+                    }, randomDelay);
+                }
+
+                // Start two parallel spawn cycles for more stickers
+                scheduleNextSticker();
+                scheduleNextSticker();
+            }, 1000);
+        }
+
+        // Initialize sticker animation when switching to bagFumbled tab
+        const originalSelectTab = window.selectTab;
+        window.selectTab = function(element, tabName) {
+            originalSelectTab(element, tabName);
+            if (tabName === 'bagFumbled') {
+                setTimeout(startStickerAnimation, 100); // Small delay to ensure container is visible
+            }
+        };
+
+        // Also start animation if bagFumbled tab is initially active
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!document.getElementById('bagFumbled-content').classList.contains('hidden')) {
+                startStickerAnimation();
+            }
+        });
+
+        // Add click handler for Mog Counter
+        document.addEventListener('DOMContentLoaded', () => {
+            const mogCounter = document.getElementById('mogCounter');
+            if (mogCounter) {
+                mogCounter.addEventListener('click', () => {
+                    // Add bounce animation
+                    mogCounter.classList.remove('animate');
+                    void mogCounter.offsetWidth; // Trigger reflow
+                    mogCounter.classList.add('animate');
+
+                    // Create and add floating "lol" text
+                    const lolText = document.createElement('div');
+                    lolText.textContent = 'lol';
+                    lolText.className = 'lol-text';
+                    
+                    // Position below the icon
+                    const rect = mogCounter.getBoundingClientRect();
+                    lolText.style.left = (mogCounter.offsetWidth - 30) / 2 + 'px';
+                    lolText.style.top = mogCounter.offsetHeight + 'px';
+                    
+                    mogCounter.parentElement.style.position = 'relative';
+                    mogCounter.parentElement.appendChild(lolText);
+
+                    // Remove the text element after animation
+                    setTimeout(() => {
+                        lolText.remove();
+                    }, 800);
+                });
+            }
+        });
+
+        function showComingSoon(element, event) {
+            event.preventDefault();
+            
+            // Remove any existing popup
+            const existingPopup = document.querySelector('.coming-soon-text');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+
+            // Create popup
+            const popup = document.createElement('div');
+            popup.textContent = 'Coming Soon';
+            popup.className = 'coming-soon-text';
+            
+            // Position the popup relative to the link
+            popup.style.left = '50%';
+            popup.style.transform = 'translateX(-50%)';
+            popup.style.top = '100%';
+            
+            // Add to the link
+            element.appendChild(popup);
+            
+            // Remove after animation
+            setTimeout(() => {
+                popup.remove();
+            }, 800);
+        }
+    </script>
+    <!-- Base dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Import TweetList component -->
+    <script type="text/babel" src="/app/components/TweetList.js"></script>
+    
+    <!-- Add chart.js before script.js -->
+    <script src="/js/script.js"></script>
+    <script src="/js/chart.js" defer></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #002420;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            transform: translateY(20%);
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.5;
+            z-index: -1;
+            transform: translateY(20%);
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-size: 13px;
+            margin: 0 6px;
+        }
+
+        .nav-link:hover {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .nav-link.active {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .explorer-btn {
+            color: #0f1a1f;
+            background: rgba(72, 255, 225, 0.9);
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+            font-size: 13px;
+            margin: 0 6px;
+        }
+
+        .explorer-btn:hover {
+            opacity: 0.9;
+        }
+
+        .tab-indicator {
+            height: 1px;
+            bottom: -1px;
+        }
+
+        .airdrop-icon {
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .airdrop-icon.selected {
+            border-color: rgba(72,255,225,0.9);
+        }
+
+        #price-chart {
+            min-height: 300px;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-right {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-right > div {
+            flex: 1;
+            min-height: 300px;
+        }
+
+        .performance-ranking {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth;
+            padding: 0 12px;
+        }
+        .performance-ranking::-webkit-scrollbar {
+            display: none;
+        }
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(16, 25, 31, 0.8);
+            color: rgb(148, 158, 156);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            z-index: 10;
+            font-size: 18px;
+            transition: color 0.2s;
+        }
+        .nav-arrow:hover {
+            color: #10B981;
+        }
+        .nav-arrow.prev {
+            left: -12px;
+        }
+        .nav-arrow.next {
+            right: -12px;
+        }
+        .icon-container {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 8px;
+            position: relative;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .icon-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            pointer-events: none;
+            user-select: none;
+            display: block;
+        }
+        .icon-container.selected {
+            outline: 2px solid #10B981;
+            outline-offset: 2px;
+        }
+        .separator-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 4px;
+            height: 40px;
+            pointer-events: none;
+            user-select: none;
+            color: rgb(148, 158, 156);
+            opacity: 0.5;
+            font-size: 14px;
+        }
+
+        .section {
+            padding-top: 2rem;
+        }
+
+        .min-h-screen {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .bag-fumbled-content {
+            width: 100%;
+            padding: 1rem;
+            position: relative;
+            min-height: 300px;
+            overflow: hidden;
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 10px,
+                rgba(72, 255, 225, 0.02) 10px,
+                rgba(72, 255, 225, 0.02) 20px
+            );
+        }
+
+        .refresh-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(72, 255, 225, 0.1);
+            color: rgba(72, 255, 225, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            z-index: 20;
+        }
+
+        .refresh-button:hover {
+            background: rgba(72, 255, 225, 0.2);
+        }
+
+        .background-sticker {
+            position: absolute;
+            transition: transform 0.3s ease;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        .background-sticker:hover {
+            transform: scale(1.2) rotate(10deg) !important;
+            opacity: 0.8;
+        }
+
+        @keyframes floatSticker {
+            0%, 100% {
+                transform: translate(-50%, -50%) rotate(var(--rotation)) translateY(0);
+            }
+            50% {
+                transform: translate(-50%, -50%) rotate(var(--rotation)) translateY(-3px);
+            }
+        }
+
+        #tweet-list-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            min-height: 300px;
+        }
+
+        .bagFumbled-refresh {
+            display: none;
+            margin-left: 4px;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+
+        .bagFumbled-refresh:hover {
+            opacity: 1;
+        }
+
+        .bagFumbled-refresh.visible {
+            display: inline-flex;
+        }
+
+        #bagFumbled-content {
+            position: relative;
+            min-height: 300px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .sticker-animation {
+            position: absolute;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        @keyframes flyAcross {
+            0% {
+                transform: translate(var(--startX), var(--startY)) rotate(0deg);
+                opacity: 0.6;
+            }
+            100% {
+                transform: translate(var(--endX), var(--endY)) rotate(var(--rotation));
+                opacity: 0;
+            }
+        }
+
+        .mog-counter {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .mog-counter.animate {
+            animation: bounceThrice 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes bounceThrice {
+            0%, 100% { transform: translateY(0); }
+            16% { transform: translateY(-6px); }
+            33% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+            66% { transform: translateY(0); }
+            83% { transform: translateY(-6px); }
+        }
+
+        .lol-text {
+            position: absolute;
+            background: rgba(15, 26, 31, 0.95);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            animation: popupAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+        }
+
+        @keyframes popupAnimation {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0.9);
+            }
+            20% {
+                opacity: 1;
+                transform: translateY(4px) scale(1);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(4px) scale(1);
+            }
+        }
+
+        .coming-soon-text {
+            position: absolute;
+            background: rgba(15, 26, 31, 0.95);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            animation: popupAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+        }
+
+        .coming-soon-link {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <nav class="bg-[#0f1a1f] border-b border-[#0a2622]">
+        <div class="flex justify-between items-center h-16 px-6">
+            <div class="flex items-center">
+                <a href="/" class="flex items-center justify-center h-16">
+                    <img src="/assets/Purrgem.png" alt="Logo" class="h-8 w-17 object-contain">
+                </a>
+                <div class="flex items-center gap-8 ml-8 mt-0.5">
+                    <a href="/airdrops" class="nav-link active">Airdrops</a>
+                    <span class="text-[13px] text-white/50 mx-[6px]">[Shitcoins]</span>
+                    <span class="text-[13px] text-white/50 mx-[6px]">[Layer 1's]</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-[13px] text-white/50 mx-[6px] mt-0.5">[Chat]</span>
+                <a href="/explorer" class="text-[#0f1a1f] bg-[rgba(72,255,225,0.9)] px-3 py-1 rounded text-[13px] hover:bg-[rgba(140,255,235,0.9)] transition-colors">Explorer</a>
+                <a href="https://x.com/purrg_hl" target="_blank" class="flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="min-h-screen pt-12">
+        <div class="max-w-7xl mx-auto px-8 pt-20">
+            <div class="flex flex-col mb-8">
+                <h1 class="text-4xl font-bold">
+                    <span class="text-[rgba(72,255,225,0.9)]">Airdrops</span>
+                    <span>Purrged</span>
+                </h1>
+                <p class="text-[rgb(148,158,156)] mt-2">HYPE is the special one. Nice try.</p>
+            </div>
+
+            <div class="grid grid-cols-7 mb-12">
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Market Cap</p>
+                    <p class="text-2xl market-cap font-normal">$8,850,584,777</p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Performance since TGE</p>
+                    <p class="text-2xl text-emerald-400 flex items-center font-normal">
+                        <span class="performance">598.2%</span>
+                        <span class="text-sm bg-emerald-400/20 text-emerald-400 px-2 py-1 rounded ml-2 multiplier">6x</span>
+                    </p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Mog Counter</p>
+                    <div class="flex items-center gap-2">
+                        <img src="/assets/lol.png" alt="Mog Counter Icon" class="w-12 h-12 object-contain mog-counter" id="mogCounter">
+                        <span class="text-2xl font-normal">5</span>
+                    </div>
+                </div>
+                <div class="col-span-2"></div>
+            </div>
+            
+            <div class="grid" style="grid-template-columns: 1fr 3fr; gap: 0.5rem;">
+                <!-- Airdrops Box -->
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 pt-3 pb-6">
+                    <div class="border-b border-gray-700 mb-4 relative">
+                        <div class="flex">
+                            <span class="text-sm cursor-pointer hover:text-white transition-colors relative pb-2" onclick="selectTab(this, 'airdrops')">
+                                Airdrops
+                                <div class="absolute tab-indicator left-0 w-full bg-emerald-400"></div>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-4" style="display: flex;">
+                        <img src="/assets/Logos/Hype.png" alt="HYPE" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity selected" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/Arbitrum.png" alt="ARB" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/Friend.png" alt="FRIEND" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/Jito.png" alt="JTO" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/MagicalEden.png" alt="ME" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/Pengu.jpeg" alt="PENGU" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/Uniswap.png" alt="UNI" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/TIA.png" alt="TIA" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/ENS.png" alt="ENS" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/JUP.png" alt="JUP" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/WEN.png" alt="WEN" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/AEVO.png" alt="AEVO" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/ENA.png" alt="ENA" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/W.png" alt="W" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/ETHFI.png" alt="ETHFI" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/ZRO.png" alt="ZRO" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/STRK.png" alt="STRK" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/EIGEN.png" alt="EIGEN" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                        <img src="/assets/Logos/DBR.png" alt="DBR" class="airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity" onclick="selectIcon(this)">
+                    </div>
+                </div>
+                
+                <!-- About Box -->
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 pt-3 pb-6">
+                    <div class="border-b border-gray-700 mb-4 relative">
+                        <div class="flex gap-4">
+                            <span class="text-sm cursor-pointer text-white transition-colors relative pb-2" onclick="selectTab(this, 'about')">
+                                About
+                                <div class="absolute tab-indicator left-0 w-full bg-emerald-400"></div>
+                            </span>
+                            <span onclick="selectTab(this, 'bagFumbled')" 
+                                  class="text-sm text-[rgb(148,158,156)] relative cursor-pointer hover:text-white transition-colors pb-2 flex items-center gap-2">
+                                Bag Fumbled
+                                <button onclick="event.stopPropagation(); window.selectNewTweet()" 
+                                        class="text-emerald-400 hover:text-emerald-300 transition-colors p-1 rounded-full hover:bg-emerald-400/10 hidden bagFumbled-refresh">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                </button>
+                                <div class="absolute tab-indicator left-0 w-full bg-emerald-400" style="display: none;"></div>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- About Content -->
+                    <div id="about-content" class="flex">
+                        <div class="w-[35%] content-left">
+                            <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 40px;">
+                                <div style="width: 300px;">
+                                    <div style="display: flex; flex-direction: column; gap: 25px;">
+                                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                                            <!-- Average Airdrop section -->
+                                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                                <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Average Airdrop</p>
+                                                <div>
+                                                    <p class="text-xl text-emerald-400 airdrop-value">$4,372.50</p>
+                                                    <p class="text-xs text-[rgb(148,158,156)]">
+                                                        <a href="#" class="hover:underline cursor-help">2915 HYPE</a>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Information section -->
+                                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                                <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Information</p>
+                                                <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1"></p>
+                                                <p class="text-[12px] text-[rgb(148,158,156)]" id="desc2"></p>
+                                                <p></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-[65%] content-right relative" style="min-height: 300px;">
+                            <div class="absolute top-0 right-0 w-full h-full" style="min-height: 300px;">
+                                <div class="relative h-full" style="min-height: 300px;">
+                                    <div id="price-chart" class="w-full h-full" style="min-height: 300px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Bag Fumbled Content -->
+                    <div id="bagFumbled-content" class="hidden">
+                        <div class="relative w-full min-h-[300px]" style="background: repeating-conic-gradient(from 0deg, transparent 0deg, transparent 10deg, rgba(16, 185, 129, 0.03) 10deg, rgba(16, 185, 129, 0.03) 11deg), repeating-conic-gradient(from 180deg, transparent 0deg, transparent 10deg, rgba(16, 185, 129, 0.03) 10deg, rgba(16, 185, 129, 0.03) 11deg); background-position: center, center; background-size: 100% 100%;">
+                            <div id="tweet-list-container" class="w-full relative">
+                                <!-- TweetList component will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Performance Ranking Section -->
+            <div class="mt-4">
+                <div class="flex gap-4 mb-2 px-6">
+                    <span class="text-xs text-white transition-colors cursor-pointer" onclick="updateRankingOrder('size')" data-sort="size">Size</span>
+                    <span class="text-xs text-[rgb(148,158,156)] hover:text-white transition-colors cursor-pointer" onclick="updateRankingOrder('performance')" data-sort="performance">Performance</span>
+                </div>
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative">
+                    <div class="performance-ranking">
+                        <!-- Single scrollable row -->
+                        <div class="flex items-center gap-4 overflow-x-auto pb-2" style="scrollbar-width: thin; scrollbar-color: #10B981 transparent;">
+                            <!-- All tokens will go here in a single row -->
+                        </div>
+                    </div>
+                    <img src="/assets/small.png" alt="Small" class="absolute -bottom-6 -right-6 w-12 h-12 object-contain transform rotate-12">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> </html> 
