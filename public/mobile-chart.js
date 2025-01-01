@@ -565,33 +565,47 @@ document.addEventListener('DOMContentLoaded', () => {
         position: relative;
         height: 100px;
         width: 100%;
-        margin-top: 20px;
-        margin-bottom: 20px;
+
         display: flex;
         justify-content: space-around;
         align-items: center;
         overflow: visible;
     `;
 
-    // Array of available stickers
-    const availableStickers = [1, 2, 3, 4, 5, 6, 7, 9, 10, 13, 14, 15, 16, 17, 22, 32, 42, 69, 70];
+    // Use specific stickers instead of random ones
+    const selectedStickers = [32, 22, 69, 42]; // Mog, Pamp, Nice, Chad
     
-    // Randomly select 4 unique stickers
-    const selectedStickers = [];
-    while (selectedStickers.length < 4) {
-        const randomIndex = Math.floor(Math.random() * availableStickers.length);
-        const sticker = availableStickers[randomIndex];
-        if (!selectedStickers.includes(sticker)) {
-            selectedStickers.push(sticker);
-        }
-    }
-
-    // Create keyframes for gentle floating animation
+    // Create keyframes for floating and click animations
     const floatKeyframes = `
         @keyframes gentleFloat {
             0% { transform: translateY(0) rotate(var(--rotation)); }
-            50% { transform: translateY(-10px) rotate(var(--rotation)); }
+            25% { transform: translateY(-15px) rotate(calc(var(--rotation) - 5deg)); }
+            50% { transform: translateY(-5px) rotate(calc(var(--rotation) + 5deg)); }
+            75% { transform: translateY(-12px) rotate(calc(var(--rotation) - 3deg)); }
             100% { transform: translateY(0) rotate(var(--rotation)); }
+        }
+
+        @keyframes popEffect {
+            0% { transform: scale(1) rotate(var(--rotation)); }
+            50% { transform: scale(1.3) rotate(calc(var(--rotation) + 20deg)); }
+            100% { transform: scale(1) rotate(var(--rotation)); }
+        }
+
+        @keyframes shakeEffect {
+            0%, 100% { transform: translate(0, 0) rotate(var(--rotation)); }
+            25% { transform: translate(-5px, 5px) rotate(calc(var(--rotation) - 10deg)); }
+            50% { transform: translate(5px, -5px) rotate(calc(var(--rotation) + 10deg)); }
+            75% { transform: translate(-3px, -3px) rotate(calc(var(--rotation) - 5deg)); }
+        }
+
+        @keyframes spinEffect {
+            0% { transform: rotate(var(--rotation)); }
+            100% { transform: rotate(calc(var(--rotation) + 360deg)); }
+        }
+
+        @keyframes quickSpin {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1) rotate(360deg); }
         }
     `;
 
@@ -600,25 +614,84 @@ document.addEventListener('DOMContentLoaded', () => {
     style.textContent = floatKeyframes;
     document.head.appendChild(style);
 
-    // Add stickers with animations
+    // Available stickers for changing on click
+    const availableStickers = [1, 2, 3, 4, 5, 6, 7, 9, 10, 13, 14, 15, 16, 17, 22, 32, 42, 69, 70];
+
+    // Function to change sticker
+    function changeSticker(sticker) {
+        const currentStickerNum = parseInt(sticker.src.split('/').pop());
+        const availableChoices = availableStickers.filter(num => num !== currentStickerNum);
+        const newStickerNum = availableChoices[Math.floor(Math.random() * availableChoices.length)];
+        
+        // Add spin and fade effect
+        sticker.style.animation = 'quickSpin 0.3s ease-in-out';
+        sticker.style.opacity = '0';
+        
+        // Change image during spin
+        setTimeout(() => {
+            sticker.src = `/assets/Sticker/${newStickerNum}.png`;
+            // Ensure image is loaded before fading back in
+            sticker.onload = () => {
+                sticker.style.opacity = '0.9';
+                // Reset to floating animation after spin completes
+                setTimeout(() => {
+                    sticker.style.animation = `gentleFloat ${sticker.dataset.duration}s ease-in-out infinite ${sticker.dataset.delay}s`;
+                }, 300);
+            };
+        }, 150);
+    }
+
+    // Add stickers with enhanced animations and click effects
     selectedStickers.forEach((stickerNum, index) => {
         const sticker = document.createElement('img');
         sticker.src = `/assets/Sticker/${stickerNum}.png`;
-        const randomSize = Math.floor(Math.random() * (70 - 50 + 1)) + 50; // Between 50px and 70px
-        const randomRotation = Math.floor(Math.random() * (30 - (-30) + 1)) + (-30); // Between -30 and 30 degrees
-        const animationDuration = 3 + Math.random() * 2; // Random duration between 3-5s
-        const animationDelay = Math.random() * -5; // Random start time for out-of-sync floating
+        const size = 60; // Fixed size for consistency
+        const baseRotation = [-15, -5, 5, 15][index]; // Different base rotation for each sticker
+        const animationDuration = 4 + (index * 0.5); // Staggered durations
+        const animationDelay = index * -1; // Staggered delays
+
+        // Store animation parameters for later use
+        sticker.dataset.duration = animationDuration;
+        sticker.dataset.delay = animationDelay;
 
         sticker.style.cssText = `
-            width: ${randomSize}px;
-            height: ${randomSize}px;
+            width: ${size}px;
+            height: ${size}px;
             object-fit: contain;
-            opacity: 1;
-            --rotation: ${randomRotation}deg;
+            opacity: 0.9;
+            cursor: pointer;
+            --rotation: ${baseRotation}deg;
             animation: gentleFloat ${animationDuration}s ease-in-out infinite;
             animation-delay: ${animationDelay}s;
             transform-origin: center center;
+            transition: opacity 0.15s ease;
         `;
+
+        // Add hover effect
+        sticker.onmouseover = () => {
+            if (!sticker.isChanging) {
+                sticker.style.transform = `scale(1.2) rotate(${baseRotation + 10}deg)`;
+                sticker.style.opacity = '1';
+            }
+        };
+        sticker.onmouseout = () => {
+            if (!sticker.isChanging) {
+                sticker.style.transform = '';
+                sticker.style.opacity = '0.9';
+            }
+        };
+
+        // Add click effect
+        sticker.onclick = () => {
+            if (!sticker.isChanging) {
+                sticker.isChanging = true;
+                changeSticker(sticker);
+                setTimeout(() => {
+                    sticker.isChanging = false;
+                }, 450); // After transition completes
+            }
+        };
+
         stickerSection.appendChild(sticker);
     });
 

@@ -11,21 +11,12 @@
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "pages/mobile/**", "use": "@vercel/static" },
     { "src": "pages/explorer/**", "use": "@vercel/static" },
-    { "src": "pages/airdrops/**", "use": "@vercel/static" },
-    { "src": "pages/chat/**", "use": "@vercel/static" }
+    { "src": "pages/airdrops/**", "use": "@vercel/static" }
   ],
-  "env": {
-    "UPSTASH_REDIS_REST_URL": "https://witty-dassie-40050.upstash.io",
-    "UPSTASH_REDIS_REST_TOKEN": "AZxyAAIjcDE3Mzk2MTJkNzJjMDg0Yzk0ODMyZWE3YmRjOGRmZTQxZHAxMA"
-  },
   "routes": [
     {
       "src": "/airdrops",
       "dest": "/pages/airdrops/index.html"
-    },
-    {
-      "src": "/chat",
-      "dest": "/pages/chat/index.html"
     },
     {
       "src": "/explorer",
@@ -43,34 +34,8 @@
       "dest": "/pages/mobile/$1"
     },
     {
-      "src": "/api/redis/get-token-data",
-      "dest": "/pages/api/redis/get-token-data.js",
-      "methods": ["GET", "OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
-      }
-    },
-    {
-      "src": "/api/redis/(.*)",
-      "dest": "/pages/api/redis/$1.js",
-      "methods": ["GET", "OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
-      }
-    },
-    {
       "src": "/api/(.*)",
-      "dest": "/pages/api/$1.js",
-      "methods": ["GET", "OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type"
-      }
+      "dest": "/pages/api/$1.js"
     },
     {
       "src": "/assets/(.*)",
@@ -85,22 +50,7 @@
       "dest": "/public/$1"
     },
     {
-      "src": "/check-mobile",
-      "dest": "/server.js"
-    },
-    {
       "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*Mobile.*"
-        }
-      ],
-      "dest": "/pages/mobile/index.html"
     },
     {
       "src": "/",

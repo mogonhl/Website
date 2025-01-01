@@ -197,9 +197,23 @@ window.selectIcon = function(element) {
 
 // Select tab
 window.selectTab = function(element, tabName) {
-    // Remove active state from all tabs in the same group
-    const tabGroup = element.closest('.flex');
-    tabGroup.querySelectorAll('span').forEach(tab => {
+    // Get the parent container to determine which tab group we're in
+    const isAirdropsContainer = element.closest('.flex').parentElement.parentElement.classList.contains('airdrops-box');
+    
+    if (isAirdropsContainer) {
+        // Airdrops tab should always be active
+        element.classList.remove('text-[rgb(148,158,156)]');
+        element.classList.add('text-white');
+        const indicator = element.querySelector('.tab-indicator');
+        if (indicator) {
+            indicator.style.display = 'block';
+        }
+        return; // Exit early for Airdrops tab
+    }
+    
+    // Handle About/Bag Fumbled tabs
+    const aboutBagGroup = element.closest('.flex');
+    aboutBagGroup.querySelectorAll('span').forEach(tab => {
         tab.classList.remove('text-white');
         tab.classList.add('text-[rgb(148,158,156)]');
         const indicator = tab.querySelector('.tab-indicator');
@@ -216,15 +230,17 @@ window.selectTab = function(element, tabName) {
         indicator.style.display = 'block';
     }
     
-    // Show/hide content based on selected tab
-    const contents = {
-        'about': document.getElementById('about-content'),
-        'bagFumbled': document.getElementById('bagFumbled-content')
-    };
-    
-    Object.entries(contents).forEach(([name, content]) => {
-        if (content) {
-            content.style.display = name === tabName ? 'block' : 'none';
-        }
-    });
+    // Only toggle About/Bag Fumbled content
+    if (tabName === 'about' || tabName === 'bagFumbled') {
+        const contents = {
+            'about': document.getElementById('about-content'),
+            'bagFumbled': document.getElementById('bagFumbled-content')
+        };
+        
+        Object.entries(contents).forEach(([name, content]) => {
+            if (content) {
+                content.style.display = name === tabName ? 'block' : 'none';
+            }
+        });
+    }
 }; 

@@ -139,7 +139,9 @@ export default function AirdropsPage() {
                             <div className="border-b border-gray-700 mb-4 relative">
                                 <div className="flex">
                                     <span 
-                                        className={`text-sm cursor-pointer hover:text-white transition-colors relative pb-2 ${activeTab === 'airdrops' ? 'text-white' : 'text-[rgb(148,158,156)]'}`}
+                                        className={`text-sm cursor-pointer hover:text-white transition-colors relative pb-2 ${
+                                            activeTab === 'airdrops' ? 'text-white' : 'text-[rgb(148,158,156)]'
+                                        }`}
                                         onClick={() => handleTabSelect('airdrops')}
                                     >
                                         Airdrops
@@ -156,7 +158,9 @@ export default function AirdropsPage() {
                                             key={symbol}
                                             src={`/assets/Logos/${symbol}.png`}
                                             alt={symbol}
-                                            className={`airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${currentToken === symbol ? 'selected' : ''}`}
+                                            className={`airdrop-icon w-10 h-10 rounded-full cursor-pointer hover:opacity-80 transition-opacity ${
+                                                currentToken === symbol ? 'selected' : ''
+                                            }`}
                                             onClick={() => handleTokenSelect(symbol)}
                                         />
                                     ))

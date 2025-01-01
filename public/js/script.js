@@ -21,13 +21,21 @@ window.selectIcon = function(element) {
     if (window.updateChartForToken) {
         window.updateChartForToken(window.currentToken);
     }
+
+    // Update TweetList if Bag Fumbled tab is active
+    const bagFumbledContent = document.getElementById('bagFumbled-content');
+    if (bagFumbledContent && !bagFumbledContent.classList.contains('hidden')) {
+        window.refreshTweet(); // Use the existing refresh function
+    }
 };
 
-// Function to select a tab
-window.selectTab = function(element, tabName) {
-    // Remove active state from all tabs in the same group
+// Function to handle About/Bag Fumbled tabs
+window.selectContentTab = function(element, tabName) {
+    // Get the About/Bag Fumbled tab group
     const tabGroup = element.closest('.flex');
-    tabGroup.querySelectorAll('.text-sm').forEach(tab => {
+    
+    // Reset all tabs in this group
+    tabGroup.querySelectorAll('span').forEach(tab => {
         tab.classList.remove('text-white');
         tab.classList.add('text-[rgb(148,158,156)]');
         const indicator = tab.querySelector('.tab-indicator');
@@ -36,7 +44,7 @@ window.selectTab = function(element, tabName) {
         }
     });
     
-    // Add active state to selected tab
+    // Activate clicked tab
     element.classList.remove('text-[rgb(148,158,156)]');
     element.classList.add('text-white');
     const indicator = element.querySelector('.tab-indicator');
@@ -44,28 +52,31 @@ window.selectTab = function(element, tabName) {
         indicator.style.display = 'block';
     }
 
-    // Hide all content sections
-    document.querySelectorAll('[id$="-content"]').forEach(content => {
-        content.classList.add('hidden');
-    });
+    // Toggle content visibility
+    const aboutContent = document.getElementById('about-content');
+    const bagFumbledContent = document.getElementById('bagFumbled-content');
+    
+    if (aboutContent) aboutContent.classList.add('hidden');
+    if (bagFumbledContent) bagFumbledContent.classList.add('hidden');
 
-    // Show selected content
     const selectedContent = document.getElementById(`${tabName}-content`);
     if (selectedContent) {
         selectedContent.classList.remove('hidden');
         
         // Initialize TweetList for Bag Fumbled tab
         if (tabName === 'bagFumbled') {
-            const container = document.getElementById('tweet-list-container');
-            if (container && window.TweetList) {
-                if (!window.tweetRoot) {
-                    window.tweetRoot = ReactDOM.createRoot(container);
-                }
-                window.tweetRoot.render(React.createElement(window.TweetList, { 
-                    token: window.currentToken.toLowerCase()
-                }));
-            }
+            window.refreshTweet(); // Use the existing refresh function
         }
+    }
+};
+
+// Function to handle Airdrops tab (always active)
+window.selectAirdropsTab = function(element) {
+    element.classList.remove('text-[rgb(148,158,156)]');
+    element.classList.add('text-white');
+    const indicator = element.querySelector('.tab-indicator');
+    if (indicator) {
+        indicator.style.display = 'block';
     }
 };
 

@@ -421,7 +421,6 @@
         }
 
         .return-value span:first-child {
-            color: #34d399 !important;
             font-size: 1.25rem;
         }
 
@@ -429,7 +428,6 @@
             background: rgba(52, 211, 153, 0.1);
             padding: 0.1rem 0.3rem;
             border-radius: 4px;
-            color: #34d399;
             font-size: 0.7rem;
         }
 
@@ -665,12 +663,10 @@
         }
 
         .ticker-value {
-            color: #34d399 !important;
             font-size: 1.25rem;
         }
 
         .return-value span:first-child {
-            color: #34d399 !important;
             font-size: 1.25rem;
         }
 
@@ -678,7 +674,6 @@
             background: rgba(52, 211, 153, 0.1);
             padding: 0.1rem 0.3rem;
             border-radius: 4px;
-            color: #34d399;
             font-size: 0.7rem;
         }
     </style>
@@ -745,7 +740,7 @@
                     </div>
                     <div class="stat-item" style="flex: 1;">
                         <h3>Ticker</h3>
-                        <div class="ticker-value" style="color: #34d399 !important; font-size: 1.25rem;">$HYPE</div>
+                        <div class="ticker-value" style="font-size: 1.25rem;">$HYPE</div>
                     </div>
                 </div>
                 <div class="bottom-stats">
@@ -1272,10 +1267,6 @@
         window.TOKENS = TOKENS;
         window.currentToken = 'HYPE';  // Default token
 
-        // Constants for price fetching
-        const CACHE_KEY = 'bulk_price_data';
-        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
         // Helper function to format numbers with dots
         function formatNumberWithDots(num) {
             return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -1388,9 +1379,19 @@
                 const mogCounterElement = document.querySelector('.bottom-stats .stat-item:last-child .stat-value span');
 
                 if (marketCapElement) marketCapElement.textContent = `$${formatNumber(metrics.marketCap, true)}`;
-                if (tickerElement) tickerElement.textContent = `$${window.currentToken}`;
-                if (sincelaunchElement) sincelaunchElement.textContent = `${Math.round(metrics.performancePercent)}%`;
-                if (multiplierBadge) multiplierBadge.textContent = `${metrics.multiplier.toFixed(1)}x`;
+                if (tickerElement) {
+                    tickerElement.textContent = `$${window.currentToken}`;
+                    tickerElement.style.color = metrics.performancePercent < 0 ? '#f87171' : '#34d399';
+                }
+                if (sincelaunchElement) {
+                    sincelaunchElement.textContent = `${Math.round(metrics.performancePercent)}%`;
+                    sincelaunchElement.style.color = metrics.performancePercent < 0 ? '#f87171' : '#34d399';
+                }
+                if (multiplierBadge) {
+                    multiplierBadge.textContent = `${metrics.multiplier.toFixed(1)}x`;
+                    multiplierBadge.style.color = metrics.performancePercent < 0 ? '#f87171' : '#34d399';
+                    multiplierBadge.style.backgroundColor = metrics.performancePercent < 0 ? 'rgba(248, 113, 113, 0.2)' : 'rgba(52, 211, 153, 0.2)';
+                }
                 if (mogCounterElement) mogCounterElement.textContent = moggedCount.toString();
 
             } catch (error) {
@@ -1417,4 +1418,4 @@
         observer.observe(appContent, { attributes: true, attributeFilter: ['class'] });
     </script>
 </body>
-</html> 
+</html>
