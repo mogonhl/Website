@@ -365,10 +365,6 @@
                     <div class="section-content">
                         <div class="text-xl mb-4 flex items-center gap-2">
                             Latest Transactions
-                            <div class="sorry-popup">
-                                <img src="/assets/sorry.png" alt="Sorry">
-                            </div>
-                            <span class="text-xs text-[rgba(72,255,225,0.9)] bg-[rgba(72,255,225,0.1)] px-2 py-1 rounded coming-soon" onclick="showSorry(this)">Coming Soon</span>
                         </div>
                         <div class="table-container">
                             <table>
@@ -383,116 +379,14 @@
                                 </thead>
                                 <tbody id="transactions">
                                     <tr>
-                                        <td><a href="#" class="hash-link">0xb26e...fbb2</a></td>
-                                        <td>Cancel order</td>
-                                        <td><a href="#" class="hash-link">440793742</a></td>
-                                        <td class="time">0 sec ago</td>
-                                        <td>0x023a...2355</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x4dc8...d017</a></td>
-                                        <td>CancelByCbId</td>
-                                        <td><a href="#" class="hash-link">440793741</a></td>
-                                        <td class="time">0 sec ago</td>
-                                        <td>0x585a...9d5d</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0xa7f1...e3c9</a></td>
-                                        <td>Place order</td>
-                                        <td><a href="#" class="hash-link">440793740</a></td>
-                                        <td class="time">1 sec ago</td>
-                                        <td>0x7b2c...1f8e</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x9e3d...b4a5</a></td>
-                                        <td>Withdraw</td>
-                                        <td><a href="#" class="hash-link">440793739</a></td>
-                                        <td class="time">1 sec ago</td>
-                                        <td>0x3f1d...8c7a</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0xc5f2...a8d6</a></td>
-                                        <td>Place order</td>
-                                        <td><a href="#" class="hash-link">440793738</a></td>
-                                        <td class="time">1 sec ago</td>
-                                        <td>0x9e4b...2d5f</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x2b8d...f7e1</a></td>
-                                        <td>Deposit</td>
-                                        <td><a href="#" class="hash-link">440793737</a></td>
-                                        <td class="time">2 sec ago</td>
-                                        <td>0x4a7c...6b3e</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0xe6a4...c2b9</a></td>
-                                        <td>Cancel order</td>
-                                        <td><a href="#" class="hash-link">440793736</a></td>
-                                        <td class="time">2 sec ago</td>
-                                        <td>0x8d5e...4f2a</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x1f7c...d9e4</a></td>
-                                        <td>Place order</td>
-                                        <td><a href="#" class="hash-link">440793735</a></td>
-                                        <td class="time">2 sec ago</td>
-                                        <td>0x2c9b...7a4d</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x8a3b...e5c7</a></td>
-                                        <td>CancelByCbId</td>
-                                        <td><a href="#" class="hash-link">440793734</a></td>
-                                        <td class="time">3 sec ago</td>
-                                        <td>0x6f1e...9c8b</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0xd4e2...b1f8</a></td>
-                                        <td>Place order</td>
-                                        <td><a href="#" class="hash-link">440793733</a></td>
-                                        <td class="time">3 sec ago</td>
-                                        <td>0x1a8d...5e3c</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x7b9c...a4d2</a></td>
-                                        <td>Withdraw</td>
-                                        <td><a href="#" class="hash-link">440793732</a></td>
-                                        <td class="time">3 sec ago</td>
-                                        <td>0xc4f7...2b6a</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x3e5f...c8b1</a></td>
-                                        <td>Place order</td>
-                                        <td><a href="#" class="hash-link">440793731</a></td>
-                                        <td class="time">4 sec ago</td>
-                                        <td>0x9b2e...7d4c</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0xf2a7...e6d9</a></td>
-                                        <td>Cancel order</td>
-                                        <td><a href="#" class="hash-link">440793730</a></td>
-                                        <td class="time">4 sec ago</td>
-                                        <td>0x5d8a...1f3b</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x6c1d...b9e4</a></td>
-                                        <td>Deposit</td>
-                                        <td><a href="#" class="hash-link">440793729</a></td>
-                                        <td class="time">4 sec ago</td>
-                                        <td>0xe2b7...8a5c</td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="#" class="hash-link">0x9a4b...d2c7</a></td>
-                                        <td>Place order</td>
-                                        <td><a href="#" class="hash-link">440793728</a></td>
-                                        <td class="time">5 sec ago</td>
-                                        <td>0x7f3c...4e1d</td>
+                                        <td colspan="5" class="text-center py-8">
+                                            <div class="flex items-center justify-center">
+                                                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[rgba(72,255,225,0.9)]"></div>
+                                            </div>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
-                        </div>
-                        <div class="view-all mt-4">
-                            <a href="#" class="view-all-button">View All Transactions</a>
-                            <span class="pagination">1-15 of 300</span>
                         </div>
                     </div>
                 </div>
@@ -889,5 +783,6 @@
             }, 800);
         }
     </script>
+    <script src="/js/transactions.js"></script>
 </body>
 </html> 

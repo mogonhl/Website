@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 
 const ws = new WebSocket('wss://api.hyperliquid.xyz/ws', {
     headers: {
-        'Origin': 'https://hypurrscan.io'
+        'Origin': 'https://purrg.com'
     }
 });
 
