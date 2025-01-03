@@ -254,7 +254,6 @@ function connectTransactionWebSocket() {
     const ws = new WebSocket('wss://api-ui.hyperliquid.xyz/ws');
 
     ws.onopen = function() {
-        console.log('Connected to Hyperliquid WebSocket API');
         // Subscribe to transactions
         ws.send(JSON.stringify({
             method: "subscribe",
@@ -267,13 +266,6 @@ function connectTransactionWebSocket() {
     ws.onmessage = function(event) {
         try {
             const data = JSON.parse(event.data);
-            
-            // More detailed logging
-            console.log('=== New WebSocket Message ===');
-            console.log('Message type:', Array.isArray(data) ? 'Array of ' + data.length + ' items' : typeof data);
-            if (Array.isArray(data) && data.length > 0) {
-                console.log('First item sample:', JSON.stringify(data[0], null, 2));
-            }
 
             // Handle transaction data
             if (Array.isArray(data)) {
