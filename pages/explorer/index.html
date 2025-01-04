@@ -409,6 +409,13 @@
                                     </thead>
                                     <tbody id="blocks">
                                         <!-- Blocks will be inserted here -->
+                                        <tr>
+                                            <td colspan="5" class="text-center">
+                                                <div class="flex items-center justify-center">
+                                                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[rgba(72,255,225,0.9)]"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -503,6 +510,54 @@
                                     </svg>
                                 </button>
                                 <button onclick="changeModalPage(1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="modal-next">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18l6-6-6-6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Modal -->
+        <div class="modal-backdrop" id="transactionsModal">
+            <div class="modal">
+                <div class="modal-content">
+                    <div class="text-xl mb-4">All Transactions</div>
+                    <div class="modal-close" onclick="closeTransactionsModal()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6L6 18M6 6l12 12"/>
+                        </svg>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Hash</th>
+                                    <th>Action</th>
+                                    <th>Block</th>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalTransactions">
+                                <!-- Transactions will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="view-all">
+                        <div></div>
+                        <div class="flex items-center gap-2">
+                            <span class="pagination" id="transactions-modal-pagination">1-15 of 300</span>
+                            <div class="flex gap-1">
+                                <button onclick="changeTransactionsModalPage(-1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="transactions-modal-prev">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M15 18l-6-6 6-6"/>
+                                    </svg>
+                                </button>
+                                <button onclick="changeTransactionsModalPage(1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="transactions-modal-next">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M9 18l6-6-6-6"/>
                                     </svg>
@@ -806,6 +861,7 @@
 
         // Modal functionality
         const modal = document.getElementById('blocksModal');
+        const transactionsModal = document.getElementById('transactionsModal');
         
         function openModal() {
             modal.classList.add('active');
@@ -842,7 +898,7 @@
         }
 
         // Update the view all blocks link
-        document.querySelector('.view-all-button').onclick = (e) => {
+        document.querySelector('.section:first-child .view-all-button').onclick = (e) => {
             e.preventDefault();
             openModal();
         };
@@ -868,6 +924,24 @@
             document.getElementById('modal-prev').disabled = modalCurrentPage === 1;
             document.getElementById('modal-next').disabled = end >= allBlocks.length;
         }
+
+        // Close transactions modal when clicking outside
+        transactionsModal.addEventListener('click', (e) => {
+            if (e.target === transactionsModal) {
+                transactionsModal.classList.remove('active');
+            }
+        });
+
+        // Add escape key handler for all modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                if (transactionsModal) {
+                    transactionsModal.classList.remove('active');
+                }
+                closeSearchModal();
+            }
+        });
 
         let activePopups = [];
         let popupTimeout;
@@ -1361,8 +1435,17 @@
         }
 
         // Add CoinGecko price fetching function
+        let priceCache = {};
+        let lastPriceUpdate = 0;
+        const PRICE_CACHE_DURATION = 60000; // 1 minute cache
+
         async function fetchCoinPrices(coins) {
             try {
+                const now = Date.now();
+                if (now - lastPriceUpdate < PRICE_CACHE_DURATION && Object.keys(priceCache).length > 0) {
+                    return priceCache;
+                }
+
                 const coinIds = {
                     'BTC': 'bitcoin',
                     'ETH': 'ethereum',
@@ -1390,18 +1473,19 @@
                 const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinGeckoIds.join(',')}&vs_currencies=usd`);
                 const data = await response.json();
                 
-                // Convert back to our ticker format
-                const prices = {};
+                // Update cache
+                priceCache = {};
                 Object.entries(coinIds).forEach(([ticker, id]) => {
                     if (data[id]) {
-                        prices[ticker] = data[id].usd;
+                        priceCache[ticker] = data[id].usd;
                     }
                 });
+                lastPriceUpdate = now;
                 
-                return prices;
+                return priceCache;
             } catch (error) {
                 console.error('Error fetching prices:', error);
-                return {};
+                return priceCache; // Return cached prices on error
             }
         }
 
@@ -1439,7 +1523,7 @@
                                     
                                     const totalPositions = shorts.length + longs.length;
                                     
-                                    if (totalPositions > 10) {
+                                    if (totalPositions > 6) {
                                         // Calculate totals
                                         const totalShortValue = shorts.reduce((sum, pos) => sum + Math.abs(parseFloat(pos.position.positionValue)), 0);
                                         const totalLongValue = longs.reduce((sum, pos) => sum + parseFloat(pos.position.positionValue), 0);
@@ -1447,18 +1531,34 @@
                                         return `
                                             <div class="bg-[#0f1a1f] rounded overflow-hidden">
                                                 ${shorts.length > 0 ? `
-                                                    <div class="p-4 border-b border-[#1a4f44]">
+                                                    <div class="p-4 border-b border-gray-800">
                                                         <div class="flex items-center justify-between">
-                                                            <div class="text-red-400">Open Shorts (${shorts.map(p => p.position.coin).join(', ')})</div>
+                                                            <div class="text-red-400">Open Shorts</div>
                                                             <div class="text-sm">$${totalShortValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                                        </div>
+                                                        <div class="text-gray-400 text-sm mt-2">
+                                                            ${(() => {
+                                                                const visibleShorts = shorts.slice(0, 15);
+                                                                const remainingShorts = shorts.length - 15;
+                                                                return visibleShorts.map(p => p.position.coin).join(', ') + 
+                                                                    (remainingShorts > 0 ? ` + ${remainingShorts} more` : '');
+                                                            })()}
                                                         </div>
                                                     </div>
                                                 ` : ''}
                                                 ${longs.length > 0 ? `
                                                     <div class="p-4">
                                                         <div class="flex items-center justify-between">
-                                                            <div class="text-green-400">Open Longs (${longs.map(p => p.position.coin).join(', ')})</div>
+                                                            <div class="text-green-400">Open Longs</div>
                                                             <div class="text-sm">$${totalLongValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                                        </div>
+                                                        <div class="text-gray-400 text-sm mt-2">
+                                                            ${(() => {
+                                                                const visibleLongs = longs.slice(0, 15);
+                                                                const remainingLongs = longs.length - 15;
+                                                                return visibleLongs.map(p => p.position.coin).join(', ') + 
+                                                                    (remainingLongs > 0 ? ` + ${remainingLongs} more` : '');
+                                                            })()}
                                                         </div>
                                                     </div>
                                                 ` : ''}
@@ -1467,21 +1567,32 @@
                                     } else if (totalPositions > 0) {
                                         return `
                                             <div class="bg-[#0f1a1f] rounded overflow-hidden">
+                                                <div class="grid grid-cols-8 p-4 border-b border-gray-800 text-xs text-gray-400">
+                                                    <div>Coin</div>
+                                                    <div>Size</div>
+                                                    <div>Position Value</div>
+                                                    <div>Entry Price</div>
+                                                    <div>Mark Price</div>
+                                                    <div>PNL (ROE %)</div>
+                                                    <div>Liq. Price</div>
+                                                    <div>Margin</div>
+                                                </div>
                                                 ${[...longs, ...shorts].map((pos, index, array) => `
-                                                    <div class="p-4 ${index !== array.length - 1 ? 'border-b border-[#1a4f44]' : ''}">
-                                                        <div class="flex items-center justify-between">
-                                                            <div>
-                                                                <span class="${pos.position.szi > 0 ? 'text-green-400' : 'text-red-400'}">${pos.position.coin}</span>
-                                                                <span class="${pos.position.szi > 0 ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'} text-xs px-2 py-0.5 rounded-full ml-2">${pos.position.leverage?.value || ''}x</span>
-                                                            </div>
-                                                            <div class="text-sm">
-                                                                <span class="${pos.position.szi > 0 ? 'text-green-400' : 'text-red-400'}">${parseFloat(pos.position.szi).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                                                <span class="mx-2">•</span>
-                                                                <span>$${parseFloat(pos.position.positionValue).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                                                <span class="mx-2">•</span>
-                                                                <span class="${parseFloat(pos.position.unrealizedPnl) > 0 ? 'text-green-400' : 'text-red-400'}">$${parseFloat(pos.position.unrealizedPnl).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                                                            </div>
+                                                    <div class="grid grid-cols-8 p-4 ${index !== array.length - 1 ? 'border-b border-gray-800' : ''}">
+                                                        <div>
+                                                            <span class="${pos.position.szi > 0 ? 'text-green-400' : 'text-red-400'}">${pos.position.coin}</span>
+                                                            <span class="${pos.position.szi > 0 ? 'text-green-400 bg-green-400/10' : 'text-red-400 bg-red-400/10'} text-xs px-2 py-0.5 rounded-full ml-2">${pos.position.leverage?.value || ''}x</span>
                                                         </div>
+                                                        <div class="${pos.position.szi > 0 ? 'text-green-400' : 'text-red-400'}">${parseFloat(pos.position.szi).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                                        <div>$${parseFloat(pos.position.positionValue).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                                        <div>${parseFloat(pos.position.entryPx).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                                        <div>${prices[pos.position.coin] ? parseFloat(prices[pos.position.coin]).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 'N/A'}</div>
+                                                        <div class="${parseFloat(pos.position.unrealizedPnl) > 0 ? 'text-green-400' : 'text-red-400'}">
+                                                            $${parseFloat(pos.position.unrealizedPnl).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                            (${parseFloat(pos.position.returnOnEquity * 100).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}%)
+                                                        </div>
+                                                        <div>${pos.position.liquidationPx ? parseFloat(pos.position.liquidationPx).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : 'N/A'}</div>
+                                                        <div>$${parseFloat(pos.position.marginUsed).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} (Cross)</div>
                                                     </div>
                                                 `).join('')}
                                             </div>
