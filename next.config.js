@@ -28,12 +28,16 @@ const nextConfig = {
                 destination: '/pages/airdrops/index.html'
             },
             {
+                source: '/shitcoins',
+                destination: '/pages/shitcoins/index.html'
+            },
+            {
                 source: '/api/:path*',
                 destination: '/api/:path*'
             },
             {
                 source: '/assets/:path*',
-                destination: '/public/assets/:path*'
+                destination: '/assets/:path*'
             }
         ];
     }

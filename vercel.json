@@ -11,9 +11,19 @@
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "pages/mobile/**", "use": "@vercel/static" },
     { "src": "pages/explorer/**", "use": "@vercel/static" },
-    { "src": "pages/airdrops/**", "use": "@vercel/static" }
+    { "src": "pages/airdrops/**", "use": "@vercel/static" },
+    { "src": "pages/shitcoins/**", "use": "@vercel/static" },
+    { "src": "styles/**", "use": "@vercel/static" }
   ],
   "routes": [
+    {
+      "src": "/components/(.*)",
+      "dest": "/public/components/$1"
+    },
+    {
+      "src": "/shitcoins",
+      "dest": "/pages/shitcoins/index.html"
+    },
     {
       "src": "/airdrops",
       "dest": "/pages/airdrops/index.html"
@@ -40,6 +50,10 @@
     {
       "src": "/assets/(.*)",
       "dest": "/public/assets/$1"
+    },
+    {
+      "src": "/styles/(.*)",
+      "dest": "/styles/$1"
     },
     {
       "src": "/app/(.*)",

@@ -1,4 +1,3 @@
-export default function handler(req, res) {
-    console.log('Test endpoint called');
+module.exports = async function handler(req, res) {
     res.status(200).json({ message: 'API is working' });
-} 
+}; 

@@ -1,3 +1,9 @@
+// Add this at the top of the file
+window.updatePriceData = function() {
+    // This is a stub function since we're handling price updates differently now
+    console.debug('Price update requested');
+};
+
 // Initialize current token
 window.currentToken = 'HYPE';
 

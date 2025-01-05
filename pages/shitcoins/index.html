@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shitcoins Purrged</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="/styles/navbar.css" rel="stylesheet" />
+    <script src="/components/navbar.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #002420;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            transform: translateY(20%);
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.5;
+            z-index: -1;
+            transform: translateY(20%);
+        }
+
+        .section {
+            padding-top: 2rem;
+        }
+
+        .min-h-screen {
+            height: 100vh;
+        }
+
+        .explorer-btn {
+            color: #0f1a1f;
+            background: rgba(72, 255, 225, 0.9);
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+            font-size: 13px;
+            margin: 0 6px;
+        }
+
+        .explorer-btn:hover {
+            opacity: 0.9;
+        }
+
+        .tab-indicator {
+            height: 1px;
+            bottom: -1px;
+        }
+
+        .token-icon {
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .token-icon.selected {
+            border-color: rgba(72,255,225,0.9);
+        }
+
+        #price-chart {
+            min-height: 300px;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-right {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-right > div {
+            flex: 1;
+            min-height: 300px;
+        }
+
+        .performance-ranking {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth;
+            padding: 0 12px;
+        }
+        .performance-ranking::-webkit-scrollbar {
+            display: none;
+        }
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(16, 25, 31, 0.8);
+            color: rgb(148, 158, 156);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            z-index: 10;
+            font-size: 18px;
+            transition: color 0.2s;
+        }
+        .nav-arrow:hover {
+            color: #10B981;
+        }
+        .nav-arrow.prev {
+            left: -12px;
+        }
+        .nav-arrow.next {
+            right: -12px;
+        }
+        .icon-container {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 8px;
+            position: relative;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .icon-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            pointer-events: none;
+            user-select: none;
+            display: block;
+        }
+        .icon-container.selected {
+            outline: 2px solid #10B981;
+            outline-offset: 2px;
+        }
+        .separator-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 4px;
+            height: 40px;
+            pointer-events: none;
+            user-select: none;
+            color: rgb(148, 158, 156);
+            opacity: 0.5;
+            font-size: 14px;
+        }
+
+        .mog-counter {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .mog-counter.animate {
+            animation: bounceThrice 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes bounceThrice {
+            0%, 100% { transform: translateY(0); }
+            16% { transform: translateY(-6px); }
+            33% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+            66% { transform: translateY(0); }
+            83% { transform: translateY(-6px); }
+        }
+
+        .lol-text {
+            position: absolute;
+            background: rgba(15, 26, 31, 0.95);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            animation: popupAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+        }
+
+        @keyframes popupAnimation {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0.9);
+            }
+            20% {
+                opacity: 1;
+                transform: translateY(4px) scale(1);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(4px) scale(1);
+            }
+        }
+
+        .coming-soon-text {
+            position: absolute;
+            background: rgba(15, 26, 31, 0.95);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            animation: popupAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+        }
+
+        .coming-soon-link {
+            position: relative;
+        }
+    </style>
+    <!-- Base dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <!-- Babel is used for development only, will be precompiled in production -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Import TweetList component -->
+    <script type="text/babel" src="/app/components/TweetList.js"></script>
+    
+    <!-- Add chart.js before script.js -->
+    <script src="/js/script.js"></script>
+    <script src="/js/chart.js" defer></script>
+    <script src="/shitcoins.js" type="module"></script>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="min-h-screen pt-12">
+        <div class="max-w-7xl mx-auto px-8 pt-20">
+            <div class="flex flex-col mb-8">
+                <h1 class="text-4xl font-bold">
+                    <span class="text-[rgba(72,255,225,0.9)]">Shitcoin</span>
+                    <span>Index</span>
+                </h1>
+                <p class="text-[rgb(148,158,156)] mt-2">HYPE is the special one. Nice try.</p>
+            </div>
+
+            <div class="grid grid-cols-7 mb-12">
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Total Mcap</p>
+                    <p class="text-2xl market-cap font-normal">$0</p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Performance</p>
+                    <p class="text-2xl text-emerald-400 flex items-center font-normal">
+                        <span class="performance">0%</span>
+                        <span class="text-sm bg-emerald-400/20 text-emerald-400 px-2 py-1 rounded ml-2 multiplier">0x</span>
+                    </p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Total Assets</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-normal">0</span>
+                    </div>
+                </div>
+                <div class="col-span-2"></div>
+            </div>
+            
+            <!-- About Box -->
+            <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 pt-3 pb-6 mb-4 relative">
+                <div class="absolute inset-0 backdrop-blur-sm bg-[#0f1a1f]/50 z-10 rounded-lg flex items-center justify-center">
+                    <div class="px-8 py-3 bg-[#0f1a1f] border border-[rgba(72,255,225,0.3)] rounded-lg text-[rgba(72,255,225,0.9)] text-sm font-medium relative">
+                        Index Coming...
+                        <img src="/assets/Sticker/7.png" alt="7" class="absolute -bottom-6 -right-6 w-12 h-12 transform rotate-12" />
+                    </div>
+                </div>
+                <div class="border-b border-gray-700 mb-4 relative">
+                    <div class="flex gap-4">
+                        <span class="text-sm cursor-pointer text-white transition-colors relative pb-2" onclick="selectContentTab(this, 'about')">
+                            About
+                            <div class="absolute tab-indicator left-0 w-full bg-emerald-400"></div>
+                        </span>
+                    </div>
+                </div>
+                <!-- About Content -->
+                <div id="about-content" class="flex">
+                    <div class="w-[35%] content-left">
+                        <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 40px;">
+                            <div style="width: 300px;">
+                                <div style="display: flex; flex-direction: column; gap: 25px;">
+                                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                                        <!-- Token Value section -->
+                                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                                            <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Token Value</p>
+                                            <div>
+                                                <p class="text-xl text-emerald-400 token-value">$0</p>
+                                                <p class="text-xs text-[rgb(148,158,156)]">
+                                                    <a href="#" class="hover:underline cursor-help token-amount">0 HYPE</a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Information section -->
+                                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                                            <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Information</p>
+                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1"></p>
+                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc2"></p>
+                                            <p></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-[65%] content-right relative" style="min-height: 300px;">
+                        <div class="absolute top-0 right-0 w-full h-full" style="min-height: 300px;">
+                            <div class="relative h-full" style="min-height: 300px;">
+                                <div id="price-chart" class="w-full h-full" style="min-height: 300px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spot Tokens Section -->
+            <div class="mt-4">
+                <div class="flex items-center mb-4 px-6">
+                    <span class="text-xl text-white font-medium">Spot Tokens</span>
+                </div>
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg">
+                    <!-- Header -->
+                    <div class="grid grid-cols-7 gap-4 px-6 py-3 border-b border-[#0a2622] text-sm text-[rgb(148,158,156)]">
+                        <div class="col-span-2">Pair</div>
+                        <div>Price</div>
+                        <div>24h Change</div>
+                        <div>24h Volume</div>
+                        <div>Market Cap</div>
+                        <div>Snapshot</div>
+                    </div>
+                    <!-- Token Rows Container -->
+                    <div class="token-list">
+                        <!-- Token Row Template -->
+                        <div class="grid grid-cols-7 gap-4 px-6 py-4 border-b border-[#0a2622]">
+                            <div class="col-span-2 flex items-center gap-3">
+                                <img src="/assets/Logos/Hype.png" alt="HYPE" class="w-8 h-8 rounded-full">
+                                <span class="text-white text-sm">HYPE/USDC</span>
+                            </div>
+                            <div class="flex items-center text-[rgb(148,158,156)] text-sm">$0.00</div>
+                            <div class="flex items-center text-emerald-400 text-sm">+0.00%</div>
+                            <div class="flex items-center text-[rgb(148,158,156)] text-sm">$0</div>
+                            <div class="flex items-center text-[rgb(148,158,156)] text-sm">$0</div>
+                            <div class="flex items-center">
+                                <svg class="w-full h-10" viewBox="0 0 200 40" preserveAspectRatio="none">
+                                    <path d="M0 30 L40 25 L80 35 L120 20 L160 28 L200 15" fill="none" stroke="rgba(16, 185, 129, 0.5)" stroke-width="2"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,7 +1,16 @@
+/* Base navbar styles */
+nav {
+    background-color: #0f1a1f;
+    border-bottom: 1px solid #0a2622;
+}
+
+/* Link styles */
 .nav-link {
     color: white;
     text-decoration: none;
+    transition: color 0.2s ease;
     font-size: 13px;
+    margin: 0 6px;
 }
 
 .nav-link:hover {
@@ -9,19 +18,57 @@
 }
 
 /* Active state for regular nav links */
-a[href="/airdrops"].nav-link.active {
+.nav-link.active {
     color: rgba(72, 255, 225, 0.9);
 }
 
 /* Special styling for Explorer button */
-a[href="/explorer"].nav-link {
-    color: #0f1a1f;
-    background: rgba(72, 255, 225, 0.9);
-    padding: 6px 12px;
-    border-radius: 4px;
-    transition: background-color 0.15s ease;
+.explorer-button {
+    color: #0f1a1f !important;
+    background: rgba(72, 255, 225, 0.9) !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    transition: all 0.15s ease !important;
+    margin-left: 12px !important;
 }
 
-a[href="/explorer"].nav-link:hover {
-    background: rgba(140, 255, 235, 0.9);
+.explorer-button:hover {
+    background: rgba(140, 255, 235, 0.9) !important;
+    color: #0f1a1f !important;
+}
+
+/* When Explorer is active */
+.explorer-button.active {
+    background: rgba(140, 255, 235, 0.9) !important;
+    color: #0f1a1f !important;
+}
+
+/* Coming soon popup styles */
+.coming-soon-text {
+    position: absolute;
+    background: rgba(15, 26, 31, 0.95);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    animation: popupAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 50;
+}
+
+@keyframes popupAnimation {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.9);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(4px) scale(1);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(4px) scale(1);
+    }
 } 
