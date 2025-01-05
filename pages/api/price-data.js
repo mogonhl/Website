@@ -24,7 +24,52 @@ export default async function handler(req, res) {
     const dataset = req.query.dataset || 'dataset1';
 
     try {
-        // Try Redis first
+        // Special handling for INDEX token
+        if (token === 'INDEX') {
+            try {
+                console.log('Fetching INDEX data from Redis...');
+                const indexData = await redis.get('spot_data_daily_index');
+                console.log('Raw INDEX data:', indexData);
+                
+                if (indexData) {
+                    const data = typeof indexData === 'string' ? JSON.parse(indexData) : indexData;
+                    console.log('Parsed INDEX data:', data);
+                    
+                    // The data should be an object with prices array
+                    if (data && data.prices && Array.isArray(data.prices)) {
+                        // Get the most recent timestamp from the data
+                        const latestTimestamp = Math.max(...data.prices.map(([timestamp]) => timestamp));
+                        console.log('Latest timestamp:', new Date(latestTimestamp).toISOString());
+
+                        // Filter data based on timeRange from the latest timestamp
+                        const timeRangeMs = {
+                            '24H': 24 * 60 * 60 * 1000,
+                            '7D': 7 * 24 * 60 * 60 * 1000,
+                            '30D': 30 * 24 * 60 * 60 * 1000
+                        }[timeRange] || 0;
+
+                        const filteredPrices = timeRange === 'All-time' 
+                            ? data.prices 
+                            : data.prices.filter(([timestamp]) => timestamp >= latestTimestamp - timeRangeMs);
+
+                        console.log(`Filtered ${filteredPrices.length} price points for ${timeRange}`);
+                        return res.json({
+                            prices: filteredPrices
+                        });
+                    }
+                }
+                console.log('No valid INDEX data found');
+                throw new Error('Index data not found or invalid format');
+            } catch (error) {
+                console.error('Redis error for INDEX:', error);
+                return res.status(404).json({
+                    error: 'Index data not found',
+                    details: { timeRange, token, dataset, message: error.message }
+                });
+            }
+        }
+
+        // For other tokens, try Redis first
         const cacheKey = dataset === 'dataset2' 
             ? `tvl_data_${timeRange}_${token.toLowerCase()}`
             : `price_data_${timeRange}_${token.toLowerCase()}`;

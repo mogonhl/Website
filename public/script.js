@@ -1112,43 +1112,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (category === 'airdrops') {
-            // For airdrops, remove blur and restore interactivity
             [mainContent, metricsBar, performanceRanking].forEach(element => {
                 if (element) {
-                    element.style.filter = '';
                     element.style.pointerEvents = '';
                 }
             });
         } else {
-            // For other categories, add blur and remove interactivity
             [mainContent, metricsBar, performanceRanking].forEach(element => {
                 if (element) {
-                    element.style.filter = 'blur(5px)';
-                    element.style.pointerEvents = 'none';
-                    // Add transition for smooth blur effect
-                    element.style.transition = 'filter 0.3s ease';
+                    element.style.pointerEvents = '';
                 }
             });
-            
-            // Create and add the "Coming Soon" text next to "Mogged"
-            const comingSoon = document.createElement('span');
-            comingSoon.className = 'coming-soon-text text-sm bg-emerald-400/20 text-emerald-400 px-2 py-1 rounded ml-4';
-            comingSoon.style.cssText = `
-                display: inline-flex;
-                align-items: center;
-                font-weight: 500;
-                height: 24px;
-                margin-top: 5px;
-            `;
-            comingSoon.textContent = 'Coming Soon';
-            
-            if (moggedText) {
-                // Make sure the parent container uses flexbox
-                const parentContainer = moggedText.parentElement;
-                parentContainer.style.display = 'inline-flex';
-                parentContainer.style.alignItems = 'center';
-                moggedText.insertAdjacentElement('afterend', comingSoon);
-            }
         }
     });
 

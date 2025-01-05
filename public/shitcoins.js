@@ -2,7 +2,7 @@ import { TOKENS } from '/app/types/tokens.js';
 
 // Make TOKENS and currentToken available globally
 window.TOKENS = TOKENS;
-window.currentToken = 'HYPE';  // Default token
+window.currentToken = 'INDEX';  // Default token
 
 // Helper functions
 window.formatNumberWithDots = function(num) {

@@ -108,7 +108,7 @@
             border-color: rgba(72,255,225,0.9);
         }
 
-        #price-chart {
+        #index-chart {
             min-height: 300px;
             height: 100%;
             width: 100%;
@@ -287,9 +287,9 @@
     <!-- Import TweetList component -->
     <script type="text/babel" src="/app/components/TweetList.js"></script>
     
-    <!-- Add chart.js before script.js -->
+    <!-- Add shitcoins-chart.js instead of chart.js -->
     <script src="/js/script.js"></script>
-    <script src="/js/chart.js" defer></script>
+    <script src="/js/shitcoins-chart.js" defer></script>
     <script src="/shitcoins.js" type="module"></script>
 </head>
 <body>
@@ -301,7 +301,7 @@
                     <span class="text-[rgba(72,255,225,0.9)]">Shitcoin</span>
                     <span>Index</span>
                 </h1>
-                <p class="text-[rgb(148,158,156)] mt-2">HYPE is the special one. Nice try.</p>
+                <p class="text-[rgb(148,158,156)] mt-2">Should've just full-stacked into the Hyperliquid Eco... Not too late...</p>
             </div>
 
             <div class="grid grid-cols-7 mb-12">
@@ -315,7 +315,7 @@
                 <div class="col-span-1">
                     <p class="text-[rgb(148,158,156)] text-sm mb-1">Performance</p>
                     <p class="text-2xl text-emerald-400 flex items-center font-normal">
-                        <span class="performance">0%</span>
+                        <span class="performance">+$0</span>
                         <span class="text-sm bg-emerald-400/20 text-emerald-400 px-2 py-1 rounded ml-2 multiplier">0x</span>
                     </p>
                 </div>
@@ -333,12 +333,6 @@
             
             <!-- About Box -->
             <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 pt-3 pb-6 mb-4 relative">
-                <div class="absolute inset-0 backdrop-blur-sm bg-[#0f1a1f]/50 z-10 rounded-lg flex items-center justify-center">
-                    <div class="px-8 py-3 bg-[#0f1a1f] border border-[rgba(72,255,225,0.3)] rounded-lg text-[rgba(72,255,225,0.9)] text-sm font-medium relative">
-                        Index Coming...
-                        <img src="/assets/Sticker/7.png" alt="7" class="absolute -bottom-6 -right-6 w-12 h-12 transform rotate-12" />
-                    </div>
-                </div>
                 <div class="border-b border-gray-700 mb-4 relative">
                     <div class="flex gap-4">
                         <span class="text-sm cursor-pointer text-white transition-colors relative pb-2" onclick="selectContentTab(this, 'about')">
@@ -356,11 +350,11 @@
                                     <div style="display: flex; flex-direction: column; gap: 15px;">
                                         <!-- Token Value section -->
                                         <div style="display: flex; flex-direction: column; gap: 15px;">
-                                            <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Token Value</p>
+                                            <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Index Value</p>
                                             <div>
-                                                <p class="text-xl text-emerald-400 token-value">$0</p>
+                                                <p class="text-xl text-emerald-400 token-value">$0.00</p>
                                                 <p class="text-xs text-[rgb(148,158,156)]">
-                                                    <a href="#" class="hover:underline cursor-help token-amount">0 HYPE</a>
+                                                    <a href="#" class="hover:underline cursor-help token-amount">1 $INDEX</a>
                                                 </p>
                                             </div>
                                         </div>
@@ -368,9 +362,8 @@
                                         <!-- Information section -->
                                         <div style="display: flex; flex-direction: column; gap: 15px;">
                                             <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Information</p>
-                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1"></p>
-                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc2"></p>
-                                            <p></p>
+                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1">$1 worth of every token was bought within the first 2 days of its launch</p>
+                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1">Seems insane... Gotta study now but will check everything tomorrow. /GLASSES_STAY_ON</p>
                                         </div>
                                     </div>
                                 </div>
@@ -380,7 +373,7 @@
                     <div class="w-[65%] content-right relative" style="min-height: 300px;">
                         <div class="absolute top-0 right-0 w-full h-full" style="min-height: 300px;">
                             <div class="relative h-full" style="min-height: 300px;">
-                                <div id="price-chart" class="w-full h-full" style="min-height: 300px;"></div>
+                                <div id="index-chart" class="w-full h-full" style="min-height: 300px;"></div>
                             </div>
                         </div>
                     </div>
@@ -425,5 +418,60 @@
             </div>
         </div>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to update the token value and performance
+        async function updateIndexStats() {
+            try {
+                const response = await fetch('/api/spot-data');
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                if (data.prices && data.prices.length > 0) {
+                    // Get current and initial prices
+                    const currentPrice = data.prices[data.prices.length - 1][1];
+                    const initialInvestment = 128; // We invested $1 in each of 128 assets
+                    
+                    // Update token value
+                    document.querySelector('.token-value').textContent = `$${currentPrice.toFixed(2)}`;
+                    
+                    // Calculate and update performance (absolute dollar gain)
+                    const absoluteGain = currentPrice - initialInvestment;
+                    document.querySelector('.performance').textContent = `+$${absoluteGain.toFixed(2)}`;
+                    
+                    // Calculate and update multiplier
+                    const multiplier = currentPrice / initialInvestment;
+                    document.querySelector('.multiplier').textContent = `${multiplier.toFixed(2)}x`;
+
+                    // Update best performers
+                    const performers = [
+                        data.bestPerformer,
+                        data.secondBestPerformer,
+                        data.thirdBestPerformer
+                    ];
+
+                    const performerElements = document.querySelectorAll('.best-performers .performer');
+                    performers.forEach((performer, index) => {
+                        if (performer && performerElements[index]) {
+                            const tickerSpan = performerElements[index].querySelector('.text-white');
+                            const returnSpan = performerElements[index].querySelector('.text-emerald-400');
+                            
+                            if (tickerSpan && returnSpan) {
+                                tickerSpan.textContent = performer.ticker;
+                                returnSpan.textContent = `${performer.return_pct.toFixed(2)}%`;
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error updating index stats:', error);
+            }
+        }
+
+        // Update stats immediately and every minute
+        updateIndexStats();
+        setInterval(updateIndexStats, 60000);
+    });
+    </script>
 </body>
 </html> 

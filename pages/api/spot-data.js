@@ -18,39 +18,43 @@ export default async function handler(req, res) {
     }
 
     try {
-        // List all keys to debug
-        const allKeys = await redis.keys('price_data_*');
-        console.log('Available price data keys:', allKeys);
+        const { timeRange } = req.query;
+        const key = timeRange === '7D' ? 'spot_data_7d_index' : 'spot_data_daily_index';
+        
+        console.log(`Fetching index data for ${timeRange}...`);
+        const indexData = await redis.get(key);
+        console.log('Raw index data:', indexData);
 
-        // Get all price data for 24H
-        const priceData = [];
-        for (const key of allKeys) {
-            if (key.startsWith('price_data_24H_')) {
-                const data = await redis.get(key);
-                if (data) {
-                    try {
-                        const parsed = JSON.parse(data);
-                        const token = key.replace('price_data_24H_', '');
-                        priceData.push({
-                            tokenId: token,
-                            ...parsed
-                        });
-                    } catch (parseError) {
-                        console.error(`Error parsing data for ${key}:`, parseError);
-                    }
-                }
-            }
-        }
-
-        if (priceData.length === 0) {
-            return res.status(404).json({ 
-                error: 'No price data found',
-                availableKeys: allKeys
+        if (!indexData) {
+            return res.status(404).json({
+                error: 'Index data not found',
+                details: { timeRange, key }
             });
         }
 
-        console.log('Total tokens in response:', priceData.length);
-        return res.json(priceData);
+        const data = typeof indexData === 'string' ? JSON.parse(indexData) : indexData;
+        console.log('Parsed index data:', {
+            hasPrices: !!data.prices,
+            numPrices: data.prices?.length,
+            hasBestPerformer: !!data.bestPerformer,
+            bestPerformerTicker: data.bestPerformer?.ticker,
+            bestPerformerReturn: data.bestPerformer?.return_pct
+        });
+
+        // The index data should already be in the correct format with prices array
+        if (!data.prices || !Array.isArray(data.prices)) {
+            return res.status(500).json({
+                error: 'Invalid index data format'
+            });
+        }
+
+        // Return both prices and performer data
+        return res.json({
+            prices: data.prices,
+            bestPerformer: data.bestPerformer,
+            secondBestPerformer: data.secondBestPerformer,
+            thirdBestPerformer: data.thirdBestPerformer
+        });
     } catch (error) {
         console.error('API Error:', error);
         return res.status(500).json({ 
