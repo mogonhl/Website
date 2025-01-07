@@ -274,6 +274,28 @@
         .coming-soon-link {
             position: relative;
         }
+
+        /* Search input styles */
+        .search-input {
+            padding: 8px 12px;
+            background-color: #0f1a1f;
+            border: 1px solid #0a2622;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(72, 255, 225, 0.9);
+        }
+
+        @media (max-width: 767px) {
+            .search-input {
+                width: 200px;
+            }
+        }
     </style>
     <!-- Base dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -381,9 +403,25 @@
             </div>
 
             <!-- Spot Tokens Section -->
-            <div class="mt-4">
-                <div class="flex items-center mb-4 px-6">
+            <div class="mt-8">
+                <div class="flex items-center justify-between mb-4 px-6">
                     <span class="text-xl text-white font-medium">Spot Tokens</span>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="tokenSearchInput"
+                            placeholder="Search tokens..." 
+                            class="search-input w-[300px] pr-10"
+                        />
+                        <button 
+                            id="tokenSearchButton"
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[rgba(72,255,225,0.9)] transition-colors"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg">
                     <!-- Header -->
@@ -423,7 +461,10 @@
         // Function to update the token value and performance
         async function updateIndexStats() {
             try {
-                const response = await fetch('/api/spot-data');
+                // Get the current index type from the chart
+                const currentIndexType = document.querySelector('[data-index-type].text-white, [data-index-type].text-emerald-400')?.getAttribute('data-index-type') || 'mcap';
+                
+                const response = await fetch(`/api/spot-data?type=${currentIndexType}`);
                 const data = await response.json();
                 console.log('API Response:', data);
                 
@@ -436,33 +477,20 @@
                     const formattedCurrentPrice = formatFullNumber(currentPrice);
                     document.querySelector('.token-value').textContent = `$${formattedCurrentPrice}`;
                     
-                    // Calculate and update performance (absolute dollar gain)
-                    const absoluteGain = currentPrice - initialPrice;
-                    document.querySelector('.performance').textContent = `+$${formatFullNumber(absoluteGain)}`;
+                    // Calculate and update performance based on index type
+                    let performanceValue;
+                    if (currentIndexType === 'snipe') {
+                        // For Snipe index, subtract total assets amount (1)
+                        performanceValue = currentPrice - 1;
+                    } else {
+                        // For other indices, show actual change from initial value
+                        performanceValue = currentPrice - initialPrice;
+                    }
+                    document.querySelector('.performance').textContent = `+$${formatFullNumber(performanceValue)}`;
                     
                     // Calculate and update multiplier
                     const multiplier = currentPrice / initialPrice;
                     document.querySelector('.multiplier').textContent = `${multiplier.toFixed(1)}x`;
-
-                    // Update best performers
-                    const performers = [
-                        data.bestPerformer,
-                        data.secondBestPerformer,
-                        data.thirdBestPerformer
-                    ];
-
-                    const performerElements = document.querySelectorAll('.best-performers .performer');
-                    performers.forEach((performer, index) => {
-                        if (performer && performerElements[index]) {
-                            const tickerSpan = performerElements[index].querySelector('.text-white');
-                            const returnSpan = performerElements[index].querySelector('.text-emerald-400');
-                            
-                            if (tickerSpan && returnSpan) {
-                                tickerSpan.textContent = performer.ticker;
-                                returnSpan.textContent = `${formatFullNumber(performer.return_pct)}%`;
-                            }
-                        }
-                    });
                 }
             } catch (error) {
                 console.error('Error updating index stats:', error);
@@ -490,10 +518,10 @@
             const [whole, decimal] = num.toString().split('.');
             
             // Add thousands separators to whole part
-            const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             
             // Return with decimal if it exists
-            return decimal ? `${formattedWhole}.${decimal}` : formattedWhole;
+            return decimal ? `${formattedWhole},${decimal}` : formattedWhole;
         }
 
         // Update stats immediately and every minute

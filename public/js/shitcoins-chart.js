@@ -4,11 +4,36 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTimeRange = '30D';
     let currentDataset = 'dataset1';
     let currentIndexType = 'mcap'; // Changed default from 'snipe' to 'mcap'
-    
+    const TOTAL_ASSETS_AMOUNT = 1; // Base amount for Snipe index
+
     // Configure step sizes for each time range (in points)
     const targetDataPoints = {
         '30D': 60,     // One point per 12 hours
         'All-time': 90 // Larger steps for all-time view
+    };
+
+    // Index descriptions
+    const INDEX_DESCRIPTIONS = {
+        mcap: {
+            desc1: 'Market cap weighted index of all tokens on Hyperliquid.',
+            desc2: 'The bigger the market cap, the higher the weight in the index.'
+        },
+        'mcap-ex-hype': {
+            desc1: 'Market cap weighted index excluding the HYPE token.',
+            desc2: 'Same as the regular index but without the influence of HYPE.'
+        },
+        equal: {
+            desc1: 'Equal weighted index of all tokens on Hyperliquid.',
+            desc2: 'Every token has the same weight regardless of its market cap.'
+        },
+        snipe: {
+            desc1: 'Snipe index tracks the performance of $1 investments in new tokens.',
+            desc2: 'Performance shows profit/loss after subtracting the total invested amount ($1 per token).'
+        },
+        volume: {
+            desc1: 'Volume weighted index of all tokens on Hyperliquid.',
+            desc2: 'Higher trading volume means higher weight in the index.'
+        }
     };
 
     // Function to reduce data points
@@ -81,6 +106,60 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize data cache
     const dataCache = {};
 
+    // Function to update button styles based on current index type
+    function updateIndexButtonStyles() {
+        const basicIndex = document.querySelector('[data-index-type="mcap"]');
+        const snipeText = document.querySelector('[data-index-type="snipe"]');
+        const fomoText = document.querySelector('[data-index-type="volume"]');
+        const woHypeText = document.querySelector('[data-index-type="mcap-ex-hype"]');
+        const equalText = document.querySelector('[data-index-type="equal"]');
+        const separator = document.querySelector('.index-separator');
+
+        // Show/hide w/o HYPE, Equal, and separator based on current type
+        const isIndexMode = ['mcap', 'mcap-ex-hype', 'equal'].includes(currentIndexType);
+        [woHypeText, equalText].forEach(el => {
+            if (el) el.style.display = isIndexMode ? '' : 'none';
+        });
+        if (separator) separator.style.display = isIndexMode ? '' : 'none';
+
+        // Reset all buttons to default style
+        [basicIndex, snipeText, fomoText].forEach(btn => {
+            if (btn) btn.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-white transition-colors';
+        });
+        [woHypeText, equalText].forEach(btn => {
+            if (btn) btn.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-emerald-400 transition-colors';
+        });
+
+        // Highlight the active button
+        const activeButton = document.querySelector(`[data-index-type="${currentIndexType}"]`);
+        if (activeButton) {
+            if (currentIndexType === 'mcap-ex-hype' || currentIndexType === 'equal') {
+                activeButton.className = 'text-emerald-400 text-xs cursor-pointer hover:text-emerald-400 transition-colors';
+            } else {
+                activeButton.className = 'text-white text-xs cursor-pointer hover:text-white transition-colors';
+            }
+        }
+    }
+
+    // Function to update descriptions
+    function updateDescriptions() {
+        const desc1Element = document.getElementById('desc1');
+        const desc2Element = document.getElementById('desc2');
+        if (desc1Element && desc2Element) {
+            const descriptions = INDEX_DESCRIPTIONS[currentIndexType];
+            desc1Element.textContent = descriptions.desc1;
+            desc2Element.textContent = descriptions.desc2;
+        }
+    }
+
+    // Function to switch index type
+    function switchIndex(type) {
+        currentIndexType = type;
+        updateIndexButtonStyles();
+        updateDescriptions();
+        updateChart(currentTimeRange);
+    }
+
     // Get the container
     const container = document.getElementById('index-chart');
     if (!container) {
@@ -101,27 +180,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const basicIndex = document.createElement('span');
     basicIndex.className = 'text-white text-xs cursor-pointer hover:text-white transition-colors';
     basicIndex.textContent = 'Index';
+    basicIndex.setAttribute('data-index-type', 'mcap');
     basicIndex.onclick = () => switchIndex('mcap');
     titleContainer.appendChild(basicIndex);
 
     // Add "w/o HYPE" text (smaller)
     const woHypeText = document.createElement('span');
-    woHypeText.className = 'text-[rgb(148,158,156)] text-[10px] cursor-pointer hover:text-emerald-400 transition-colors index-suboption';
+    woHypeText.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-emerald-400 transition-colors';
     woHypeText.textContent = 'w/o HYPE';
+    woHypeText.setAttribute('data-index-type', 'mcap-ex-hype');
     woHypeText.onclick = () => switchIndex('mcap-ex-hype');
     titleContainer.appendChild(woHypeText);
 
     // Add "Equal" text (smaller)
     const equalText = document.createElement('span');
-    equalText.className = 'text-[rgb(148,158,156)] text-[10px] cursor-pointer hover:text-emerald-400 transition-colors index-suboption';
+    equalText.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-emerald-400 transition-colors';
     equalText.textContent = 'Equal';
+    equalText.setAttribute('data-index-type', 'equal');
     equalText.onclick = () => switchIndex('equal');
     titleContainer.appendChild(equalText);
+
+    // Add separator line
+    const separator = document.createElement('div');
+    separator.className = 'h-3 w-[1px] bg-gray-700 index-separator';
+    titleContainer.appendChild(separator);
 
     // Add "Snipe" text
     const snipeText = document.createElement('span');
     snipeText.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-white transition-colors';
     snipeText.textContent = 'Snipe';
+    snipeText.setAttribute('data-index-type', 'snipe');
     snipeText.onclick = () => switchIndex('snipe');
     titleContainer.appendChild(snipeText);
 
@@ -129,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fomoText = document.createElement('span');
     fomoText.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-white transition-colors';
     fomoText.textContent = 'FOMO';
+    fomoText.setAttribute('data-index-type', 'volume');
     fomoText.onclick = () => switchIndex('volume');
     titleContainer.appendChild(fomoText);
 
@@ -209,12 +298,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function fetchData(timeRange, retries = 3) {
-        console.log('Fetching index data for:', { timeRange, indexType: currentIndexType });
+    async function fetchData(timeRange, retries = 3, isAutoUpdate = false) {
+        console.log('Fetching index data for:', { timeRange, indexType: currentIndexType, isAutoUpdate });
         
         // Try to get data from cache first
         const cachedData = getCachedData(timeRange);
-        if (cachedData) {
+        if (cachedData && !isAutoUpdate) {
             console.log('Using cached data for:', { timeRange, indexType: currentIndexType });
             return cachedData;
         }
@@ -223,8 +312,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 console.log(`Fetching data attempt ${attempt}/${retries}:`, { timeRange, indexType: currentIndexType });
                 
-                // Always use spot-data endpoint for indices
-                const endpoint = `/api/spot-data?type=${currentIndexType}`;
+                // Always use spot-data endpoint for indices and explicitly include the type parameter
+                const endpoint = `/api/spot-data?timeRange=${timeRange}&type=${currentIndexType}`;
                 
                 const response = await fetch(endpoint);
                 
@@ -248,14 +337,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error('Invalid data format received');
                 }
 
+                // If this is an auto-update and we're not on the default index type,
+                // we should ignore this update as it's likely for the default index
+                if (isAutoUpdate && currentIndexType !== 'mcap') {
+                    console.log('Ignoring auto-update for non-default index type');
+                    return null;
+                }
+
                 // Process the data - use the actual portfolio value
                 const processedData = data.prices.map(([timestamp, portfolioValue]) => ({
                     time: timestamp / 1000,
                     value: portfolioValue
                 }));
 
-                // Cache the processed data
-                setCachedData(timeRange, processedData);
+                // Only cache if it's not an auto-update
+                if (!isAutoUpdate) {
+                    setCachedData(timeRange, processedData);
+                }
                 
                 return processedData;
             } catch (error) {
@@ -357,12 +455,19 @@ document.addEventListener('DOMContentLoaded', () => {
         window.indexChartRoot.render(chart);
     }
 
-    async function updateChart(timeRange = '7D') {
+    async function updateChart(timeRange = '7D', isAutoUpdate = false) {
         try {
-            console.log('Updating chart with:', { timeRange });
-            const data = await fetchData(timeRange);
+            console.log('Updating chart with:', { timeRange, indexType: currentIndexType, isAutoUpdate });
+            const data = await fetchData(timeRange, 3, isAutoUpdate);
             if (!data || data.length === 0) {
                 console.log('No data available');
+                return;
+            }
+
+            // If this is an auto-update and we're not on the default index,
+            // don't update the chart
+            if (isAutoUpdate && currentIndexType !== 'mcap') {
+                console.log('Skipping chart update for auto-update on non-default index');
                 return;
             }
 
@@ -378,8 +483,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filteredData.length > 0) {
                 const currentPrice = filteredData[filteredData.length - 1].value;
                 const initialPrice = filteredData[0].value;
-                const absoluteGain = currentPrice - initialPrice;
-                const multiplier = currentPrice / initialPrice;
 
                 // Update token value in About tab
                 const tokenValueElement = document.querySelector('.token-value');
@@ -387,15 +490,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     tokenValueElement.textContent = `$${formatTooltipNumber(currentPrice)}`;
                 }
 
+                // Calculate performance based on time range and current index type
+                let performanceValue;
+                if (timeRange === '30D') {
+                    // For 30D, show actual change
+                    performanceValue = currentPrice - initialPrice;
+                } else {
+                    // For All-time
+                    if (currentIndexType === 'snipe') {
+                        // For Snipe index, subtract total assets amount
+                        performanceValue = currentPrice - TOTAL_ASSETS_AMOUNT;
+                    } else {
+                        // For other indices, show actual change from initial value
+                        performanceValue = currentPrice - initialPrice;
+                    }
+                }
+
                 // Update performance in top stats
                 const performanceElement = document.querySelector('.performance');
                 if (performanceElement) {
-                    performanceElement.textContent = `+$${formatTooltipNumber(absoluteGain)}`;
+                    performanceElement.textContent = `+$${formatTooltipNumber(performanceValue)}`;
                 }
 
                 // Update multiplier in top stats
                 const multiplierElement = document.querySelector('.multiplier');
                 if (multiplierElement) {
+                    const multiplier = currentPrice / initialPrice;
                     multiplierElement.textContent = `${multiplier.toFixed(1)}x`;
                 }
             }
@@ -412,81 +532,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial render
     console.log('Performing initial render with:', { timeRange: currentTimeRange });
+    updateDescriptions();
     updateChart(currentTimeRange);
     switchIndex('mcap');
 
-    // Function to switch between index types
-    function switchIndex(type) {
-        currentIndexType = type;
-        
-        // Update active styles
-        [basicIndex, woHypeText, equalText, snipeText, fomoText].forEach(el => {
-            if (el === woHypeText || el === equalText) {
-                el.className = 'text-[rgb(148,158,156)] text-[10px] cursor-pointer hover:text-emerald-400 transition-colors index-suboption';
-            } else {
-                el.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-white transition-colors';
-            }
-        });
-
-        // Show/hide index suboptions based on type
-        const suboptions = document.querySelectorAll('.index-suboption');
-        if (type === 'snipe' || type === 'volume') {
-            suboptions.forEach(el => el.style.display = 'none');
-        } else {
-            suboptions.forEach(el => el.style.display = 'block');
-        }
-
-        // Set active index style and descriptions
-        let activeElement;
-        let mainDescription = '';
-        let detailedDescription = '';
-        switch(type) {
-            case 'mcap':
-                activeElement = basicIndex;
-                mainDescription = 'Market cap weighted index of all tokens on Hyperliquid';
-                detailedDescription = 'If you had invested $1 proportionally across all tokens based on their market caps, this is how much your portfolio would be worth today.';
-                break;
-            case 'mcap-ex-hype':
-                activeElement = woHypeText;
-                mainDescription = 'Market cap weighted index excluding HYPE token';
-                detailedDescription = 'Same as the regular index, but excluding HYPE token. Shows how the ecosystem performs without its largest token.';
-                break;
-            case 'snipe':
-                activeElement = snipeText;
-                mainDescription = '$1 worth of every token was bought within the first 2 days of its launch';
-                detailedDescription = 'If you had bought $1 worth of each token within 48 hours of its launch, this would be your total portfolio value.';
-                break;
-            case 'volume':
-                activeElement = fomoText;
-                mainDescription = 'Volume weighted index based on 24h trading volume';
-                detailedDescription = 'Portfolio weighted by trading activity - more weight given to frequently traded tokens. Shows what happens if you follow the crowd.';
-                break;
-            case 'equal':
-                activeElement = equalText;
-                mainDescription = 'Equal weighted index giving same weight to all tokens';
-                detailedDescription = 'If you had invested equal amounts in every token regardless of their market cap, this would be your return.';
-                break;
-        }
-
-        if (activeElement) {
-            if (activeElement === woHypeText || activeElement === equalText) {
-                activeElement.className = 'text-white text-[10px] cursor-pointer hover:text-emerald-400 transition-colors index-suboption';
-            } else {
-                activeElement.className = 'text-white text-xs cursor-pointer hover:text-white transition-colors';
-            }
-        }
-
-        // Update both descriptions
-        const desc1Element = document.getElementById('desc1');
-        const desc2Element = document.getElementById('desc2');
-        if (desc1Element) {
-            desc1Element.textContent = mainDescription;
-        }
-        if (desc2Element) {
-            desc2Element.textContent = detailedDescription;
-        }
-
-        // Don't clear all cache, just update the chart
-        updateChart(currentTimeRange);
-    }
+    // Initialize button styles
+    updateIndexButtonStyles();
 }); 

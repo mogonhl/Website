@@ -248,6 +248,53 @@ async function fetchSpotData(tokenId, interval, days) {
     }
 }
 
+async function fetchPurrData(interval, days) {
+    console.log(`\nFetching ${interval} data for PURR (${days} days)...`);
+    
+    const now = Date.now();
+    const startTime = now - (days * 24 * 60 * 60 * 1000);
+    
+    const payload = {
+        type: "candleSnapshot",
+        req: {
+            coin: "PURR/USDC",
+            interval: interval,
+            startTime: startTime,
+            endTime: now
+        }
+    };
+
+    try {
+        const response = await fetch('https://api-ui.hyperliquid.xyz/info', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!Array.isArray(data) || data.length === 0) {
+            return null;
+        }
+
+        return {
+            tokenId: 'purr',  // Special identifier for PURR
+            prices: data.map(candle => [candle.t, parseFloat(candle.c)]),
+            total_volumes: data.map(candle => [candle.t, parseFloat(candle.v)]),
+            market_caps: data.map(candle => [candle.t, 0])
+        };
+    } catch (error) {
+        console.error(`Error fetching ${interval} data for PURR:`, error.message);
+        return null;
+    }
+}
+
 async function updateSpotData() {
     console.log('\n=== Updating spot data ===');
     
@@ -258,6 +305,15 @@ async function updateSpotData() {
     const hourlyData = [];
     const dailyData = [];
     
+    // First fetch PURR data
+    console.log('\nFetching PURR data...');
+    const purrHourly = await fetchPurrData('1h', 7);
+    const purrDaily = await fetchPurrData('1d', 365);
+    
+    if (purrHourly) hourlyData.push(purrHourly);
+    if (purrDaily) dailyData.push(purrDaily);
+    
+    // Then fetch other tokens
     while (consecutiveEmptyResponses < MAX_EMPTY_RESPONSES) {
         if (tokenId > 1) {
             await new Promise(resolve => setTimeout(resolve, 2000));

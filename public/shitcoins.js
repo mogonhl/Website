@@ -60,6 +60,41 @@ let snapshotData = {};
 let currentDisplayCount = 10; // Number of tokens currently displayed
 const tokensPerLoad = 10; // Number of tokens to load each time
 let isLoading = false; // Track loading state
+let currentSortColumn = null; // Track which column we're sorting by
+let isAscending = true; // Track sort direction
+let searchQuery = ''; // Track search query
+
+// Add search functionality
+function setupSearch() {
+    const searchInput = document.getElementById('tokenSearchInput');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase();
+        currentDisplayCount = 10; // Reset display count when searching
+        if (marketData) {
+            updateTokenList(marketData);
+        }
+    });
+}
+
+// Add sort icons HTML
+const sortIcons = {
+    none: `<svg class="w-4 h-4 ml-1 opacity-0 group-hover:opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+           </svg>`,
+    asc: `<svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+          </svg>`,
+    desc: `<svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>`
+};
+
+function getSortIcon(column) {
+    if (currentSortColumn !== column) return sortIcons.none;
+    return isAscending ? sortIcons.asc : sortIcons.desc;
+}
 
 async function fetchMarketData() {
     if (isLoading) return null;
@@ -93,6 +128,7 @@ async function fetchMarketData() {
 async function fetchBatchedSnapshotData(tokenIds) {
     const batchSize = 20;
     const uniqueBatches = new Set(tokenIds.map(id => Math.floor(parseInt(id) / batchSize)));
+    
     const batchPromises = Array.from(uniqueBatches).map(batchNum => 
         fetch(`/api/redis/get?key=spot_data_7d_${batchNum}`).then(r => r.json())
     );
@@ -160,11 +196,95 @@ document.head.appendChild(style);
 
 function updateTokenList(data) {
     const container = document.querySelector('.token-list');
-    container.innerHTML = ''; // Clear existing content
+    
+    // Add click handlers to the existing header above token-list
+    const headerRow = document.querySelector('.grid.grid-cols-7.gap-4.px-6.py-3');
+    if (headerRow) {
+        // First, clear any existing click handlers and classes
+        Array.from(headerRow.children).forEach(cell => {
+            cell.className = 'text-[rgb(148,158,156)]';
+            cell.onclick = null;
+        });
+
+        // Define the sortable columns with their display text and sort property
+        const columnDefinitions = [
+            { text: 'Pair', property: 'coin', span: 2 },
+            { text: 'Price', property: 'price', span: 1 },
+            { text: '24h Change', property: 'priceChange', span: 1 },
+            { text: '24h Volume', property: 'volume24h', span: 1 },
+            { text: 'Market Cap', property: 'marketCap', span: 1 },
+            { text: 'Snapshot', property: null, span: 1 } // Not sortable
+        ];
+
+        // Clear the header row
+        headerRow.innerHTML = '';
+
+        // Create header cells with proper layout and sorting
+        columnDefinitions.forEach(column => {
+            const cell = document.createElement('div');
+            cell.textContent = column.text;
+            
+            if (column.span > 1) {
+                cell.className = `col-span-${column.span}`;
+            }
+
+            if (column.property) {
+                cell.className += ' cursor-pointer group flex items-center text-[rgb(148,158,156)]';
+                cell.dataset.sortProperty = column.property;
+                cell.onclick = () => window.sortTokens(column.property);
+                cell.innerHTML = column.text + ' ' + getSortIcon(column.property);
+            } else {
+                cell.className += ' text-[rgb(148,158,156)]';
+            }
+
+            headerRow.appendChild(cell);
+        });
+    }
+
+    // Clear existing content
+    container.innerHTML = '';
 
     // Filter out excluded tokens
     const excludedTokens = ['@71', '@98', '@131', '@132'];
-    const filteredTokens = data.tokens.filter(token => !excludedTokens.includes(token.coin));
+    let filteredTokens = data.tokens.filter(token => !excludedTokens.includes(token.coin));
+
+    // Apply search filter if there's a search query
+    if (searchQuery) {
+        filteredTokens = filteredTokens.filter(token => {
+            const searchableText = `${token.displayName} ${token.coin}`.toLowerCase();
+            return searchableText.includes(searchQuery);
+        });
+    }
+
+    // Sort tokens if a sort column is selected
+    if (currentSortColumn) {
+        filteredTokens.sort((a, b) => {
+            // For coin/pair sorting
+            if (currentSortColumn === 'coin') {
+                return isAscending 
+                    ? a.displayName.localeCompare(b.displayName)
+                    : b.displayName.localeCompare(a.displayName);
+            }
+
+            // For numerical values
+            let aValue = a[currentSortColumn];
+            let bValue = b[currentSortColumn];
+
+            // Handle potential undefined/null values
+            if (aValue === undefined || aValue === null) return isAscending ? -1 : 1;
+            if (bValue === undefined || bValue === null) return isAscending ? 1 : -1;
+
+            // Ensure we're working with numbers
+            aValue = parseFloat(aValue);
+            bValue = parseFloat(bValue);
+
+            // Handle NaN values
+            if (isNaN(aValue)) return isAscending ? -1 : 1;
+            if (isNaN(bValue)) return isAscending ? 1 : -1;
+
+            return isAscending ? aValue - bValue : bValue - aValue;
+        });
+    }
 
     // Only show the first currentDisplayCount tokens
     const tokensToShow = filteredTokens.slice(0, currentDisplayCount);
@@ -180,7 +300,8 @@ function updateTokenList(data) {
         const row = document.createElement('div');
         row.className = 'grid grid-cols-7 gap-4 px-6 py-4 border-b border-[#0a2622]';
         
-        const tokenId = token.coin.replace('@', '');
+        // Special handling for PURR tokenId
+        const tokenId = token.coin === 'PURR/USDC' ? 'purr' : token.coin.replace('@', '');
         
         row.innerHTML = `
             <div class="col-span-2 flex items-center gap-3">
@@ -220,11 +341,11 @@ function updateTokenList(data) {
     document.querySelector('.market-cap').textContent = 
         `$${data.totalMarketCap.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 
-    // Show/Hide "Show More" button based on remaining tokens
+    // Show/Hide "Show More" button based on remaining tokens and search query
     const showMoreContainer = document.querySelector('.show-more-container') || document.createElement('div');
     showMoreContainer.className = 'show-more-container flex justify-center mb-32 pb-16';
     
-    if (currentDisplayCount < data.tokens.length) {
+    if (currentDisplayCount < filteredTokens.length && !searchQuery) {
         showMoreContainer.innerHTML = `
             <button class="show-more-btn px-8 py-3 mt-8 bg-[#0f1a1f] hover:bg-[#131f27] text-[#949e9c]
                          border border-[#162630] rounded-lg transition-all duration-200 ease-in-out 
@@ -252,7 +373,14 @@ function updateTokenList(data) {
     }
 
     // Load snapshot data in the background
-    const tokenIds = tokensToShow.map(token => token.coin.replace('@', ''));
+    const tokenIds = tokensToShow.map(token => {
+        // Special handling for PURR
+        if (token.coin === 'PURR/USDC') {
+            return 'purr';
+        }
+        return token.coin.replace('@', '');
+    });
+    
     fetchBatchedSnapshotData(tokenIds).then(snapshotDataMap => {
         Object.entries(snapshotDataMap).forEach(([tokenId, data]) => {
             if (data && data.prices) {
@@ -397,6 +525,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Show placeholder table immediately
     showPlaceholderTable();
     
+    // Setup search functionality
+    setupSearch();
+    
     // Then load the real data
     const data = await fetchMarketData();
     if (data) {
@@ -406,3 +537,26 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // Remove the automatic refresh interval
 // The refresh is now manual only via the refresh button 
+
+// Add global sort function
+window.sortTokens = function(column) {
+    if (currentSortColumn === column) {
+        if (isAscending) {
+            // If currently ascending, switch to descending
+            isAscending = false;
+        } else {
+            // If currently descending, clear sort
+            currentSortColumn = null;
+            isAscending = true;
+        }
+    } else {
+        // If clicking a new column, set it as current and default to ascending
+        currentSortColumn = column;
+        isAscending = true;
+    }
+    
+    // Re-render the table with new sort
+    if (marketData) {
+        updateTokenList(marketData);
+    }
+}; 

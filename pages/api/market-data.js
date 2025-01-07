@@ -1,5 +1,4 @@
 const fetch = require('node-fetch');
-const { SPOT_TICKERS } = require('../../app/types/spot_tickers');
 
 let cachedData = null;
 let lastFetchTime = 0;
@@ -55,6 +54,10 @@ async function getMarketData() {
         throw new Error('Failed to fetch token details');
     }
 
+    // Log full data structure for PURR
+    console.log('Universe Data:', data.universe.find(pair => pair.name === 'PURR/USDC'));
+    console.log('All Tokens:', data.tokens);
+
     // Create maps for efficient lookups
     const tokenMap = new Map();
     data.tokens.forEach(token => {
@@ -71,7 +74,17 @@ async function getMarketData() {
     let totalMarketCap = 0;
 
     for (const details of data.details) {
-        if (!details.coin || details.coin === 'PURR/USDC') continue;
+        if (!details.coin) continue;  // Only skip if no coin name
+
+        // Log PURR data for debugging
+        if (details.coin === 'PURR/USDC') {
+            console.log('PURR Details:', details);
+            console.log('PURR Pair Tokens:', pairMap.get(details.coin));
+            const purrTokens = pairMap.get(details.coin);
+            if (purrTokens) {
+                console.log('PURR Token Info:', tokenMap.get(purrTokens[0]));
+            }
+        }
 
         const price = parseFloat(details.markPx);
         if (!price) continue;
@@ -81,10 +94,15 @@ async function getMarketData() {
         const tokenInfo = pairTokens ? tokenMap.get(pairTokens[0]) : null;
         const tokenId = tokenInfo ? tokenInfo.tokenId : null;
         
-        // Get ticker from SPOT_TICKERS
-        const spotTicker = Object.entries(SPOT_TICKERS).find(([id]) => id === `@${tokenId}`)?.[1];
-        const ticker = spotTicker?.ticker || '';
-        const name = spotTicker?.name || details.coin;
+        // Special handling for PURR/USDC
+        let name, ticker;
+        if (details.coin === 'PURR/USDC') {
+            name = 'PURR';
+            ticker = 'PURR';
+        } else {
+            name = details.coin;
+            ticker = details.coin.split('/')[0];  // Get ticker from the trading pair
+        }
 
         // Calculate market cap
         const marketCap = price * parseFloat(details.circulatingSupply);
@@ -109,7 +127,26 @@ async function getMarketData() {
     }
 
     // Sort by market cap
-    tokenData.sort((a, b) => b.marketCap - a.marketCap);
+    tokenData.sort((a, b) => {
+        // Ensure we have valid numbers for comparison
+        const aMarketCap = a.marketCap || 0;
+        const bMarketCap = b.marketCap || 0;
+        
+        // Primary sort by market cap
+        if (aMarketCap !== bMarketCap) {
+            return bMarketCap - aMarketCap;
+        }
+        
+        // Secondary sort by volume if market caps are equal
+        const aVolume = a.volume24h || 0;
+        const bVolume = b.volume24h || 0;
+        if (aVolume !== bVolume) {
+            return bVolume - aVolume;
+        }
+        
+        // Tertiary sort by name if both market cap and volume are equal
+        return a.name.localeCompare(b.name);
+    });
 
     // Update cache
     cachedData = {

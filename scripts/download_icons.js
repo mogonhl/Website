@@ -1,9 +1,8 @@
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
-const { SPOT_TICKERS } = require('../app/types/spot_tickers');
 
-const ICONS_DIR = path.join(__dirname, '../public/assets');
+const ICONS_DIR = path.join(__dirname, '../public/assets/icons');
 
 // Create icons directory if it doesn't exist
 if (!fs.existsSync(ICONS_DIR)) {
@@ -15,6 +14,9 @@ async function downloadIcon(ticker) {
     
     const url = `https://app.hyperliquid.xyz/coins/${ticker}_USDC.svg`;
     const filePath = path.join(ICONS_DIR, `${ticker}.svg`);
+
+    console.log(`Downloading from: ${url}`);
+    console.log(`Saving to: ${filePath}`);
 
     return new Promise((resolve, reject) => {
         https.get(url, (response) => {
@@ -39,14 +41,9 @@ async function downloadIcon(ticker) {
 
 async function downloadAllIcons() {
     console.log('Starting icon downloads...');
-    // Get all valid tickers
-    const tickers = Object.entries(SPOT_TICKERS)
-        .map(([id, data]) => data.ticker)
-        .filter(ticker => ticker); // Remove empty tickers
     
-    for (const ticker of tickers) {
-        await downloadIcon(ticker);
-    }
+    // Download PURR icon
+    await downloadIcon('PURR');
     
     console.log('Icon downloads complete!');
 }

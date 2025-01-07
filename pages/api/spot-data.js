@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { timeRange, type = 'snipe' } = req.query;
+        const { timeRange, type = 'mcap' } = req.query;
         
         // Map index type to Redis key
         const keyMap = {
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
             'equal': 'spot_data_equal_index'
         };
         
-        const key = keyMap[type] || 'spot_data_snipe_index';
+        const key = keyMap[type] || 'spot_data_mcap_index';
         
         console.log(`Fetching index data for ${timeRange}, type: ${type}...`);
         const indexData = await redis.get(key);
