@@ -163,7 +163,7 @@ function updateTokenList(data) {
     container.innerHTML = ''; // Clear existing content
 
     // Filter out excluded tokens
-    const excludedTokens = ['@71', '@98', '@131'];
+    const excludedTokens = ['@71', '@98', '@131', '@132'];
     const filteredTokens = data.tokens.filter(token => !excludedTokens.includes(token.coin));
 
     // Only show the first currentDisplayCount tokens

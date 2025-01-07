@@ -40,6 +40,32 @@ function getTokenInfo(atNumber) {
     return tokenInfo || { ticker: atNumber, name: atNumber };
 }
 
+function calculateMarketCap(price, circulatingSupply) {
+    // Handle invalid inputs
+    if (typeof price !== 'number' || typeof circulatingSupply !== 'number') {
+        return 0;
+    }
+    
+    // Handle negative values
+    if (price < 0 || circulatingSupply < 0) {
+        return 0;
+    }
+    
+    // Handle NaN and Infinity
+    if (isNaN(price) || isNaN(circulatingSupply) || !isFinite(price) || !isFinite(circulatingSupply)) {
+        return 0;
+    }
+    
+    const marketCap = price * circulatingSupply;
+    
+    // Handle overflow
+    if (marketCap > Number.MAX_SAFE_INTEGER) {
+        return Number.MAX_SAFE_INTEGER;
+    }
+    
+    return marketCap;
+}
+
 async function testMarketCap() {
     console.log('Fetching all token details...');
     const data = await getAllTokenDetails();
@@ -80,8 +106,8 @@ async function testMarketCap() {
         const tokenInfo = pairTokens ? tokenMap.get(pairTokens[0]) : null;
         const name = tokenInfo ? tokenInfo.name : details.coin;
 
-        // Calculate market cap
-        const marketCap = price * parseFloat(details.circulatingSupply);
+        // Calculate market cap with edge case handling
+        const marketCap = calculateMarketCap(price, parseFloat(details.circulatingSupply));
         
         tokenData.push({
             coin: details.coin,

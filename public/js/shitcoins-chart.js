@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeRanges = ['30D', 'All-time']; // Removed 7D
     let currentTimeRange = '30D';
     let currentDataset = 'dataset1';
+    let currentIndexType = 'mcap'; // Changed default from 'snipe' to 'mcap'
     
     // Configure step sizes for each time range (in points)
     const targetDataPoints = {
@@ -34,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         num = Math.round(num);
         if (num >= 1e9) {
-            return Math.round(num / 1e9) + 'B';
+            return (num / 1e9).toFixed(1) + 'B';
         } else if (num >= 1e6) {
-            return Math.round(num / 1e6) + 'M';
-        } else if (num >= 1e5) {
-            return Math.round(num / 1e3) + 'K';
+            return (num / 1e6).toFixed(1) + 'M';
+        } else if (num >= 1e3) {
+            return (num / 1e3).toFixed(1) + 'K';
         }
         return num.toString();
     };
@@ -46,13 +47,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Format numbers with dots for tooltip
     const formatTooltipNumber = (num) => {
         if (typeof num !== 'number') return '0';
-        num = Math.round(num);
-        if (num === 0) return '0';
+        
+        // For very small numbers (0.01 and below), show up to 3 decimal places
+        if (num > 0 && num < 0.01) {
+            return num.toFixed(3);
+        }
+        
+        // For numbers between 0.01 and 1, show two decimal places
+        if (num > 0 && num < 1) {
+            return num.toFixed(2);
+        }
+        
+        // For numbers above 1, round to 2 decimal places
+        num = Math.round(num * 100) / 100;
         
         const numStr = num.toString();
         const parts = [];
-        for (let i = numStr.length; i > 0; i -= 3) {
-            parts.unshift(numStr.slice(Math.max(0, i - 3), i));
+        const [whole, decimal] = numStr.split('.');
+        
+        // Format the whole number part with dots
+        for (let i = whole.length; i > 0; i -= 3) {
+            parts.unshift(whole.slice(Math.max(0, i - 3), i));
+        }
+        
+        // Add the decimal part if it exists
+        if (decimal) {
+            return parts.join('.') + ',' + decimal;
         }
         
         return parts.join('.');
@@ -78,22 +98,39 @@ document.addEventListener('DOMContentLoaded', () => {
     titleContainer.className = 'flex items-center gap-4 ml-4';
     
     // Add "Index" text
-    const indexText = document.createElement('span');
-    indexText.className = 'text-white text-xs';
-    indexText.textContent = 'Snipe Index';
-    titleContainer.appendChild(indexText);
-
-    // Add "Index" text
     const basicIndex = document.createElement('span');
-    basicIndex.className = 'text-[rgb(148,158,156)] text-xs line-through';
+    basicIndex.className = 'text-white text-xs cursor-pointer hover:text-white transition-colors';
     basicIndex.textContent = 'Index';
+    basicIndex.onclick = () => switchIndex('mcap');
     titleContainer.appendChild(basicIndex);
 
-    // Add "w/o HYPE" text
+    // Add "w/o HYPE" text (smaller)
     const woHypeText = document.createElement('span');
-    woHypeText.className = 'text-[rgb(148,158,156)] text-xs line-through';
+    woHypeText.className = 'text-[rgb(148,158,156)] text-[10px] cursor-pointer hover:text-emerald-400 transition-colors index-suboption';
     woHypeText.textContent = 'w/o HYPE';
+    woHypeText.onclick = () => switchIndex('mcap-ex-hype');
     titleContainer.appendChild(woHypeText);
+
+    // Add "Equal" text (smaller)
+    const equalText = document.createElement('span');
+    equalText.className = 'text-[rgb(148,158,156)] text-[10px] cursor-pointer hover:text-emerald-400 transition-colors index-suboption';
+    equalText.textContent = 'Equal';
+    equalText.onclick = () => switchIndex('equal');
+    titleContainer.appendChild(equalText);
+
+    // Add "Snipe" text
+    const snipeText = document.createElement('span');
+    snipeText.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-white transition-colors';
+    snipeText.textContent = 'Snipe';
+    snipeText.onclick = () => switchIndex('snipe');
+    titleContainer.appendChild(snipeText);
+
+    // Add "FOMO" text
+    const fomoText = document.createElement('span');
+    fomoText.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-white transition-colors';
+    fomoText.textContent = 'FOMO';
+    fomoText.onclick = () => switchIndex('volume');
+    titleContainer.appendChild(fomoText);
 
     controlsContainer.appendChild(titleContainer);
 
@@ -123,17 +160,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to get cached data
     function getCachedData(timeRange) {
         try {
-            const cacheKey = `index_chart_cache_${timeRange}`;
+            const cacheKey = `index_chart_cache_${timeRange}_${currentIndexType}`;
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
                 const { data, timestamp } = JSON.parse(cached);
-                if (Date.now() - timestamp < CACHE_EXPIRY) {
-                    console.log('Serving from localStorage cache:', cacheKey);
+                // Only use cache if it's fresh and data looks valid
+                if (Date.now() - timestamp < CACHE_EXPIRY && 
+                    Array.isArray(data) && 
+                    data.length > 0 && 
+                    data[0].value > 0) {
+                    console.log('Serving from cache:', cacheKey, data);
                     return data;
+                } else {
+                    // Clear only this expired cache entry
+                    localStorage.removeItem(cacheKey);
                 }
             }
         } catch (error) {
             console.error('Error reading from cache:', error);
+            // Only clear this specific cache entry on error
+            try {
+                const cacheKey = `index_chart_cache_${timeRange}_${currentIndexType}`;
+                localStorage.removeItem(cacheKey);
+            } catch (e) {
+                console.error('Error clearing cache entry:', e);
+            }
         }
         return null;
     }
@@ -141,34 +192,39 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to set cached data
     function setCachedData(timeRange, data) {
         try {
-            const cacheKey = `index_chart_cache_${timeRange}`;
+            // Validate data before caching
+            if (!Array.isArray(data) || data.length === 0) {
+                console.error('Invalid data format for caching:', data);
+                return;
+            }
+            
+            const cacheKey = `index_chart_cache_${timeRange}_${currentIndexType}`;
             localStorage.setItem(cacheKey, JSON.stringify({
                 data,
                 timestamp: Date.now()
             }));
-            console.log('Saved to localStorage cache:', cacheKey);
+            console.log('Saved to cache:', cacheKey, data);
         } catch (error) {
             console.error('Error writing to cache:', error);
         }
     }
 
     async function fetchData(timeRange, retries = 3) {
-        console.log('Fetching index data for:', { timeRange });
+        console.log('Fetching index data for:', { timeRange, indexType: currentIndexType });
         
-        // Check localStorage cache first
-        const cached = getCachedData(timeRange);
-        if (cached) {
-            return cached;
+        // Try to get data from cache first
+        const cachedData = getCachedData(timeRange);
+        if (cachedData) {
+            console.log('Using cached data for:', { timeRange, indexType: currentIndexType });
+            return cachedData;
         }
-
+        
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
-                console.log(`Fetching data attempt ${attempt}/${retries}:`, { timeRange });
+                console.log(`Fetching data attempt ${attempt}/${retries}:`, { timeRange, indexType: currentIndexType });
                 
-                // Use spot-data endpoint for 7D view, price-data for others
-                const endpoint = timeRange === '7D' 
-                    ? '/api/spot-data?timeRange=7D'
-                    : `/api/price-data?timeRange=${timeRange}&token=INDEX&dataset=dataset1`;
+                // Always use spot-data endpoint for indices
+                const endpoint = `/api/spot-data?type=${currentIndexType}`;
                 
                 const response = await fetch(endpoint);
                 
@@ -187,19 +243,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 console.log('Received data:', data);
                 
-                if (!data || !data.prices) {
+                if (!data || !data.prices || !Array.isArray(data.prices)) {
                     console.error('Invalid data format:', data);
                     throw new Error('Invalid data format received');
                 }
 
-                // Process the data
-                const processedData = data.prices.map(([timestamp, price]) => ({
+                // Process the data - use the actual portfolio value
+                const processedData = data.prices.map(([timestamp, portfolioValue]) => ({
                     time: timestamp / 1000,
-                    value: parseFloat(price)
+                    value: portfolioValue
                 }));
 
-                // Save to localStorage cache
+                // Cache the processed data
                 setCachedData(timeRange, processedData);
+                
                 return processedData;
             } catch (error) {
                 console.error(`Error fetching data (attempt ${attempt}):`, error);
@@ -309,9 +366,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Filter data based on time range
+            const now = Date.now() / 1000;
+            let filteredData = data;
+            if (timeRange === '30D') {
+                const thirtyDaysAgo = now - (30 * 24 * 60 * 60);
+                filteredData = data.filter(point => point.time >= thirtyDaysAgo);
+            }
+
+            // Update performance metrics
+            if (filteredData.length > 0) {
+                const currentPrice = filteredData[filteredData.length - 1].value;
+                const initialPrice = filteredData[0].value;
+                const absoluteGain = currentPrice - initialPrice;
+                const multiplier = currentPrice / initialPrice;
+
+                // Update token value in About tab
+                const tokenValueElement = document.querySelector('.token-value');
+                if (tokenValueElement) {
+                    tokenValueElement.textContent = `$${formatTooltipNumber(currentPrice)}`;
+                }
+
+                // Update performance in top stats
+                const performanceElement = document.querySelector('.performance');
+                if (performanceElement) {
+                    performanceElement.textContent = `+$${formatTooltipNumber(absoluteGain)}`;
+                }
+
+                // Update multiplier in top stats
+                const multiplierElement = document.querySelector('.multiplier');
+                if (multiplierElement) {
+                    multiplierElement.textContent = `${multiplier.toFixed(1)}x`;
+                }
+            }
+
             // Reduce data points based on time range
             const target = targetDataPoints[timeRange] || data.length;
-            const reducedData = reduceDataPoints(data, target);
+            const reducedData = reduceDataPoints(filteredData, target);
             console.log('Rendering chart data:', reducedData);
             updateChartData(reducedData);
         } catch (error) {
@@ -322,4 +413,80 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial render
     console.log('Performing initial render with:', { timeRange: currentTimeRange });
     updateChart(currentTimeRange);
+    switchIndex('mcap');
+
+    // Function to switch between index types
+    function switchIndex(type) {
+        currentIndexType = type;
+        
+        // Update active styles
+        [basicIndex, woHypeText, equalText, snipeText, fomoText].forEach(el => {
+            if (el === woHypeText || el === equalText) {
+                el.className = 'text-[rgb(148,158,156)] text-[10px] cursor-pointer hover:text-emerald-400 transition-colors index-suboption';
+            } else {
+                el.className = 'text-[rgb(148,158,156)] text-xs cursor-pointer hover:text-white transition-colors';
+            }
+        });
+
+        // Show/hide index suboptions based on type
+        const suboptions = document.querySelectorAll('.index-suboption');
+        if (type === 'snipe' || type === 'volume') {
+            suboptions.forEach(el => el.style.display = 'none');
+        } else {
+            suboptions.forEach(el => el.style.display = 'block');
+        }
+
+        // Set active index style and descriptions
+        let activeElement;
+        let mainDescription = '';
+        let detailedDescription = '';
+        switch(type) {
+            case 'mcap':
+                activeElement = basicIndex;
+                mainDescription = 'Market cap weighted index of all tokens on Hyperliquid';
+                detailedDescription = 'If you had invested $1 proportionally across all tokens based on their market caps, this is how much your portfolio would be worth today.';
+                break;
+            case 'mcap-ex-hype':
+                activeElement = woHypeText;
+                mainDescription = 'Market cap weighted index excluding HYPE token';
+                detailedDescription = 'Same as the regular index, but excluding HYPE token. Shows how the ecosystem performs without its largest token.';
+                break;
+            case 'snipe':
+                activeElement = snipeText;
+                mainDescription = '$1 worth of every token was bought within the first 2 days of its launch';
+                detailedDescription = 'If you had bought $1 worth of each token within 48 hours of its launch, this would be your total portfolio value.';
+                break;
+            case 'volume':
+                activeElement = fomoText;
+                mainDescription = 'Volume weighted index based on 24h trading volume';
+                detailedDescription = 'Portfolio weighted by trading activity - more weight given to frequently traded tokens. Shows what happens if you follow the crowd.';
+                break;
+            case 'equal':
+                activeElement = equalText;
+                mainDescription = 'Equal weighted index giving same weight to all tokens';
+                detailedDescription = 'If you had invested equal amounts in every token regardless of their market cap, this would be your return.';
+                break;
+        }
+
+        if (activeElement) {
+            if (activeElement === woHypeText || activeElement === equalText) {
+                activeElement.className = 'text-white text-[10px] cursor-pointer hover:text-emerald-400 transition-colors index-suboption';
+            } else {
+                activeElement.className = 'text-white text-xs cursor-pointer hover:text-white transition-colors';
+            }
+        }
+
+        // Update both descriptions
+        const desc1Element = document.getElementById('desc1');
+        const desc2Element = document.getElementById('desc2');
+        if (desc1Element) {
+            desc1Element.textContent = mainDescription;
+        }
+        if (desc2Element) {
+            desc2Element.textContent = detailedDescription;
+        }
+
+        // Don't clear all cache, just update the chart
+        updateChart(currentTimeRange);
+    }
 }); 

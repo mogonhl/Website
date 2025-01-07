@@ -363,7 +363,7 @@
                                         <div style="display: flex; flex-direction: column; gap: 15px;">
                                             <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Information</p>
                                             <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1">$1 worth of every token was bought within the first 2 days of its launch</p>
-                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1">Seems insane... Gotta study now but will check everything tomorrow. /GLASSES_STAY_ON</p>
+                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc2">If you had bought $1 worth of each token within 48 hours of its launch, this would be your total portfolio value.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -430,18 +430,19 @@
                 if (data.prices && data.prices.length > 0) {
                     // Get current and initial prices
                     const currentPrice = data.prices[data.prices.length - 1][1];
-                    const initialInvestment = 128; // We invested $1 in each of 128 assets
+                    const initialPrice = data.prices[0][1];
                     
-                    // Update token value
-                    document.querySelector('.token-value').textContent = `$${currentPrice.toFixed(2)}`;
+                    // Update token value with full number formatting
+                    const formattedCurrentPrice = formatFullNumber(currentPrice);
+                    document.querySelector('.token-value').textContent = `$${formattedCurrentPrice}`;
                     
                     // Calculate and update performance (absolute dollar gain)
-                    const absoluteGain = currentPrice - initialInvestment;
-                    document.querySelector('.performance').textContent = `+$${absoluteGain.toFixed(2)}`;
+                    const absoluteGain = currentPrice - initialPrice;
+                    document.querySelector('.performance').textContent = `+$${formatFullNumber(absoluteGain)}`;
                     
                     // Calculate and update multiplier
-                    const multiplier = currentPrice / initialInvestment;
-                    document.querySelector('.multiplier').textContent = `${multiplier.toFixed(2)}x`;
+                    const multiplier = currentPrice / initialPrice;
+                    document.querySelector('.multiplier').textContent = `${multiplier.toFixed(1)}x`;
 
                     // Update best performers
                     const performers = [
@@ -458,7 +459,7 @@
                             
                             if (tickerSpan && returnSpan) {
                                 tickerSpan.textContent = performer.ticker;
-                                returnSpan.textContent = `${performer.return_pct.toFixed(2)}%`;
+                                returnSpan.textContent = `${formatFullNumber(performer.return_pct)}%`;
                             }
                         }
                     });
@@ -466,6 +467,33 @@
             } catch (error) {
                 console.error('Error updating index stats:', error);
             }
+        }
+
+        // Format numbers with full digits and separators
+        function formatFullNumber(num) {
+            if (typeof num !== 'number') return '0';
+            
+            // For very small numbers (0.01 and below), show up to 3 decimal places
+            if (num > 0 && num < 0.01) {
+                return num.toFixed(3);
+            }
+            
+            // For numbers between 0.01 and 1, show two decimal places
+            if (num > 0 && num < 1) {
+                return num.toFixed(2);
+            }
+            
+            // For numbers above 1, round to 2 decimal places
+            num = Math.round(num * 100) / 100;
+            
+            // Split into whole and decimal parts
+            const [whole, decimal] = num.toString().split('.');
+            
+            // Add thousands separators to whole part
+            const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            
+            // Return with decimal if it exists
+            return decimal ? `${formattedWhole}.${decimal}` : formattedWhole;
         }
 
         // Update stats immediately and every minute

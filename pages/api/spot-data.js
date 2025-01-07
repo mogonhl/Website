@@ -18,10 +18,20 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { timeRange } = req.query;
-        const key = timeRange === '7D' ? 'spot_data_7d_index' : 'spot_data_daily_index';
+        const { timeRange, type = 'snipe' } = req.query;
         
-        console.log(`Fetching index data for ${timeRange}...`);
+        // Map index type to Redis key
+        const keyMap = {
+            'snipe': 'spot_data_snipe_index',
+            'mcap': 'spot_data_mcap_index',
+            'mcap-ex-hype': 'spot_data_mcap_ex_hype_index',
+            'volume': 'spot_data_volume_index',
+            'equal': 'spot_data_equal_index'
+        };
+        
+        const key = keyMap[type] || 'spot_data_snipe_index';
+        
+        console.log(`Fetching index data for ${timeRange}, type: ${type}...`);
         const indexData = await redis.get(key);
         console.log('Raw index data:', indexData);
 
