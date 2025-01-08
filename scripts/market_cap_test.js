@@ -1,5 +1,4 @@
 const fetch = require('node-fetch');
-const { SPOT_TICKERS } = require('../app/types/spot_tickers.js');
 
 async function getAllTokenDetails() {
     const payload = {
@@ -31,13 +30,6 @@ async function getAllTokenDetails() {
         console.error('Error fetching token details:', error.message);
         return null;
     }
-}
-
-function getTokenInfo(atNumber) {
-    // Convert @123 to @123 format
-    const key = atNumber.startsWith('@') ? atNumber : `@${atNumber.replace('@', '')}`;
-    const tokenInfo = SPOT_TICKERS[key];
-    return tokenInfo || { ticker: atNumber, name: atNumber };
 }
 
 function calculateMarketCap(price, circulatingSupply) {

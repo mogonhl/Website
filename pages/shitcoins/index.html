@@ -402,6 +402,72 @@
                 </div>
             </div>
 
+            <!-- Latest Launch Container -->
+            <div class="mt-4 mb-4">
+                <div class="flex items-center justify-between mb-2 px-6">
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs text-white transition-colors cursor-pointer">Latest Launch</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-[rgb(148,158,156)]">
+                        <span class="cursor-pointer transition-colors" id="prevLaunchBtn" onclick="showPreviousLaunch()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </span>
+                        <span class="cursor-pointer transition-colors" id="nextLaunchBtn" onclick="showNextLaunch()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 5l7 7-7 7" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative">
+                    <div id="latest-launch" class="flex items-center justify-between">
+                        <!-- Token Info -->
+                        <div class="flex items-center gap-3">
+                            <img id="latest-token-icon" src="/assets/icons/default.svg" alt="Token Icon" class="w-8 h-8 rounded-full">
+                            <div>
+                                <h3 id="latest-token-name" class="text-white text-sm">Loading...</h3>
+                                <p id="latest-token-time" class="text-xs text-[rgb(148,158,156)]">Launched: Loading...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Performance Metrics -->
+                        <div class="flex items-center gap-8">
+                            <!-- Price -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">Price</p>
+                                <p id="latest-token-price" class="text-sm text-white">$0.00</p>
+                            </div>
+                            
+                            <!-- 24h Performance -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">24h</p>
+                                <p id="latest-token-24h" class="text-sm">0%</p>
+                            </div>
+                            
+                            <!-- Launch Performance -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">Since Launch</p>
+                                <p id="latest-token-launch-perf" class="text-sm">1x</p>
+                            </div>
+                            
+                            <!-- Volume -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">24h Volume</p>
+                                <p id="latest-token-volume" class="text-sm text-white">$0</p>
+                            </div>
+                            
+                            <!-- Market Cap -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">Market Cap</p>
+                                <p id="latest-token-mcap" class="text-sm text-white">$0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Spot Tokens Section -->
             <div class="mt-8">
                 <div class="flex items-center justify-between mb-4 px-6">
@@ -457,6 +523,228 @@
         </div>
     </div>
     <script>
+    // Track current launch index and cache data
+    let currentLaunchIndex = 2;
+    let launches = [];
+    let tokenDataCache = new Map();
+
+    // Preload all launch data
+    async function preloadLaunchData() {
+        try {
+            // Get launches from Redis
+            const response = await fetch('/api/redis/get?key=latest_launches');
+            launches = await response.json();
+            console.log('Latest launches:', launches);
+
+            // Fetch all token data at once
+            const currentData = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: "spotMetaAndAssetCtxs" })
+            }).then(r => r.json());
+
+            // Cache all token data
+            const now = Date.now();
+            launches.forEach(launch => {
+                const tokenData = currentData[1].find(t => t.coin === launch.fullName);
+                if (tokenData) {
+                    tokenDataCache.set(launch.fullName, tokenData);
+                    tokenDataCache.set(launch.fullName + '_time', now);
+                }
+            });
+
+            // Preload all images
+            launches.forEach(launch => {
+                const img = new Image();
+                img.src = `/assets/Logos/${launch.name}.png`;
+            });
+
+            // Update UI with initial launch
+            await updateLatestLaunch(launches[currentLaunchIndex]);
+        } catch (error) {
+            console.error('Error preloading launch data:', error);
+        }
+    }
+
+    // Format time difference to "X days and Y hours ago" or "X hours ago"
+    function formatTimeDifference(timestamp) {
+        const now = Date.now();
+        // Convert timestamp to milliseconds if it's in seconds
+        const timestampMs = timestamp > 9999999999 ? timestamp : timestamp * 1000;
+        const diffHours = Math.floor((now - timestampMs) / (1000 * 60 * 60));
+        
+        if (diffHours < 24) {
+            return `Launched ${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+        } else {
+            const days = Math.floor(diffHours / 24);
+            const hours = diffHours % 24;
+            if (hours === 0) {
+                return `Launched ${days} ${days === 1 ? 'day' : 'days'} ago`;
+            }
+            return `Launched ${days} ${days === 1 ? 'day' : 'days'} and ${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+        }
+    }
+
+    // Format numbers with full digits and separators
+    function formatFullNumber(num) {
+        if (typeof num !== 'number') return '0';
+        
+        // For very small numbers (0.01 and below), show up to 3 decimal places
+        if (num > 0 && num < 0.01) {
+            return num.toFixed(3);
+        }
+        
+        // For numbers between 0.01 and 1, show two decimal places
+        if (num > 0 && num < 1) {
+            return num.toFixed(2);
+        }
+        
+        // For numbers above 1, round to 2 decimal places
+        num = Math.round(num * 100) / 100;
+        
+        // Split into whole and decimal parts
+        const [whole, decimal] = num.toString().split('.');
+        
+        // Add thousands separators to whole part
+        const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        
+        // Return with decimal if it exists
+        return decimal ? `${formattedWhole},${decimal}` : formattedWhole;
+    }
+
+    // Function to update navigation buttons state
+    function updateNavigationState() {
+        const prevBtn = document.getElementById('prevLaunchBtn');
+        const nextBtn = document.getElementById('nextLaunchBtn');
+        
+        // Update previous button state
+        if (currentLaunchIndex < launches.length - 1) {
+            prevBtn.classList.add('hover:text-emerald-400');
+            prevBtn.style.opacity = '1';
+        } else {
+            prevBtn.classList.remove('hover:text-emerald-400');
+            prevBtn.style.opacity = '0.5';
+        }
+        
+        // Update next button state
+        if (currentLaunchIndex > 0) {
+            nextBtn.classList.add('hover:text-emerald-400');
+            nextBtn.style.opacity = '1';
+        } else {
+            nextBtn.classList.remove('hover:text-emerald-400');
+            nextBtn.style.opacity = '0.5';
+        }
+    }
+
+    // Initialize Latest Launch data
+    async function updateLatestLaunch(specificLaunch = null) {
+        try {
+            if (!specificLaunch) {
+                // Get launches from Redis if not already loaded
+                if (launches.length === 0) {
+                    const response = await fetch('/api/redis/get?key=latest_launches');
+                    launches = await response.json();
+                    console.log('Latest launches:', launches);
+                }
+            }
+
+            // Use either specific launch or latest
+            const launchData = specificLaunch || launches[currentLaunchIndex];
+            if (!launchData) {
+                console.error('No launch data available');
+                return;
+            }
+
+            // Check cache first
+            let tokenData = tokenDataCache.get(launchData.fullName);
+            const cacheTime = tokenDataCache.get(launchData.fullName + '_time');
+            const now = Date.now();
+
+            // Refresh cache if older than 30 seconds
+            if (!tokenData || !cacheTime || now - cacheTime > 30000) {
+                const currentData = await fetch('https://api.hyperliquid.xyz/info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: "spotMetaAndAssetCtxs" })
+                }).then(r => r.json());
+
+                tokenData = currentData[1].find(t => t.coin === launchData.fullName);
+                if (tokenData) {
+                    tokenDataCache.set(launchData.fullName, tokenData);
+                    tokenDataCache.set(launchData.fullName + '_time', now);
+                }
+            }
+
+            if (!tokenData) {
+                console.error('Could not find current token data');
+                return;
+            }
+
+            // Calculate metrics
+            const currentPrice = parseFloat(tokenData.markPx);
+            const performanceMultiplier = currentPrice / launchData.launchPrice;
+            const performance24h = ((currentPrice - parseFloat(tokenData.prevDayPx)) / parseFloat(tokenData.prevDayPx)) * 100;
+            const volume24h = parseFloat(tokenData.dayNtlVlm);
+            const marketCap = currentPrice * parseFloat(tokenData.circulatingSupply);
+
+            // Update UI
+            document.getElementById('latest-token-name').textContent = launchData.name;
+            document.getElementById('latest-token-time').textContent = formatTimeDifference(launchData.launchTime);
+            document.getElementById('latest-token-price').textContent = `$${currentPrice.toFixed(6)}`;
+            document.getElementById('latest-token-24h').textContent = `${performance24h.toFixed(1)}%`;
+            document.getElementById('latest-token-24h').className = `text-sm ${performance24h >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            document.getElementById('latest-token-launch-perf').textContent = `${performanceMultiplier.toFixed(1)}x`;
+            document.getElementById('latest-token-launch-perf').className = `text-sm ${performanceMultiplier >= 1 ? 'text-emerald-400' : 'text-red-400'}`;
+            document.getElementById('latest-token-volume').textContent = `$${formatFullNumber(volume24h)}`;
+            document.getElementById('latest-token-mcap').textContent = `$${formatFullNumber(marketCap)}`;
+
+            // Update navigation state
+            updateNavigationState();
+
+            // Try to load token icon
+            const iconImg = document.getElementById('latest-token-icon');
+            const tryLoadImage = (src) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(src);
+                    img.onerror = reject;
+                    img.src = src;
+                });
+            };
+
+            // Try to load token icon, fall back to default.svg
+            tryLoadImage(`/assets/Logos/${launchData.name}.png`)
+                .then(src => {
+                    iconImg.src = src;
+                })
+                .catch(() => {
+                    iconImg.src = '/assets/icons/default.svg';
+                });
+        } catch (error) {
+            console.error('Error updating latest launch:', error);
+        }
+    }
+
+    // Function to show previous launch
+    async function showPreviousLaunch() {
+        console.log('Showing previous launch. Current index:', currentLaunchIndex, 'Launches:', launches);
+        if (currentLaunchIndex < launches.length - 1) {
+            currentLaunchIndex++;
+            console.log('Moving to index:', currentLaunchIndex);
+            await updateLatestLaunch(launches[currentLaunchIndex]);
+        }
+    }
+
+    // Function to show next launch
+    async function showNextLaunch() {
+        console.log('Showing next launch. Current index:', currentLaunchIndex, 'Launches:', launches);
+        if (currentLaunchIndex > 0) {
+            currentLaunchIndex--;
+            console.log('Moving to index:', currentLaunchIndex);
+            await updateLatestLaunch(launches[currentLaunchIndex]);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Function to update the token value and performance
         async function updateIndexStats() {
@@ -497,36 +785,11 @@
             }
         }
 
-        // Format numbers with full digits and separators
-        function formatFullNumber(num) {
-            if (typeof num !== 'number') return '0';
-            
-            // For very small numbers (0.01 and below), show up to 3 decimal places
-            if (num > 0 && num < 0.01) {
-                return num.toFixed(3);
-            }
-            
-            // For numbers between 0.01 and 1, show two decimal places
-            if (num > 0 && num < 1) {
-                return num.toFixed(2);
-            }
-            
-            // For numbers above 1, round to 2 decimal places
-            num = Math.round(num * 100) / 100;
-            
-            // Split into whole and decimal parts
-            const [whole, decimal] = num.toString().split('.');
-            
-            // Add thousands separators to whole part
-            const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            
-            // Return with decimal if it exists
-            return decimal ? `${formattedWhole},${decimal}` : formattedWhole;
-        }
-
-        // Update stats immediately and every minute
+        // Preload data and update stats immediately
+        preloadLaunchData();
         updateIndexStats();
         setInterval(updateIndexStats, 60000);
+        setInterval(updateLatestLaunch, 60000);
     });
     </script>
 </body>

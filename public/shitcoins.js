@@ -245,7 +245,7 @@ function updateTokenList(data) {
     container.innerHTML = '';
 
     // Filter out excluded tokens
-    const excludedTokens = ['@71', '@98', '@131', '@132'];
+    const excludedTokens = ['@71', '@98', '@131'];
     let filteredTokens = data.tokens.filter(token => !excludedTokens.includes(token.coin));
 
     // Apply search filter if there's a search query

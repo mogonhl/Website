@@ -1,6 +1,5 @@
 const { Redis } = require('@upstash/redis');
 const fetch = require('node-fetch');
-const { SPOT_TICKERS } = require('../app/types/spot_tickers');
 require('dotenv').config();
 
 // Validate environment variables
@@ -117,7 +116,7 @@ async function populateSpotData() {
     let consecutiveEmptyResponses = 0;
     const MAX_EMPTY_RESPONSES = 5;
     const dailyData = [];
-    const CHUNK_SIZE = 10; // Store data in chunks of 10 tokens
+    const CHUNK_SIZE = 5; // Reduced chunk size to avoid request size limit
     
     while (consecutiveEmptyResponses < MAX_EMPTY_RESPONSES) {
         if (tokenId > 1) {
@@ -142,8 +141,23 @@ async function populateSpotData() {
             try {
                 const chunkNumber = Math.floor((tokenId - 1) / CHUNK_SIZE);
                 console.log(`\nStoring chunk ${chunkNumber} (tokens ${tokenId - CHUNK_SIZE} to ${tokenId - 1})...`);
-                await redis.set(`spot_data_daily_chunk_${chunkNumber}`, JSON.stringify(dailyData));
-                console.log('Successfully stored chunk');
+                
+                // Split the data into smaller chunks if needed
+                const dataStr = JSON.stringify(dailyData);
+                if (dataStr.length > 900000) { // Leave some buffer below the 1MB limit
+                    console.log('Data size too large, splitting chunk further...');
+                    const halfSize = Math.ceil(dailyData.length / 2);
+                    const firstHalf = dailyData.slice(0, halfSize);
+                    const secondHalf = dailyData.slice(halfSize);
+                    
+                    await redis.set(`spot_data_daily_chunk_${chunkNumber}_a`, JSON.stringify(firstHalf));
+                    await redis.set(`spot_data_daily_chunk_${chunkNumber}_b`, JSON.stringify(secondHalf));
+                    console.log('Successfully stored split chunks');
+                } else {
+                    await redis.set(`spot_data_daily_chunk_${chunkNumber}`, dataStr);
+                    console.log('Successfully stored chunk');
+                }
+                
                 dailyData.length = 0; // Clear the array after storing
             } catch (error) {
                 console.error('Error storing data chunk:', error);
@@ -157,8 +171,22 @@ async function populateSpotData() {
         try {
             const chunkNumber = Math.floor((tokenId - 1) / CHUNK_SIZE);
             console.log(`\nStoring final chunk ${chunkNumber} (${dailyData.length} tokens)...`);
-            await redis.set(`spot_data_daily_chunk_${chunkNumber}`, JSON.stringify(dailyData));
-            console.log('Successfully stored final chunk');
+            
+            // Split the final chunk if needed
+            const dataStr = JSON.stringify(dailyData);
+            if (dataStr.length > 900000) {
+                console.log('Final chunk too large, splitting...');
+                const halfSize = Math.ceil(dailyData.length / 2);
+                const firstHalf = dailyData.slice(0, halfSize);
+                const secondHalf = dailyData.slice(halfSize);
+                
+                await redis.set(`spot_data_daily_chunk_${chunkNumber}_a`, JSON.stringify(firstHalf));
+                await redis.set(`spot_data_daily_chunk_${chunkNumber}_b`, JSON.stringify(secondHalf));
+                console.log('Successfully stored split final chunks');
+            } else {
+                await redis.set(`spot_data_daily_chunk_${chunkNumber}`, dataStr);
+                console.log('Successfully stored final chunk');
+            }
         } catch (error) {
             console.error('Error storing final chunk:', error);
             throw error;
@@ -187,19 +215,82 @@ async function populateSpotData() {
 async function loadAllChunks() {
     try {
         const metadataStr = await redis.get('spot_data_daily_metadata');
+        console.log('Metadata from Redis:', metadataStr);
+        console.log('Metadata type:', typeof metadataStr);
+        
         if (!metadataStr) {
             throw new Error('No metadata found for chunked data');
         }
 
-        const metadata = JSON.parse(metadataStr);
+        const metadata = typeof metadataStr === 'string' ? JSON.parse(metadataStr) : metadataStr;
         const { totalChunks } = metadata;
         const allData = [];
 
+        console.log(`\nLoading ${totalChunks} chunks of data...`);
+
         for (let i = 0; i < totalChunks; i++) {
-            const chunkDataStr = await redis.get(`spot_data_daily_chunk_${i}`);
-            if (chunkDataStr) {
-                const parsed = JSON.parse(chunkDataStr);
-                allData.push(...parsed);
+            console.log(`Loading chunk ${i}...`);
+            // Try to load the main chunk first
+            let chunkData = await redis.get(`spot_data_daily_chunk_${i}`);
+            console.log(`Chunk ${i} type:`, typeof chunkData);
+            console.log(`Chunk ${i} data:`, chunkData?.slice?.(0, 100) + '...');
+            
+            if (chunkData) {
+                // If it's already an object, use it directly
+                if (typeof chunkData === 'object' && Array.isArray(chunkData)) {
+                    allData.push(...chunkData);
+                }
+                // If it's a string, try to parse it
+                else if (typeof chunkData === 'string') {
+                    try {
+                        const parsed = JSON.parse(chunkData);
+                        if (Array.isArray(parsed)) {
+                            allData.push(...parsed);
+                        } else {
+                            console.error(`Chunk ${i} is not an array:`, typeof parsed);
+                        }
+                    } catch (e) {
+                        console.error(`Error parsing chunk ${i}:`, e);
+                        continue;
+                    }
+                } else {
+                    console.error(`Unexpected chunk ${i} type:`, typeof chunkData);
+                }
+            } else {
+                // If main chunk doesn't exist, try loading split chunks
+                console.log(`Loading split chunks ${i}_a and ${i}_b...`);
+                let chunkAData = await redis.get(`spot_data_daily_chunk_${i}_a`);
+                let chunkBData = await redis.get(`spot_data_daily_chunk_${i}_b`);
+                
+                if (chunkAData) {
+                    if (typeof chunkAData === 'object' && Array.isArray(chunkAData)) {
+                        allData.push(...chunkAData);
+                    } else if (typeof chunkAData === 'string') {
+                        try {
+                            const parsed = JSON.parse(chunkAData);
+                            if (Array.isArray(parsed)) {
+                                allData.push(...parsed);
+                            }
+                        } catch (e) {
+                            console.error(`Error parsing chunk ${i}_a:`, e);
+                        }
+                    }
+                }
+                
+                if (chunkBData) {
+                    if (typeof chunkBData === 'object' && Array.isArray(chunkBData)) {
+                        allData.push(...chunkBData);
+                    } else if (typeof chunkBData === 'string') {
+                        try {
+                            const parsed = JSON.parse(chunkBData);
+                            if (Array.isArray(parsed)) {
+                                allData.push(...parsed);
+                            }
+                        } catch (e) {
+                            console.error(`Error parsing chunk ${i}_b:`, e);
+                        }
+                    }
+                }
             }
         }
 
@@ -237,7 +328,7 @@ async function determineStableStartPoint(tokens, minTokens = 5) {
         if (activeTokens.size >= minTokens) {
             console.log(`Found stable start point at ${new Date(timestamp).toISOString()}`);
             console.log(`Number of active tokens: ${activeTokens.size}`);
-            console.log('Active tokens:', Array.from(activeTokens).map(id => SPOT_TICKERS[`@${id}`]?.ticker || `Token ${id}`).join(', '));
+            console.log('Active token IDs:', Array.from(activeTokens).join(', '));
             return timestamp;
         }
     }
@@ -480,13 +571,48 @@ async function createVolumeWeightedIndex(tokens, redisKey, stableStartTimestamp)
 
 async function main() {
     try {
-        // 1. Populate spot data
+        // 1. Populate spot data (this includes daily data chunking)
         const spotData = await populateSpotData();
         
         // 2. Create all indices
         await createIndices(spotData);
+
+        // 3. Update 7-day snapshot data for token graphs
+        console.log('\n=== Updating 7-day snapshot data ===');
+        const batchSize = 20;
+        const tokenIds = spotData.map(token => token.tokenId);
+        const uniqueBatches = new Set(tokenIds.map(id => Math.floor(id / batchSize)));
         
-        console.log('\nAll indices created successfully!');
+        for (const batchNum of uniqueBatches) {
+            const batchTokens = spotData.filter(token => 
+                Math.floor(token.tokenId / batchSize) === batchNum
+            );
+            
+            if (batchTokens.length > 0) {
+                console.log(`\nStoring snapshot data for batch ${batchNum} (${batchTokens.length} tokens)...`);
+                await redis.set(`spot_data_7d_${batchNum}`, JSON.stringify(batchTokens));
+            }
+        }
+
+        // 4. Update latest launch data
+        console.log('\n=== Updating latest launch data ===');
+        // Find the token with the highest ID that has data
+        const latestToken = spotData.reduce((latest, current) => {
+            return (!latest || current.tokenId > latest.tokenId) ? current : latest;
+        }, null);
+
+        if (latestToken) {
+            const latestLaunchData = {
+                fullName: `@${latestToken.tokenId}`,
+                name: latestToken.displayName || `@${latestToken.tokenId}`,
+                launchTime: latestToken.prices[0][0],
+                launchPrice: latestToken.prices[0][1]
+            };
+            console.log('Latest launch data:', latestLaunchData);
+            await redis.set('latest_launch', JSON.stringify(latestLaunchData));
+        }
+        
+        console.log('\nAll data updated successfully!');
         process.exit(0);
     } catch (error) {
         console.error('Error in main execution:', error);
@@ -494,4 +620,4 @@ async function main() {
     }
 }
 
-main(); 
+main();
