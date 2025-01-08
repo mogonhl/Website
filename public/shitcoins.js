@@ -394,16 +394,34 @@ function updateSnapshotChart(tokenId, priceData) {
     const container = document.querySelector(`[data-token-id="${tokenId}"]`);
     if (!container) return;
 
+    // Find the current token's price from marketData
+    const currentToken = marketData.tokens.find(token => {
+        const tokenIdFromCoin = token.coin === 'PURR/USDC' ? 'purr' : token.coin.replace('@', '');
+        return tokenIdFromCoin === tokenId;
+    });
+
+    if (!currentToken) return;
+
     // Get min and max prices for scaling
-    const prices = priceData.map(p => p[1]);
+    let prices = priceData.map(p => p[1]);
+    
+    // Add the current price as the last data point
+    const lastTimestamp = priceData[priceData.length - 1][0];
+    const currentTimestamp = Date.now();
+    const extendedPriceData = [
+        ...priceData,
+        [currentTimestamp, currentToken.price]
+    ];
+    prices = [...prices, currentToken.price];
+
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const priceRange = maxPrice - minPrice;
 
     // Calculate points with padding
     const padding = 5; // Padding from top and bottom
-    const points = priceData.map((p, i) => ({
-        x: (i / (priceData.length - 1)) * 200,
+    const points = extendedPriceData.map((p, i) => ({
+        x: (i / (extendedPriceData.length - 1)) * 200,
         y: padding + ((maxPrice - p[1]) / priceRange) * (40 - 2 * padding)
     }));
 
@@ -440,8 +458,8 @@ function updateSnapshotChart(tokenId, priceData) {
         }
     }
 
-    // Calculate if price went up or down
-    const priceChange = prices[prices.length - 1] - prices[0];
+    // Calculate if price went up or down using the first and current price
+    const priceChange = currentToken.price - prices[0];
     const isPositive = priceChange >= 0;
 
     // Create gradient for the path
