@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Stream Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        #chart-container {
+            width: 100%;
+            height: 600px;
+            margin: 20px 0;
+            background: #222;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        #price {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #4CAF50;
+        }
+        #general-info {
+            background: #222;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        #general-info h2 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        #general-info dl {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px 20px;
+            margin: 0;
+        }
+        #general-info dt {
+            font-weight: bold;
+            color: #888;
+        }
+        #general-info dd {
+            margin: 0;
+        }
+        #general-info .links {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        #general-info .links a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        #general-info .links a:hover {
+            text-decoration: underline;
+        }
+        #price-debug {
+            font-family: monospace;
+            font-size: 12px;
+            padding: 10px;
+            background: #333;
+            border-radius: 4px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .progress {
+            background: #333;
+            border-radius: 4px;
+            height: 20px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-bar {
+            background: #4CAF50;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>HyperAI Platform</h1>
+    <div id="general-info">
+        <h2>General Information</h2>
+        <dl>
+            <dt>Project Name</dt>
+            <dd>HyperAI Platform</dd>
+            
+            <dt>Symbol</dt>
+            <dd>HAI</dd>
+            
+            <dt>Description</dt>
+            <dd>Platform & Framework for AI agents in the Hyperliquid ecosystem.</dd>
+
+            <dt>Project Image</dt>
+            <dd>
+                <img src="https://media.hypurr.fun/AgACAgIAAxkBAAGjC8ZncvFL5hpYpL2LJYN9qFRSKKW45wACFukxG2wzmUtoWeRny7FsGwEAAwIAA3gAAzYE" 
+                     alt="HyperAI Platform" 
+                     style="max-width: 100%; border-radius: 4px; margin-top: 10px;">
+            </dd>
+        </dl>
+        <div class="links">
+            <a href="https://x.com/HyperAI_trade" target="_blank">Twitter</a>
+            <a href="https://t.me/HyperAI_trade" target="_blank">Telegram</a>
+            <a href="https://hyperAI.trade" target="_blank">Website</a>
+        </div>
+    </div>
+
+    <h2>Price Stream Test</h2>
+    <div id="price">Connecting...</div>
+    <div id="chart-container">
+        <canvas id="priceChart"></canvas>
+    </div>
+    <h3>Debug Log</h3>
+    <div id="price-debug"></div>
+
+    <script>
+        /**
+         * Global debug logging function
+         * Adds timestamped messages to the debug panel and maintains a maximum of 50 lines
+         */
+        function log(message) {
+            const debug = document.getElementById('price-debug');
+            const time = new Date().toISOString().split('T')[1].split('.')[0];
+            debug.innerHTML = `[${time}] ${message}\n` + debug.innerHTML;
+            if (debug.innerHTML.split('\n').length > 50) {
+                debug.innerHTML = debug.innerHTML.split('\n').slice(0, 50).join('\n');
+            }
+        }
+
+        /**
+         * PriceStream Class
+         * Handles real-time price data streaming and chart updates
+         */
+        class PriceStream {
+            constructor() {
+                this.xhr = null;                // XHR connection instance
+                this.chart = null;              // Chart.js instance
+                this.lastTimestamp = 0;         // Last processed timestamp to prevent duplicates
+                this.initChart();
+            }
+
+            /**
+             * Initializes the Chart.js price chart with custom configuration
+             */
+            initChart() {
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                // Set global chart defaults for dark theme
+                Chart.defaults.color = '#fff';
+                Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+                
+                this.chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Price',
+                            data: [],
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false,
+                        spanGaps: true,
+                        elements: {
+                            line: {
+                                tension: 0.1
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'nearest'
+                        },
+                        scales: {
+                            x: {
+                                type: 'time',
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                },
+                                ticks: {
+                                    source: 'auto',
+                                    maxRotation: 0
+                                },
+                                time: {
+                                    unit: 'minute',
+                                    displayFormats: {
+                                        minute: 'HH:mm:ss'
+                                    }
+                                }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Price ($)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(2);
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Price: $' + context.parsed.y.toFixed(2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            /**
+             * Establishes connection to the candle stream
+             * Uses gRPC-Web protocol for streaming price data
+             */
+            connect() {
+                if (this.xhr) {
+                    log('Connection already exists');
+                    return;
+                }
+
+                log('Starting connection to candle stream...');
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://grpc.hypurr.fun/hypurr.Static/HyperliquidLaunchCandleStream');
+                
+                xhr.setRequestHeader('content-type', 'application/grpc-web-text');
+                xhr.setRequestHeader('x-grpc-web', '1');
+                
+                let buffer = '';
+                
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 3 || xhr.readyState === 4) {
+                        if (xhr.response) {
+                            try {
+                                const newData = xhr.response.slice(buffer.length);
+                                if (newData) {
+                                    buffer += newData;
+                                    
+                                    while (buffer.length >= 2) {
+                                        const firstByte = parseInt(buffer.substr(0, 2), 16);
+                                        if (isNaN(firstByte)) break;
+                                        
+                                        if (buffer.length < 12) break;
+                                        
+                                        this.processResponse(buffer);
+                                        
+                                        const processedLength = Math.floor(buffer.length / 2) * 2;
+                                        buffer = buffer.slice(processedLength);
+                                    }
+                                }
+                            } catch (e) {
+                                if (!(e.message.includes('atob'))) {
+                                    log('Error processing response: ' + e.message);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (xhr.readyState === 4) {
+                        log('Stream closed, reconnecting...');
+                        this.xhr = null;
+                        setTimeout(() => this.connect(), 1000);
+                    }
+                };
+
+                xhr.onerror = (error) => {
+                    log('Stream error: ' + error);
+                    this.xhr = null;
+                    setTimeout(() => this.connect(), 1000);
+                };
+
+                xhr.onabort = () => {
+                    log('Stream aborted');
+                    this.xhr = null;
+                };
+
+                const payload = 'AAAAAAcIiTsSAjVt';
+                xhr.send(payload);
+                this.xhr = xhr;
+            }
+
+            /**
+             * Processes incoming response data
+             * Handles base64 decoding and frame extraction
+             */
+            processResponse(response) {
+                if (!response) return;
+
+                try {
+                    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(response)) {
+                        return;
+                    }
+
+                    const binary = atob(response);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+
+                    let offset = 0;
+                    while (offset < bytes.length) {
+                        const frameTag = bytes[offset];
+                        if (frameTag === 0x0a) {
+                            offset++;
+                            const frameLength = bytes[offset];
+                            offset++;
+                            if (frameLength > 0 && offset + frameLength <= bytes.length) {
+                                const frameData = bytes.slice(offset, offset + frameLength);
+                                this.processFrame(frameData);
+                                offset += frameLength;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            offset++;
+                        }
+                    }
+                } catch (e) {
+                    if (!(e.message.includes('atob'))) {
+                        log('Error processing response: ' + e.message);
+                    }
+                }
+            }
+
+            /**
+             * Processes individual data frames
+             * Extracts timestamp and price data, updates chart
+             */
+            processFrame(frameData) {
+                try {
+                    let offset = 0;
+                    
+                    const tagByte = frameData[offset++];
+                    if ((tagByte >> 3) !== 1) {
+                        log('Invalid tag byte for timestamp: ' + tagByte.toString(16));
+                        return;
+                    }
+                    
+                    let [timestampBig, newOffset] = this.readVarint(frameData, offset);
+                    offset = newOffset;
+                    
+                    const timestamp = Number(timestampBig);
+                    const date = new Date(timestamp * 1000);
+                    
+                    if (timestamp <= this.lastTimestamp) {
+                        return;
+                    }
+                    this.lastTimestamp = timestamp;
+                    
+                    const prices = {};
+                    while (offset < frameData.length) {
+                        const fieldTag = frameData[offset++];
+                        const fieldNum = fieldTag >> 3;
+                        
+                        if (fieldNum >= 2 && fieldNum <= 6) {
+                            const value = this.readFloat(frameData, offset);
+                            offset += 4;
+                            prices[fieldNum] = value;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    const { 2: open, 3: close, 4: low, 5: high, 6: volume } = prices;
+                    
+                    if (typeof close === 'number' && !isNaN(close)) {
+                        document.getElementById('price').textContent = `Current Price: $${close.toFixed(2)}`;
+                        
+                        const dataPoint = {
+                            x: date,
+                            y: close
+                        };
+                        
+                        this.chart.data.datasets[0].data.push(dataPoint);
+                        
+                        if (this.chart.data.datasets[0].data.length > 100) {
+                            this.chart.data.datasets[0].data.shift();
+                        }
+                        
+                        this.chart.update('quiet');
+                        
+                        log(`Price update - Time: ${date.toISOString()}, Close: $${close.toFixed(2)}, Volume: ${volume?.toFixed(2) || 'N/A'}`);
+                    }
+                    
+                } catch (e) {
+                    log('Error parsing frame: ' + e.message + '\n' + e.stack);
+                }
+            }
+
+            /**
+             * Utility function to read variable-length integers from byte array
+             */
+            readVarint(bytes, offset) {
+                let value = 0n;
+                let shift = 0n;
+                let currentOffset = offset;
+                
+                while (currentOffset < bytes.length) {
+                    const byte = bytes[currentOffset++];
+                    value |= BigInt(byte & 0x7F) << shift;
+                    if ((byte & 0x80) === 0) break;
+                    shift += 7n;
+                }
+                
+                return [value, currentOffset];
+            }
+
+            /**
+             * Utility function to read 32-bit float from byte array
+             */
+            readFloat(bytes, offset) {
+                const buffer = new ArrayBuffer(4);
+                const view = new DataView(buffer);
+                for (let i = 0; i < 4; i++) {
+                    view.setUint8(i, bytes[offset + i]);
+                }
+                return view.getFloat32(0, true);
+            }
+
+            /**
+             * Cleanly disconnects from the price stream
+             */
+            disconnect() {
+                if (this.xhr) {
+                    this.xhr.abort();
+                    this.xhr = null;
+                    log('Disconnected from stream');
+                }
+            }
+        }
+
+        /**
+         * LaunchStream Class
+         * Handles project information retrieval from the launch endpoint
+         */
+        class LaunchStream {
+            constructor() {
+                this.xhr = null;
+                // Initialize debug container for launch stream messages
+                this.debugContainer = document.createElement('div');
+                this.debugContainer.id = 'launch-debug';
+                this.debugContainer.style.cssText = `
+                    font-family: monospace;
+                    font-size: 12px;
+                    padding: 10px;
+                    background: #333;
+                    border-radius: 4px;
+                    margin-top: 20px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    white-space: pre-wrap;
+                `;
+                document.body.appendChild(document.createElement('h3')).textContent = 'Launch Stream';
+                document.body.appendChild(this.debugContainer);
+            }
+
+            /**
+             * Logs messages to the launch stream debug panel
+             */
+            log(message) {
+                const time = new Date().toISOString().split('T')[1].split('.')[0];
+                this.debugContainer.innerHTML = `[${time}] ${message}\n` + this.debugContainer.innerHTML;
+                if (this.debugContainer.innerHTML.split('\n').length > 50) {
+                    this.debugContainer.innerHTML = this.debugContainer.innerHTML.split('\n').slice(0, 50).join('\n');
+                }
+            }
+
+            /**
+             * Makes a single request to fetch project information
+             * Uses gRPC-Web protocol
+             */
+            connect() {
+                if (this.xhr) {
+                    this.log('Connection already exists');
+                    return;
+                }
+
+                this.log('Making single request to HyperliquidLaunch...');
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://grpc.hypurr.fun/hypurr.Static/HyperliquidLaunch');
+                
+                xhr.setRequestHeader('content-type', 'application/grpc-web-text');
+                xhr.setRequestHeader('x-grpc-web', '1');
+                
+                let buffer = '';
+                
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 3 || xhr.readyState === 4) {
+                        if (xhr.response) {
+                            try {
+                                const newData = xhr.response.slice(buffer.length);
+                                if (newData) {
+                                    this.log(`Raw response: ${newData}`);
+                                    buffer += newData;
+                                    this.processBuffer(buffer);
+                                }
+                            } catch (e) {
+                                this.log('Error: ' + e.message);
+                            }
+                        }
+                    }
+                };
+
+                xhr.onerror = (error) => {
+                    this.log('Request error: ' + error);
+                    this.xhr = null;
+                };
+
+                xhr.onabort = () => {
+                    this.log('Request aborted');
+                    this.xhr = null;
+                };
+
+                const payload = 'AAAAAAMIpk0=';
+                xhr.send(payload);
+                this.xhr = xhr;
+            }
+
+            /**
+             * Processes the response buffer
+             * Attempts both base64 and hex decoding
+             */
+            processBuffer(buffer) {
+                try {
+                    // Try base64 first
+                    if (/^[A-Za-z0-9+/]*={0,2}$/.test(buffer)) {
+                        try {
+                            const binary = atob(buffer);
+                            const bytes = new Uint8Array(binary.length);
+                            for (let i = 0; i < binary.length; i++) {
+                                bytes[i] = binary.charCodeAt(i);
+                            }
+                            this.processBytes(bytes);
+                            return;
+                        } catch (e) {
+                            // Silently fail and try hex
+                        }
+                    }
+
+                    // Try hex
+                    const hexPairs = buffer.match(/.{2}/g) || [];
+                    const bytes = new Uint8Array(hexPairs.map(byte => parseInt(byte, 16)));
+                    this.processBytes(bytes);
+                } catch (e) {
+                    this.log('Error processing buffer: ' + e.message);
+                }
+            }
+
+            /**
+             * Processes decoded bytes to extract project information
+             * Parses description, links, and metadata
+             */
+            processBytes(bytes) {
+                try {
+                    // Skip sync bytes (0xAA)
+                    let offset = 0;
+                    while (offset < bytes.length && bytes[offset] === 0xaa) {
+                        offset++;
+                    }
+
+                    // Find the project description
+                    const fullData = new TextDecoder().decode(bytes);
+                    const descMatch = fullData.match(/Platform & Framework[^]*/);
+                    if (descMatch) {
+                        const description = descMatch[0].split('(')[0].trim();
+                        this.log('Project Description:\n' + description);
+                    }
+
+                    // Extract links
+                    const links = {
+                        x: fullData.match(/X: ([^\n]+)/)?.[1],
+                        telegram: fullData.match(/TG: ([^\n]+)/)?.[1],
+                        website: fullData.match(/Web: ([^\n]+)/)?.[1]
+                    };
+
+                    if (Object.values(links).some(v => v)) {
+                        this.log('Links:\n' + Object.entries(links)
+                            .filter(([_, v]) => v)
+                            .map(([k, v]) => `  ${k}: ${v}`)
+                            .join('\n'));
+                    }
+
+                    // Extract other metadata
+                    const metadata = {
+                        symbol: fullData.match(/HAI/)?.[0],
+                        name: fullData.match(/HyperAI Platform/)?.[0]
+                    };
+
+                    if (Object.values(metadata).some(v => v)) {
+                        this.log('Project Info:\n' + Object.entries(metadata)
+                            .filter(([_, v]) => v)
+                            .map(([k, v]) => `  ${k}: ${v}`)
+                            .join('\n'));
+                    }
+
+                } catch (e) {
+                    this.log('Error processing bytes: ' + e.message);
+                }
+            }
+
+            /**
+             * Cleanly disconnects from the launch stream
+             */
+            disconnect() {
+                if (this.xhr) {
+                    this.xhr.abort();
+                    this.xhr = null;
+                    this.log('Disconnected from stream');
+                }
+            }
+        }
+
+        // Initialize streams
+        const priceStream = new PriceStream();
+        const launchStream = new LaunchStream();
+        
+        // Connect to streams
+        priceStream.connect();
+        launchStream.connect();
+
+        // Clean up connections when page is closed
+        window.addEventListener('beforeunload', () => {
+            priceStream.disconnect();
+            launchStream.disconnect();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stream Analysis</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: monospace;
+            margin: 20px;
+        }
+        #debug {
+            background: #222;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-size: 12px;
+        }
+        .entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #4CAF50;
+        }
+        .raw {
+            color: #888;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Stream Analysis</h2>
+    <div id="debug"></div>
+
+    <script>
+        class StreamAnalyzer {
+            constructor() {
+                this.debug = document.getElementById('debug');
+                this.connect();
+            }
+
+            log(message, raw = '') {
+                const entry = document.createElement('div');
+                entry.className = 'entry';
+                entry.innerHTML = `${message}${raw ? `\n<div class="raw">${raw}</div>` : ''}`;
+                this.debug.insertBefore(entry, this.debug.firstChild);
+                if (this.debug.children.length > 100) {
+                    this.debug.lastChild.remove();
+                }
+            }
+
+            connect() {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'https://grpc.hypurr.fun/hypurr.Static/HyperliquidLaunchStream');
+                xhr.setRequestHeader('content-type', 'application/grpc-web-text');
+                xhr.setRequestHeader('x-grpc-web', '1');
+                
+                let buffer = '';
+                
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 3 || xhr.readyState === 4) {
+                        if (xhr.response) {
+                            try {
+                                const newData = xhr.response.slice(buffer.length);
+                                if (newData) {
+                                    buffer = (buffer + newData).slice(-10000);
+                                    this.analyze(newData);
+                                }
+                            } catch (e) {
+                                console.error('Error:', e);
+                            }
+                        }
+                    }
+                    
+                    if (xhr.readyState === 4) {
+                        setTimeout(() => this.connect(), 1000);
+                    }
+                };
+
+                const payload = 'AAAAAAA=';
+                xhr.send(payload);
+            }
+
+            analyze(data) {
+                try {
+                    // Log raw data first
+                    this.log('Raw data:', data);
+
+                    // Try base64 decode
+                    const binary = atob(data);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) {
+                        bytes[i] = binary.charCodeAt(i);
+                    }
+
+                    // Log hex representation
+                    const hex = Array.from(bytes.slice(0, 32))
+                        .map(b => b.toString(16).padStart(2, '0'))
+                        .join(' ');
+                    this.log('First 32 bytes:', hex);
+
+                    // Try to decode as text
+                    const text = new TextDecoder().decode(bytes);
+                    this.log('Decoded text:', text);
+
+                    // Log structure markers
+                    const markers = [];
+                    for (let i = 0; i < bytes.length - 1; i++) {
+                        if (bytes[i] === 0x12 || bytes[i] === 0x1a || bytes[i] === 0x22) {
+                            const len = bytes[i + 1];
+                            if (len > 0 && len < 200 && i + 2 + len <= bytes.length) {
+                                const fieldText = new TextDecoder().decode(bytes.slice(i + 2, i + 2 + len));
+                                markers.push(`Field type 0x${bytes[i].toString(16)}, length ${len}: ${fieldText}`);
+                            }
+                        }
+                    }
+                    if (markers.length > 0) {
+                        this.log('Structure:', markers.join('\n'));
+                    }
+                } catch (e) {
+                    this.log('Error analyzing data:', e.message);
+                }
+            }
+        }
+
+        new StreamAnalyzer();
+    </script>
+</body>
+</html> 

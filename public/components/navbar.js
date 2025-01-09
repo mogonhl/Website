@@ -2,7 +2,8 @@
 function getActivePage() {
     const path = window.location.pathname;
     if (path.includes('/airdrops')) return 'airdrops';
-    if (path.includes('/shitcoins')) return 'shitcoins';
+    if (path.includes('/ecosystem')) return 'ecosystem';
+    if (path.includes('/launches')) return 'launches';
     if (path.includes('/explorer')) return 'explorer';
     return '';
 }
@@ -43,7 +44,6 @@ async function injectNavbar() {
         
     } catch (error) {
         console.error('Failed to load navbar:', error);
-        // Clear any error messages that might have been displayed
         let navbarContainer = document.getElementById('navbar-container');
         if (navbarContainer) {
             navbarContainer.innerHTML = '';

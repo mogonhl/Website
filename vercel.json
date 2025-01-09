@@ -12,7 +12,8 @@
     { "src": "pages/mobile/**", "use": "@vercel/static" },
     { "src": "pages/explorer/**", "use": "@vercel/static" },
     { "src": "pages/airdrops/**", "use": "@vercel/static" },
-    { "src": "pages/shitcoins/**", "use": "@vercel/static" },
+    { "src": "pages/ecosystem/**", "use": "@vercel/static" },
+    { "src": "pages/launches/**", "use": "@vercel/static" },
     { "src": "styles/**", "use": "@vercel/static" }
   ],
   "routes": [
@@ -21,8 +22,8 @@
       "dest": "/public/components/$1"
     },
     {
-      "src": "/shitcoins",
-      "dest": "/pages/shitcoins/index.html"
+      "src": "/ecosystem",
+      "dest": "/pages/ecosystem/index.html"
     },
     {
       "src": "/airdrops",
@@ -69,6 +70,10 @@
     {
       "src": "/",
       "dest": "/index.html"
+    },
+    {
+      "src": "/launches",
+      "dest": "/pages/launches/index.html"
     }
   ]
 } 

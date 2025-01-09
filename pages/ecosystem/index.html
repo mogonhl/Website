@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecosystem Purrged</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="/styles/navbar.css" rel="stylesheet" />
+    <script src="/components/navbar.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #002420;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            transform: translateY(20%);
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.5;
+            z-index: -1;
+            transform: translateY(20%);
+        }
+
+        .section {
+            padding-top: 2rem;
+        }
+
+        .min-h-screen {
+            height: 100vh;
+        }
+
+        .explorer-btn {
+            color: #0f1a1f;
+            background: rgba(72, 255, 225, 0.9);
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+            font-size: 13px;
+            margin: 0 6px;
+        }
+
+        .explorer-btn:hover {
+            opacity: 0.9;
+        }
+
+        .tab-indicator {
+            height: 1px;
+            bottom: -1px;
+        }
+
+        .token-icon {
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .token-icon.selected {
+            border-color: rgba(72,255,225,0.9);
+        }
+
+        #index-chart {
+            min-height: 300px;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-right {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-right > div {
+            flex: 1;
+            min-height: 300px;
+        }
+
+        .performance-ranking {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth;
+            padding: 0 12px;
+        }
+        .performance-ranking::-webkit-scrollbar {
+            display: none;
+        }
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(16, 25, 31, 0.8);
+            color: rgb(148, 158, 156);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 12px;
+            z-index: 10;
+            font-size: 18px;
+            transition: color 0.2s;
+        }
+        .nav-arrow:hover {
+            color: #10B981;
+        }
+        .nav-arrow.prev {
+            left: -12px;
+        }
+        .nav-arrow.next {
+            right: -12px;
+        }
+        .icon-container {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 8px;
+            position: relative;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .icon-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            pointer-events: none;
+            user-select: none;
+            display: block;
+        }
+        .icon-container.selected {
+            outline: 2px solid #10B981;
+            outline-offset: 2px;
+        }
+        .separator-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin: 0 4px;
+            height: 40px;
+            pointer-events: none;
+            user-select: none;
+            color: rgb(148, 158, 156);
+            opacity: 0.5;
+            font-size: 14px;
+        }
+
+        .mog-counter {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .mog-counter.animate {
+            animation: bounceThrice 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes bounceThrice {
+            0%, 100% { transform: translateY(0); }
+            16% { transform: translateY(-6px); }
+            33% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+            66% { transform: translateY(0); }
+            83% { transform: translateY(-6px); }
+        }
+
+        .lol-text {
+            position: absolute;
+            background: rgba(15, 26, 31, 0.95);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            animation: popupAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+        }
+
+        @keyframes popupAnimation {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0.9);
+            }
+            20% {
+                opacity: 1;
+                transform: translateY(4px) scale(1);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(4px) scale(1);
+            }
+        }
+
+        .coming-soon-text {
+            position: absolute;
+            background: rgba(15, 26, 31, 0.95);
+            color: #fff;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            pointer-events: none;
+            animation: popupAnimation 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+        }
+
+        .coming-soon-link {
+            position: relative;
+        }
+
+        /* Search input styles */
+        .search-input {
+            padding: 8px 12px;
+            background-color: #0f1a1f;
+            border: 1px solid #0a2622;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(72, 255, 225, 0.9);
+        }
+
+        @media (max-width: 767px) {
+            .search-input {
+                width: 200px;
+            }
+        }
+    </style>
+    <!-- Base dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <!-- Babel is used for development only, will be precompiled in production -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Import TweetList component -->
+    <script type="text/babel" src="/app/components/TweetList.js"></script>
+    
+    <!-- Add shitcoins-chart.js instead of chart.js -->
+    <script src="/js/script.js"></script>
+    <script src="/js/ecosystem-chart.js" defer></script>
+    <script src="/ecosystem.js" type="module"></script>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="min-h-screen pt-12">
+        <div class="max-w-7xl mx-auto px-8 pt-20">
+            <div class="flex flex-col mb-8">
+                <h1 class="text-4xl font-bold">
+                    <span class="text-[rgba(72,255,225,0.9)]">Ecosystem</span>
+                    <span>Index</span>
+                </h1>
+                <p class="text-[rgb(148,158,156)] mt-2">Should've just full-stacked into the Hyperliquid Eco... Not too late...</p>
+            </div>
+
+            <div class="grid grid-cols-7 mb-12">
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Total Mcap</p>
+                    <p class="text-2xl market-cap font-normal">$0</p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Performance</p>
+                    <p class="text-2xl text-emerald-400 flex items-center font-normal">
+                        <span class="performance">+$0</span>
+                        <span class="text-sm bg-emerald-400/20 text-emerald-400 px-2 py-1 rounded ml-2 multiplier">0x</span>
+                    </p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Total Assets</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-normal">0</span>
+                    </div>
+                </div>
+                <div class="col-span-2"></div>
+            </div>
+            
+            <!-- About Box -->
+            <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 pt-3 pb-6 mb-4 relative">
+                <div class="border-b border-gray-700 mb-4 relative">
+                    <div class="flex gap-4">
+                        <span class="text-sm cursor-pointer text-white transition-colors relative pb-2" onclick="selectContentTab(this, 'about')">
+                            About
+                            <div class="absolute tab-indicator left-0 w-full bg-emerald-400"></div>
+                        </span>
+                    </div>
+                </div>
+                <!-- About Content -->
+                <div id="about-content" class="flex">
+                    <div class="w-[35%] content-left">
+                        <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 40px;">
+                            <div style="width: 300px;">
+                                <div style="display: flex; flex-direction: column; gap: 25px;">
+                                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                                        <!-- Token Value section -->
+                                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                                            <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Index Value</p>
+                                            <div>
+                                                <p class="text-xl text-emerald-400 token-value">$0.00</p>
+                                                <p class="text-xs text-[rgb(148,158,156)]">
+                                                    <a href="#" class="hover:underline cursor-help token-amount">1 $INDEX</a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Information section -->
+                                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                                            <p class="text-[14px] leading-[15px] mb-1 border-gray-700">Information</p>
+                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc1">$1 worth of every token was bought within the first 2 days of its launch</p>
+                                            <p class="text-[12px] text-[rgb(148,158,156)]" id="desc2">If you had bought $1 worth of each token within 48 hours of its launch, this would be your total portfolio value.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-[65%] content-right relative" style="min-height: 300px;">
+                        <div class="absolute top-0 right-0 w-full h-full" style="min-height: 300px;">
+                            <div class="relative h-full" style="min-height: 300px;">
+                                <div id="index-chart" class="w-full h-full" style="min-height: 300px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Latest Launch Container -->
+            <div class="mt-4 mb-4">
+                <div class="flex items-center justify-between mb-2 px-6">
+                    <div class="flex items-center gap-4">
+                        <span class="text-xs text-white transition-colors cursor-pointer">Latest Launch</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-[rgb(148,158,156)]">
+                        <span class="cursor-pointer transition-colors" id="prevLaunchBtn" onclick="showPreviousLaunch()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </span>
+                        <span class="cursor-pointer transition-colors" id="nextLaunchBtn" onclick="showNextLaunch()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 5l7 7-7 7" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative">
+                    <div id="latest-launch" class="flex items-center justify-between">
+                        <!-- Token Info -->
+                        <div class="flex items-center gap-3">
+                            <img id="latest-token-icon" src="/assets/icons/default.svg" alt="Token Icon" class="w-8 h-8 rounded-full">
+                            <div>
+                                <h3 id="latest-token-name" class="text-white text-sm">Loading...</h3>
+                                <p id="latest-token-time" class="text-xs text-[rgb(148,158,156)]">Launched: Loading...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Performance Metrics -->
+                        <div class="flex items-center gap-8">
+                            <!-- Price -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">Price</p>
+                                <p id="latest-token-price" class="text-sm text-white">$0.00</p>
+                            </div>
+                            
+                            <!-- 24h Performance -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">24h</p>
+                                <p id="latest-token-24h" class="text-sm">0%</p>
+                            </div>
+                            
+                            <!-- Launch Performance -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">Since Launch</p>
+                                <p id="latest-token-launch-perf" class="text-sm">1x</p>
+                            </div>
+                            
+                            <!-- Volume -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">24h Volume</p>
+                                <p id="latest-token-volume" class="text-sm text-white">$0</p>
+                            </div>
+                            
+                            <!-- Market Cap -->
+                            <div>
+                                <p class="text-xs text-[rgb(148,158,156)]">Market Cap</p>
+                                <p id="latest-token-mcap" class="text-sm text-white">$0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spot Tokens Section -->
+            <div class="mt-8">
+                <div class="flex items-center justify-between mb-4 px-6">
+                    <span class="text-xl text-white font-medium">Spot Tokens</span>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="tokenSearchInput"
+                            placeholder="Search tokens..." 
+                            class="search-input w-[300px] pr-10"
+                        />
+                        <button 
+                            id="tokenSearchButton"
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[rgba(72,255,225,0.9)] transition-colors"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg">
+                    <!-- Header -->
+                    <div class="grid grid-cols-7 gap-4 px-6 py-3 border-b border-[#0a2622] text-sm text-[rgb(148,158,156)]">
+                        <div class="col-span-2">Pair</div>
+                        <div>Price</div>
+                        <div>24h Change</div>
+                        <div>24h Volume</div>
+                        <div>Market Cap</div>
+                        <div>Snapshot</div>
+                    </div>
+                    <!-- Token Rows Container -->
+                    <div class="token-list">
+                        <!-- Token Row Template -->
+                        <div class="grid grid-cols-7 gap-4 px-6 py-4 border-b border-[#0a2622]">
+                            <div class="col-span-2 flex items-center gap-3">
+                                <img src="/assets/Logos/Hype.png" alt="HYPE" class="w-8 h-8 rounded-full">
+                                <span class="text-white text-sm">HYPE/USDC</span>
+                            </div>
+                            <div class="flex items-center text-[rgb(148,158,156)] text-sm">$0.00</div>
+                            <div class="flex items-center text-emerald-400 text-sm">+0.00%</div>
+                            <div class="flex items-center text-[rgb(148,158,156)] text-sm">$0</div>
+                            <div class="flex items-center text-[rgb(148,158,156)] text-sm">$0</div>
+                            <div class="flex items-center">
+                                <svg class="w-full h-10" viewBox="0 0 200 40" preserveAspectRatio="none">
+                                    <path d="M0 30 L40 25 L80 35 L120 20 L160 28 L200 15" fill="none" stroke="rgba(16, 185, 129, 0.5)" stroke-width="2"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    // Track current launch index and cache data
+    let currentLaunchIndex = 2;
+    let launches = [];
+    let tokenDataCache = new Map();
+
+    // Preload all launch data
+    async function preloadLaunchData() {
+        try {
+            // Get launches from Redis
+            const response = await fetch('/api/redis/get?key=latest_launches');
+            launches = await response.json();
+            console.log('Latest launches:', launches);
+
+            // Fetch all token data at once
+            const currentData = await fetch('https://api.hyperliquid.xyz/info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: "spotMetaAndAssetCtxs" })
+            }).then(r => r.json());
+
+            // Cache all token data
+            const now = Date.now();
+            launches.forEach(launch => {
+                const tokenData = currentData[1].find(t => t.coin === launch.fullName);
+                if (tokenData) {
+                    tokenDataCache.set(launch.fullName, tokenData);
+                    tokenDataCache.set(launch.fullName + '_time', now);
+                }
+            });
+
+            // Preload all images
+            launches.forEach(launch => {
+                const img = new Image();
+                img.src = `/assets/Logos/${launch.name}.png`;
+            });
+
+            // Update UI with initial launch
+            await updateLatestLaunch(launches[currentLaunchIndex]);
+        } catch (error) {
+            console.error('Error preloading launch data:', error);
+        }
+    }
+
+    // Format time difference to "X days and Y hours ago" or "X hours ago"
+    function formatTimeDifference(timestamp) {
+        const now = Date.now();
+        // Convert timestamp to milliseconds if it's in seconds
+        const timestampMs = timestamp > 9999999999 ? timestamp : timestamp * 1000;
+        const diffHours = Math.floor((now - timestampMs) / (1000 * 60 * 60));
+        
+        if (diffHours < 24) {
+            return `Launched ${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+        } else {
+            const days = Math.floor(diffHours / 24);
+            const hours = diffHours % 24;
+            if (hours === 0) {
+                return `Launched ${days} ${days === 1 ? 'day' : 'days'} ago`;
+            }
+            return `Launched ${days} ${days === 1 ? 'day' : 'days'} and ${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+        }
+    }
+
+    // Format numbers with full digits and separators
+    function formatFullNumber(num) {
+        if (typeof num !== 'number') return '0';
+        
+        // For very small numbers (0.01 and below), show up to 3 decimal places
+        if (num > 0 && num < 0.01) {
+            return num.toFixed(3);
+        }
+        
+        // For numbers between 0.01 and 1, show two decimal places
+        if (num > 0 && num < 1) {
+            return num.toFixed(2);
+        }
+        
+        // For numbers above 1, round to 2 decimal places
+        num = Math.round(num * 100) / 100;
+        
+        // Split into whole and decimal parts
+        const [whole, decimal] = num.toString().split('.');
+        
+        // Add thousands separators to whole part
+        const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        
+        // Return with decimal if it exists
+        return decimal ? `${formattedWhole},${decimal}` : formattedWhole;
+    }
+
+    // Function to update navigation buttons state
+    function updateNavigationState() {
+        const prevBtn = document.getElementById('prevLaunchBtn');
+        const nextBtn = document.getElementById('nextLaunchBtn');
+        
+        // Update previous button state
+        if (currentLaunchIndex < launches.length - 1) {
+            prevBtn.classList.add('hover:text-emerald-400');
+            prevBtn.style.opacity = '1';
+        } else {
+            prevBtn.classList.remove('hover:text-emerald-400');
+            prevBtn.style.opacity = '0.5';
+        }
+        
+        // Update next button state
+        if (currentLaunchIndex > 0) {
+            nextBtn.classList.add('hover:text-emerald-400');
+            nextBtn.style.opacity = '1';
+        } else {
+            nextBtn.classList.remove('hover:text-emerald-400');
+            nextBtn.style.opacity = '0.5';
+        }
+    }
+
+    // Initialize Latest Launch data
+    async function updateLatestLaunch(specificLaunch = null) {
+        try {
+            if (!specificLaunch) {
+                // Get launches from Redis if not already loaded
+                if (launches.length === 0) {
+                    const response = await fetch('/api/redis/get?key=latest_launches');
+                    launches = await response.json();
+                    console.log('Latest launches:', launches);
+                }
+            }
+
+            // Use either specific launch or latest
+            const launchData = specificLaunch || launches[currentLaunchIndex];
+            if (!launchData) {
+                console.error('No launch data available');
+                return;
+            }
+
+            // Check cache first
+            let tokenData = tokenDataCache.get(launchData.fullName);
+            const cacheTime = tokenDataCache.get(launchData.fullName + '_time');
+            const now = Date.now();
+
+            // Refresh cache if older than 30 seconds
+            if (!tokenData || !cacheTime || now - cacheTime > 30000) {
+                const currentData = await fetch('https://api.hyperliquid.xyz/info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: "spotMetaAndAssetCtxs" })
+                }).then(r => r.json());
+
+                tokenData = currentData[1].find(t => t.coin === launchData.fullName);
+                if (tokenData) {
+                    tokenDataCache.set(launchData.fullName, tokenData);
+                    tokenDataCache.set(launchData.fullName + '_time', now);
+                }
+            }
+
+            if (!tokenData) {
+                console.error('Could not find current token data');
+                return;
+            }
+
+            // Calculate metrics
+            const currentPrice = parseFloat(tokenData.markPx);
+            const performanceMultiplier = currentPrice / launchData.launchPrice;
+            const performance24h = ((currentPrice - parseFloat(tokenData.prevDayPx)) / parseFloat(tokenData.prevDayPx)) * 100;
+            const volume24h = parseFloat(tokenData.dayNtlVlm);
+            const marketCap = currentPrice * parseFloat(tokenData.circulatingSupply);
+
+            // Update UI
+            document.getElementById('latest-token-name').textContent = launchData.name;
+            document.getElementById('latest-token-time').textContent = formatTimeDifference(launchData.launchTime);
+            document.getElementById('latest-token-price').textContent = `$${currentPrice.toFixed(6)}`;
+            document.getElementById('latest-token-24h').textContent = `${performance24h.toFixed(1)}%`;
+            document.getElementById('latest-token-24h').className = `text-sm ${performance24h >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            document.getElementById('latest-token-launch-perf').textContent = `${performanceMultiplier.toFixed(1)}x`;
+            document.getElementById('latest-token-launch-perf').className = `text-sm ${performanceMultiplier >= 1 ? 'text-emerald-400' : 'text-red-400'}`;
+            document.getElementById('latest-token-volume').textContent = `$${formatFullNumber(volume24h)}`;
+            document.getElementById('latest-token-mcap').textContent = `$${formatFullNumber(marketCap)}`;
+
+            // Update navigation state
+            updateNavigationState();
+
+            // Try to load token icon
+            const iconImg = document.getElementById('latest-token-icon');
+            const tryLoadImage = (src) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(src);
+                    img.onerror = reject;
+                    img.src = src;
+                });
+            };
+
+            // Try to load token icon, fall back to default.svg
+            tryLoadImage(`/assets/Logos/${launchData.name}.png`)
+                .then(src => {
+                    iconImg.src = src;
+                })
+                .catch(() => {
+                    iconImg.src = '/assets/icons/default.svg';
+                });
+        } catch (error) {
+            console.error('Error updating latest launch:', error);
+        }
+    }
+
+    // Function to show previous launch
+    async function showPreviousLaunch() {
+        console.log('Showing previous launch. Current index:', currentLaunchIndex, 'Launches:', launches);
+        if (currentLaunchIndex < launches.length - 1) {
+            currentLaunchIndex++;
+            console.log('Moving to index:', currentLaunchIndex);
+            await updateLatestLaunch(launches[currentLaunchIndex]);
+        }
+    }
+
+    // Function to show next launch
+    async function showNextLaunch() {
+        console.log('Showing next launch. Current index:', currentLaunchIndex, 'Launches:', launches);
+        if (currentLaunchIndex > 0) {
+            currentLaunchIndex--;
+            console.log('Moving to index:', currentLaunchIndex);
+            await updateLatestLaunch(launches[currentLaunchIndex]);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to update the token value and performance
+        async function updateIndexStats() {
+            try {
+                // Get the current index type from the chart
+                const currentIndexType = document.querySelector('[data-index-type].text-white, [data-index-type].text-emerald-400')?.getAttribute('data-index-type') || 'mcap';
+                
+                const response = await fetch(`/api/spot-data?type=${currentIndexType}`);
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                if (data.prices && data.prices.length > 0) {
+                    // Get current and initial prices
+                    const currentPrice = data.prices[data.prices.length - 1][1];
+                    const initialPrice = data.prices[0][1];
+                    
+                    // Update token value with full number formatting
+                    const formattedCurrentPrice = formatFullNumber(currentPrice);
+                    document.querySelector('.token-value').textContent = `$${formattedCurrentPrice}`;
+                    
+                    // Calculate and update performance based on index type
+                    let performanceValue;
+                    if (currentIndexType === 'snipe') {
+                        // For Snipe index, subtract total assets amount (1)
+                        performanceValue = currentPrice - 1;
+                    } else {
+                        // For other indices, show actual change from initial value
+                        performanceValue = currentPrice - initialPrice;
+                    }
+                    document.querySelector('.performance').textContent = `+$${formatFullNumber(performanceValue)}`;
+                    
+                    // Calculate and update multiplier
+                    const multiplier = currentPrice / initialPrice;
+                    document.querySelector('.multiplier').textContent = `${multiplier.toFixed(1)}x`;
+                }
+            } catch (error) {
+                console.error('Error updating index stats:', error);
+            }
+        }
+
+        // Preload data and update stats immediately
+        preloadLaunchData();
+        updateIndexStats();
+        setInterval(updateIndexStats, 60000);
+        setInterval(updateLatestLaunch, 60000);
+    });
+    </script>
+</body>
+</html> 

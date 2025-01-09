@@ -104,7 +104,7 @@ export default function AirdropsPage() {
                                 <select className="category-select" id="category-select">
                                     <option value="airdrops">Airdrops</option>
                                     <option value="layer1s">Layer 1s</option>
-                                    <option value="shitcoins">Shitcoins</option>
+                                    <option value="ecosystem">Ecosystem</option>
                                 </select>
                             </div>
                             <span className="text-[3rem] font-bold">Purrged</span>

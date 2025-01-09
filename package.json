@@ -19,8 +19,10 @@
     "html2canvas": "^1.4.1",
     "next": "^15.1.3",
     "node-fetch": "^2.7.0",
+    "puppeteer": "^23.11.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/react": "19.0.2",

@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Launches Purrged</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="/styles/navbar.css" rel="stylesheet" />
+    <script src="/components/navbar.js"></script>
+    <script src="/js/launches-data.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #002420;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .section {
+            padding-top: 2rem;
+        }
+
+        .tab-indicator {
+            height: 1px;
+            bottom: -1px;
+        }
+
+        .snapshot-chart {
+            width: 120px;
+            height: 60px;
+        }
+
+        .social-link {
+            transition: all 0.2s ease;
+            color: rgb(148,158,156);
+        }
+
+        .social-link:hover {
+            color: rgba(72,255,225,0.9);
+        }
+
+        .search-input {
+            background: rgba(15, 26, 31, 0.7);
+            border: 1px solid #0a2622;
+            color: white;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: rgba(72,255,225,0.3);
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .sort-button {
+            transition: color 0.2s ease;
+        }
+
+        .sort-button:hover {
+            color: rgba(72,255,225,0.9);
+        }
+
+        .sort-button.active {
+            color: rgba(72,255,225,0.9);
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="min-h-screen pt-12">
+        <div class="max-w-7xl mx-auto px-8 pt-20">
+            <div class="flex flex-col mb-8">
+                <h1 class="text-4xl font-bold">
+                    <span class="text-[rgba(72,255,225,0.9)]">Launches</span>
+                    <span>Purrged</span>
+                </h1>
+                <p class="text-[rgb(148,158,156)] mt-2">It's only a matter of time. Outwork them. Flip them. PURRG'EM.</p>
+            </div>
+
+            <div class="grid grid-cols-7 mb-12">
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Total Launches</p>
+                    <p class="text-2xl market-cap font-normal total-launches">0</p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">24h Volume</p>
+                    <p class="text-2xl text-emerald-400 flex items-center font-normal">
+                        <span class="volume">$0</span>
+                    </p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Best Performer</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-normal best-performer">-</span>
+                    </div>
+                </div>
+                <div class="col-span-2"></div>
+            </div>
+
+            <!-- Search and Sort Tools -->
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-xl text-white font-medium">All Launches</span>
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="tokenSearchInput"
+                        placeholder="Search tokens..." 
+                        class="search-input w-[300px] pr-10"
+                    />
+                    <button 
+                        id="tokenSearchButton"
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[rgba(72,255,225,0.9)] transition-colors"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Launches Container -->
+            <div class="space-y-4" id="launches-container">
+                <!-- Launch Element -->
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-6">
+                    <div class="flex items-center w-full">
+                        <div class="flex items-center gap-4 min-w-[180px]">
+                            <div class="w-12 h-12 rounded-full bg-[#0f1a1f] flex items-center justify-center">
+                                <img src="/assets/logo.png" alt="Token" class="w-10 h-10 object-contain">
+                            </div>
+                            <div>
+                                <span class="text-white text-sm font-medium">@undefined</span>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-[rgb(148,158,156)] text-xs">@MON</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 min-w-[100px] ml-4">
+                            <a href="#" class="social-link text-[rgb(148,158,156)] hover:text-white">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-link text-[rgb(148,158,156)] hover:text-white">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="flex items-center gap-8 ml-auto">
+                            <div>
+                                <p class="text-[rgb(148,158,156)] text-xs">24h Volume</p>
+                                <p class="text-sm font-medium">$220.94K</p>
+                            </div>
+                            <div>
+                                <p class="text-[rgb(148,158,156)] text-xs">TVL</p>
+                                <p class="text-sm font-medium">$0.00</p>
+                            </div>
+                            <div>
+                                <p class="text-[rgb(148,158,156)] text-xs">Market Cap</p>
+                                <p class="text-sm font-medium">$1.2M</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-8 ml-12">
+                            <div class="text-right min-w-[100px]">
+                                <p class="text-sm font-medium">$0.11</p>
+                                <p class="text-emerald-400 text-sm">+32.69%</p>
+                            </div>
+                            <div class="w-[240px] h-[80px] rounded overflow-hidden price-graph -mt-4">
+                                <svg class="w-full h-full" viewBox="0 0 240 80" preserveAspectRatio="none">
+                                    <path 
+                                        d="M0 60 L48 50 L96 70 L144 40 L192 56 L240 30" 
+                                        fill="none" 
+                                        stroke="rgba(16, 185, 129, 0.5)" 
+                                        stroke-width="2"
+                                    />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                class PriceStream {
+                    constructor(streamId, graphElement) {
+                        this.streamId = streamId;
+                        this.graphElement = graphElement;
+                        this.xhr = null;
+                        this.lastTimestamp = 0;
+                        this.priceData = [];
+                        this.timestampedPrices = [];
+                        this.minPrice = Infinity;
+                        this.maxPrice = -Infinity;
+                        this.historicalRange = { min: Infinity, max: -Infinity };
+                        this.volume = 0;
+                        this.currentPrice = 0;
+                        this.initGraph();
+
+                        // Initialize with market data if available
+                        this.initializeFromMarketData();
+                    }
+
+                    async initializeFromMarketData() {
+                        try {
+                            const response = await fetch('https://api.hyperliquid.xyz/info', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ type: "spotMetaAndAssetCtxs" })
+                            });
+                            const data = await response.json();
+                            const marketData = data[1];
+                            
+                            // Find the matching token data
+                            const tokenData = marketData.find(t => t.coin === this.streamId.slice(-3));
+                            if (tokenData) {
+                                this.currentPrice = parseFloat(tokenData.markPx);
+                                this.volume = parseFloat(tokenData.dayNtlVlm);
+                                // Update metrics with initial price
+                                this.updateMetricsDisplay(this.currentPrice);
+                            }
+                        } catch (error) {
+                            console.error('Error fetching initial market data:', error);
+                        }
+                    }
+
+                    initGraph() {
+                        // Create SVG path for the graph
+                        const svg = this.graphElement.querySelector('svg');
+                        // Create new path if it doesn't exist
+                        this.path = svg.querySelector('path');
+                        if (!this.path) {
+                            this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                            this.path.setAttribute('fill', 'none');
+                            this.path.setAttribute('stroke', 'rgba(16, 185, 129, 0.5)');
+                            this.path.setAttribute('stroke-width', '2');
+                            svg.appendChild(this.path);
+                        }
+                    }
+
+                    connect() {
+                        // Make sure any existing connection is cleaned up first
+                        this.disconnect();
+
+                        console.log('Starting connection for', this.streamId);
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', 'https://grpc.hypurr.fun/hypurr.Static/HyperliquidLaunchCandleStream');
+                        
+                        xhr.setRequestHeader('content-type', 'application/grpc-web-text');
+                        xhr.setRequestHeader('x-grpc-web', '1');
+                        
+                        let buffer = '';
+                        
+                        xhr.onreadystatechange = () => {
+                            if (xhr.readyState === 3) {
+                                if (xhr.response) {
+                                    try {
+                                        const newData = xhr.response.slice(buffer.length);
+                                        if (newData) {
+                                            buffer += newData;
+                                            
+                                            while (buffer.length >= 2) {
+                                                const firstByte = parseInt(buffer.substr(0, 2), 16);
+                                                if (isNaN(firstByte)) break;
+                                                
+                                                if (buffer.length < 12) break;
+                                                
+                                                this.processResponse(buffer);
+                                                
+                                                const processedLength = Math.floor(buffer.length / 2) * 2;
+                                                buffer = buffer.slice(processedLength);
+                                            }
+                                        }
+                                    } catch (e) {
+                                        if (!(e.message.includes('atob'))) {
+                                            console.error('Error processing response:', e);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if (xhr.readyState === 4) {
+                                console.log('Stream closed for', this.streamId);
+                                this.xhr = null;
+                                setTimeout(() => this.connect(), 1000);
+                            }
+                        };
+
+                        xhr.onerror = (error) => {
+                            console.error('Stream error for', this.streamId, ':', error);
+                            this.xhr = null;
+                            setTimeout(() => this.connect(), 1000);
+                        };
+
+                        const payload = this.streamId;
+                        xhr.send(payload);
+                        this.xhr = xhr;
+                    }
+
+                    processResponse(response) {
+                        if (!response) return;
+
+                        try {
+                            if (!/^[A-Za-z0-9+/]*={0,2}$/.test(response)) {
+                                return;
+                            }
+
+                            const binary = atob(response);
+                            const bytes = new Uint8Array(binary.length);
+                            for (let i = 0; i < binary.length; i++) {
+                                bytes[i] = binary.charCodeAt(i);
+                            }
+
+                            let offset = 0;
+                            while (offset < bytes.length) {
+                                const frameTag = bytes[offset];
+                                if (frameTag === 0x0a) {
+                                    offset++;
+                                    const frameLength = bytes[offset];
+                                    offset++;
+                                    if (frameLength > 0 && offset + frameLength <= bytes.length) {
+                                        const frameData = bytes.slice(offset, offset + frameLength);
+                                        this.processFrame(frameData);
+                                        offset += frameLength;
+                                    } else {
+                                        break;
+                                    }
+                                } else {
+                                    offset++;
+                                }
+                            }
+                        } catch (e) {
+                            if (!(e.message.includes('atob'))) {
+                                console.error('Error processing response:', e);
+                            }
+                        }
+                    }
+
+                    processFrame(frameData) {
+                        try {
+                            let offset = 0;
+                            
+                            const tagByte = frameData[offset++];
+                            if ((tagByte >> 3) !== 1) return;
+                            
+                            let [timestampBig, newOffset] = this.readVarint(frameData, offset);
+                            offset = newOffset;
+                            
+                            const timestamp = Number(timestampBig);
+                            
+                            // Only process newer timestamps
+                            if (timestamp <= this.lastTimestamp) return;
+                            this.lastTimestamp = timestamp;
+                            
+                            const prices = {};
+                            while (offset < frameData.length) {
+                                const fieldTag = frameData[offset++];
+                                const fieldNum = fieldTag >> 3;
+                                
+                                if (fieldNum >= 2 && fieldNum <= 6) {
+                                    const value = this.readFloat(frameData, offset);
+                                    offset += 4;
+                                    prices[fieldNum] = value;
+                                } else {
+                                    break;
+                                }
+                            }
+                            
+                            const { 3: close } = prices;
+                            
+                            if (typeof close === 'number' && !isNaN(close) && close > 0) {
+                                console.log(`Price update for ${this.streamId}: ${this.currentPrice} -> ${close} (timestamp: ${new Date(timestamp * 1000).toISOString()})`);
+                                this.currentPrice = close;
+
+                                // Update the UI with the new price
+                                const launchContainer = this.graphElement.parentElement.parentElement;
+                                
+                                // Update price display
+                                const priceDisplay = launchContainer.querySelector('.text-right p:first-child');
+                                if (priceDisplay) {
+                                    priceDisplay.textContent = `$${close < 1 ? close.toFixed(4) : close.toFixed(2)}`;
+                                }
+
+                                // Calculate and update Market Cap and TVL
+                                const marketCap = close * 700000;
+                                const tvl = close * 240000;
+
+                                const allMetrics = launchContainer.querySelectorAll('.flex.items-center.gap-8 div p:last-child');
+                                if (allMetrics.length >= 3) {
+                                    allMetrics[1].textContent = `$${formatNumber(tvl)}`;
+                                    allMetrics[2].textContent = `$${formatNumber(marketCap)}`;
+                                }
+
+                                this.timestampedPrices.push({ timestamp, price: close });
+                                this.updateGraph(close, timestamp);
+                            }
+                            
+                        } catch (e) {
+                            console.error('Error parsing frame:', e);
+                        }
+                    }
+
+                    updateMetricsDisplay(price) {
+                        if (!price || price <= 0) return;
+
+                        // Calculate Market Cap and TVL
+                        const marketCap = price * 700000;
+                        const tvl = price * 220000;
+                        
+                        // Update displays in the table
+                        const container = this.graphElement.closest('.flex');
+                        if (!container) return;
+
+                        const priceContainer = container.querySelector('.text-right');
+                        const metricsContainer = container.querySelector('.flex.items-center.gap-8.ml-auto');
+                        
+                        if (priceContainer) {
+                            const priceDisplay = priceContainer.querySelector('p:first-child');
+                            if (priceDisplay) {
+                                const formattedPrice = price < 1 ? price.toFixed(4) : price.toFixed(2);
+                                priceDisplay.textContent = `$${formattedPrice}`;
+                            }
+                        }
+                        
+                        if (metricsContainer) {
+                            const volumeMetric = metricsContainer.querySelector('div:first-child p:last-child');
+                            const tvlMetric = metricsContainer.querySelector('div:nth-child(2) p:last-child');
+                            const marketCapMetric = metricsContainer.querySelector('div:last-child p:last-child');
+                            
+                            // Update metrics with calculated values
+                            if (volumeMetric) volumeMetric.textContent = `$${formatNumber(parseFloat(this.volume || 0))}`;
+                            if (tvlMetric) tvlMetric.textContent = `$${formatNumber(tvl)}`;
+                            if (marketCapMetric) marketCapMetric.textContent = `$${formatNumber(marketCap)}`;
+                        }
+                    }
+
+                    updateGraph(price, timestamp) {
+                        // Update historical price range
+                        this.historicalRange.min = Math.min(this.historicalRange.min, price);
+                        this.historicalRange.max = Math.max(this.historicalRange.max, price);
+                        
+                        // Update current window price range
+                        this.minPrice = Math.min(this.minPrice, price);
+                        this.maxPrice = Math.max(this.maxPrice, price);
+                        
+                        // Add new price to data
+                        this.priceData.push(price);
+                        if (this.priceData.length > 7200) {
+                            this.priceData.shift();
+                            this.minPrice = Math.min(...this.priceData);
+                            this.maxPrice = Math.max(...this.priceData);
+                        }
+
+                        // Clean up old timestamped prices
+                        const oneDayAgo = timestamp - 24 * 60 * 60;
+                        this.timestampedPrices = this.timestampedPrices.filter(p => p.timestamp >= oneDayAgo);
+                        
+                        // Find price from 24h ago
+                        const oldestPrice = this.timestampedPrices[0]?.price || price;
+                        const priceChange = ((price - oldestPrice) / oldestPrice) * 100;
+                        
+                        // Update price change display
+                        const container = this.graphElement.closest('.flex');
+                        if (container) {
+                            const priceContainer = container.querySelector('.text-right');
+                            if (priceContainer) {
+                                const changeDisplay = priceContainer.querySelector('p:last-child');
+                                if (changeDisplay) {
+                                    changeDisplay.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%`;
+                                    changeDisplay.className = `text-sm ${priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+                                }
+                            }
+                        }
+
+                        // Update graph with smoother transitions
+                        const width = 240;
+                        const height = 80;
+                        
+                        if (this.priceData.length > 1) {
+                            // Use a moving average for smoother price transitions
+                            const smoothedPrices = this.smoothPrices(this.priceData, 3);  // 3-point moving average
+                            
+                            const avgPrice = (this.historicalRange.max + this.historicalRange.min) / 2;
+                            const totalRange = this.historicalRange.max - this.historicalRange.min;
+                            
+                            const volatility = totalRange / avgPrice;
+                            const scaleFactor = Math.min(1, Math.max(0.05, volatility * 10));
+                            
+                            const visibleRange = totalRange * scaleFactor;
+                            const visibleMin = avgPrice - (visibleRange / 2);
+                            const visibleMax = avgPrice + (visibleRange / 2);
+                            
+                            const points = smoothedPrices.map((p, i) => {
+                                const x = (i / (smoothedPrices.length - 1)) * width;
+                                const normalizedPrice = (p - visibleMin) / (visibleMax - visibleMin);
+                                const y = height - (normalizedPrice * height * 0.9 + height * 0.05);
+                                return { x, y };
+                            });
+                            
+                            let pathData = `M ${points[0].x} ${points[0].y}`;
+                            
+                            for (let i = 0; i < points.length - 1; i++) {
+                                const current = points[i];
+                                const next = points[i + 1];
+                                
+                                const tension = 0.3;
+                                const deltaX = next.x - current.x;
+                                
+                                const cp1x = current.x + deltaX * tension;
+                                const cp2x = next.x - deltaX * tension;
+                                
+                                pathData += ` C ${cp1x} ${current.y}, ${cp2x} ${next.y}, ${next.x} ${next.y}`;
+                            }
+                            
+                            this.path.setAttribute('d', pathData);
+                            this.path.setAttribute('stroke-width', '2');
+                        }
+                    }
+
+                    // Helper function for price smoothing
+                    smoothPrices(prices, windowSize) {
+                        const smoothed = [];
+                        for (let i = 0; i < prices.length; i++) {
+                            let sum = 0;
+                            let count = 0;
+                            for (let j = Math.max(0, i - windowSize + 1); j <= Math.min(prices.length - 1, i + windowSize - 1); j++) {
+                                sum += prices[j];
+                                count++;
+                            }
+                            smoothed.push(sum / count);
+                        }
+                        return smoothed;
+                    }
+
+                    readVarint(bytes, offset) {
+                        let value = 0n;
+                        let shift = 0n;
+                        let currentOffset = offset;
+                        
+                        while (currentOffset < bytes.length) {
+                            const byte = bytes[currentOffset++];
+                            value |= BigInt(byte & 0x7F) << shift;
+                            if ((byte & 0x80) === 0) break;
+                            shift += 7n;
+                        }
+                        
+                        return [value, currentOffset];
+                    }
+
+                    readFloat(bytes, offset) {
+                        const buffer = new ArrayBuffer(4);
+                        const view = new DataView(buffer);
+                        for (let i = 0; i < 4; i++) {
+                            view.setUint8(i, bytes[offset + i]);
+                        }
+                        return view.getFloat32(0, true);
+                    }
+
+                    disconnect() {
+                        if (this.xhr) {
+                            this.xhr.abort();
+                            this.xhr = null;
+                        }
+                        // Reset connection state
+                        this.lastTimestamp = 0;
+                        this.priceData = [];
+                        this.timestampedPrices = [];
+                        this.minPrice = Infinity;
+                        this.maxPrice = -Infinity;
+                        this.historicalRange = { min: Infinity, max: -Infinity };
+
+                        // Reset the graph path
+                        if (this.path) {
+                            this.path.setAttribute('d', '');
+                        }
+                    }
+                }
+
+                // Cleanup on page unload
+                window.addEventListener('beforeunload', () => {
+                    // Disconnect all streams
+                    document.querySelectorAll('.price-graph').forEach(element => {
+                        if (element.priceStream) {
+                            element.priceStream.disconnect();
+                        }
+                    });
+                });
+
+                // Function to initialize the page
+                async function initializeLaunchesPage() {
+                    try {
+                        // Use the launchesData directly instead of fetching
+                        const metadata = launchesData;
+                        
+                        // Update total launches
+                        document.querySelector('.total-launches').textContent = metadata.tokens.length;
+
+                        // Fetch current market data
+                        const marketData = await fetch('https://api.hyperliquid.xyz/info', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ type: "spotMetaAndAssetCtxs" })
+                        }).then(r => r.json());
+
+                        // Debug logs
+                        console.log('Market Data:', marketData[1]);
+                        console.log('Market Data Structure:', marketData[1][0]);
+                        console.log('Metadata:', metadata);
+
+                        // Calculate total 24h volume
+                        const totalVolume = marketData[1].reduce((sum, token) => {
+                            return sum + parseFloat(token.dayNtlVlm);
+                        }, 0);
+
+                        // Format and display volume
+                        document.querySelector('.volume').textContent = '$' + formatNumber(totalVolume);
+
+                        // Find best performer
+                        let bestPerformance = -Infinity;
+                        let bestToken = '';
+
+                        metadata.tokens.forEach(token => {
+                            const tokenData = marketData[1].find(t => t.coin === token.id);
+                            if (tokenData) {
+                                const currentPrice = parseFloat(tokenData.markPx);
+                                const performance = 0; // We'll implement this later with launch price data
+                                if (performance > bestPerformance) {
+                                    bestPerformance = performance;
+                                    bestToken = token.ticker;
+                                }
+                            }
+                        });
+
+                        // Display best performer
+                        document.querySelector('.best-performer').textContent = bestToken || '-';
+
+                        // Create launch elements
+                        const container = document.getElementById('launches-container');
+                        // Store the template HTML before clearing
+                        const templateHtml = container.firstElementChild.outerHTML;
+                        container.innerHTML = ''; // Clear the placeholder
+
+                        metadata.tokens.forEach(token => {
+                            // Create new element from template HTML
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = templateHtml;
+                            const element = tempDiv.firstElementChild;
+                            
+                            // Update element data
+                            element.querySelector('img').src = token.icon;
+                            const spans = element.querySelectorAll('span');
+                            spans[0].textContent = token.ticker;
+                            spans[1].textContent = token.name;
+                            
+                            // Update social links
+                            const links = element.querySelectorAll('.social-link');
+                            if (token.links.website) links[0].href = token.links.website;
+                            if (token.links.twitter) links[1].href = token.links.twitter;
+                            
+                            // Initialize price stream for this token
+                            const graphElement = element.querySelector('.price-graph');
+                            if (token.streamId && graphElement) {
+                                const stream = new PriceStream(token.streamId, graphElement);
+                                // Actually connect the stream
+                                stream.connect();
+                            }
+                            
+                            container.appendChild(element);
+                        });
+
+                        // Initialize search
+                        const searchInput = document.querySelector('#tokenSearchInput');
+                        if (searchInput) {
+                            searchInput.addEventListener('input', (e) => {
+                                const query = e.target.value.toLowerCase();
+                                Array.from(container.children).forEach(element => {
+                                    const ticker = element.querySelector('span').textContent.toLowerCase();
+                                    const name = element.querySelectorAll('span')[1].textContent.toLowerCase();
+                                    element.style.display = ticker.includes(query) || name.includes(query) ? 'block' : 'none';
+                                });
+                            });
+                        }
+
+                    } catch (error) {
+                        console.error('Error:', error);
+                    }
+                }
+
+                // Initialize on DOMContentLoaded
+                document.addEventListener('DOMContentLoaded', initializeLaunchesPage);
+
+                // Initialize when navigated to via SPA
+                if (document.readyState === 'complete') {
+                    initializeLaunchesPage();
+                }
+
+                // Export the initialization function for external use
+                window.initializeLaunchesPage = initializeLaunchesPage;
+
+                function formatNumber(num) {
+                    if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+                    if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+                    if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+                    return num.toFixed(2);
+                }
+            </script>
+        </div>
+    </div>
+</body>
+</html> 

@@ -20,7 +20,7 @@ export default function Navbar() {
                         >
                             Airdrops
                         </Link>
-                        <Link href="#" className="nav-link">Shitcoins</Link>
+                        <Link href="#" className="nav-link">Ecosystem</Link>
                         <Link href="#" className="nav-link">Layer 1s</Link>
                     </div>
                 </div>
