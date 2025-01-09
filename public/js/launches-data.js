@@ -59,6 +59,18 @@ const launchesData = {
                 "twitter": "https://x.com/AgentHydra_com",
                 "telegram": "https://t.me/Agent_HYDRA"
             }
+        },
+        {
+            "id": "AGX",
+            "streamId": "AAAAAAcI82ASAjVt",
+            "ticker": "AGX",
+            "name": "Agentix AI Marketplace & Incubator",
+            "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAHpzeRnf3m6MsvfJTI0taqGSN8uq9DDsAACha4xG012AUQuTvDG_52tQQEAAwIAA3kAAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/12403",
+            "links": {
+                "website": "hypurr.app",
+                "twitter": "x.com/hypurragentix",
+            }
         }
     ]
 }; 
