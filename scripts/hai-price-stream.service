@@ -1,0 +1,17 @@
+[Unit]
+Description=HAI Price Stream Service
+After=network.target redis-server.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/path/to/your/project
+ExecStart=/usr/bin/node /path/to/your/project/scripts/price_stream_service.js
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=hai-price-stream
+
+[Install]
+WantedBy=multi-user.target 

@@ -111,14 +111,14 @@
 
             <div class="grid grid-cols-7 mb-12">
                 <div class="col-span-1">
-                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Total Launches</p>
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Launches Tracked</p>
                     <p class="text-2xl market-cap font-normal total-launches">0</p>
                 </div>
                 <div class="flex justify-center items-center">
                     <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
                 </div>
                 <div class="col-span-1">
-                    <p class="text-[rgb(148,158,156)] text-sm mb-1">24h Volume</p>
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Market Cap</p>
                     <p class="text-2xl text-emerald-400 flex items-center font-normal">
                         <span class="volume">$0</span>
                     </p>
@@ -129,7 +129,8 @@
                 <div class="col-span-1">
                     <p class="text-[rgb(148,158,156)] text-sm mb-1">Best Performer</p>
                     <div class="flex items-center gap-2">
-                        <span class="text-2xl font-normal best-performer">-</span>
+                        <img src="/assets/logo.png" alt="PURRG" class="w-6 h-6 object-contain">
+                        <span class="text-lg font-normal">PURRG</span>
                     </div>
                 </div>
                 <div class="col-span-2"></div>
@@ -158,14 +159,14 @@
 
             <!-- Launches Container -->
             <div class="space-y-4" id="launches-container">
-                <!-- Launch Element -->
-                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-6">
+                <!-- Launch Element Template -->
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-6 cursor-pointer hover:border-[rgba(72,255,225,0.3)] transition-colors">
                     <div class="flex items-center w-full">
-                        <div class="flex items-center gap-4 min-w-[180px]">
-                            <div class="w-12 h-12 rounded-full bg-[#0f1a1f] flex items-center justify-center">
-                                <img src="/assets/logo.png" alt="Token" class="w-10 h-10 object-contain">
+                        <div class="flex items-center gap-4 min-w-[300px]">
+                            <div class="w-12 h-12 rounded-lg bg-[#0f1a1f] flex items-center justify-center overflow-hidden">
+                                <img src="/assets/logo.png" alt="Token" class="w-10 h-10 object-contain rounded-lg">
                             </div>
-                            <div>
+                            <div class="min-w-[200px]">
                                 <span class="text-white text-sm font-medium">@undefined</span>
                                 <div class="flex items-center gap-2 mt-0.5">
                                     <span class="text-[rgb(148,158,156)] text-xs">@MON</span>
@@ -186,16 +187,12 @@
                         </div>
                         <div class="flex items-center gap-8 ml-auto">
                             <div>
-                                <p class="text-[rgb(148,158,156)] text-xs">24h Volume</p>
-                                <p class="text-sm font-medium">$220.94K</p>
-                            </div>
-                            <div>
                                 <p class="text-[rgb(148,158,156)] text-xs">TVL</p>
-                                <p class="text-sm font-medium">$0.00</p>
+                                <p class="text-sm font-medium">Loading...</p>
                             </div>
                             <div>
                                 <p class="text-[rgb(148,158,156)] text-xs">Market Cap</p>
-                                <p class="text-sm font-medium">$1.2M</p>
+                                <p class="text-sm font-medium">Loading...</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-8 ml-12">
@@ -218,7 +215,34 @@
                 </div>
             </div>
 
+            <!-- More Coming Button -->
+            <div class="flex justify-center mt-6 mb-6">
+                <div class="flex items-center">
+                    <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-8 py-3 flex items-center">
+                        <span class="text-[rgb(148,158,156)] text-sm">More Coming</span>
+                    </div>
+                    <img src="/assets/Sticker/7.png" alt="@7" class="w-12 h-12 object-contain -ml-4 transform rotate-12">
+                </div>
+            </div>
+
+            <!-- Empty space for better scrolling -->
+            <div class="h-24"></div>
+
             <script>
+                function calculateMarketCap(price) {
+                    if (price >= 2) return price * 880000;      // Higher range
+                    if (price >= 0.4) return price * 687000;    // High range
+                    if (price >= 0.08) return price * 340000;   // Mid range
+                    return price * 177000;                      // Low range
+                }
+
+                function calculateTVL(price) {
+                    if (price >= 2) return price * 110000;     // Higher range
+                    if (price >= 0.4) return price * 215000;   // High range
+                    if (price >= 0.08) return price * 225000;  // Mid range
+                    return price * 146000;                     // Low range
+                }
+
                 class PriceStream {
                     constructor(streamId, graphElement) {
                         this.streamId = streamId;
@@ -232,9 +256,10 @@
                         this.historicalRange = { min: Infinity, max: -Infinity };
                         this.volume = 0;
                         this.currentPrice = 0;
+                        this.currentMarketCap = 0;  // Add tracking for individual market cap
+                        this.hasInitialData = false;
+                        this.inactivityTimer = null;
                         this.initGraph();
-
-                        // Initialize with market data if available
                         this.initializeFromMarketData();
                     }
 
@@ -319,14 +344,22 @@
                             if (xhr.readyState === 4) {
                                 console.log('Stream closed for', this.streamId);
                                 this.xhr = null;
-                                setTimeout(() => this.connect(), 1000);
+                                // Only reconnect if we haven't received any data yet
+                                if (!this.hasInitialData) {
+                                    setTimeout(() => this.connect(), 1000);
+                                } else {
+                                    console.log('Initial data received, maintaining last known state for', this.streamId);
+                                }
                             }
                         };
 
                         xhr.onerror = (error) => {
                             console.error('Stream error for', this.streamId, ':', error);
                             this.xhr = null;
-                            setTimeout(() => this.connect(), 1000);
+                            // Only reconnect if we haven't received any data yet
+                            if (!this.hasInitialData) {
+                                setTimeout(() => this.connect(), 1000);
+                            }
                         };
 
                         const payload = this.streamId;
@@ -385,7 +418,6 @@
                             
                             const timestamp = Number(timestampBig);
                             
-                            // Only process newer timestamps
                             if (timestamp <= this.lastTimestamp) return;
                             this.lastTimestamp = timestamp;
                             
@@ -408,24 +440,29 @@
                             if (typeof close === 'number' && !isNaN(close) && close > 0) {
                                 console.log(`Price update for ${this.streamId}: ${this.currentPrice} -> ${close} (timestamp: ${new Date(timestamp * 1000).toISOString()})`);
                                 this.currentPrice = close;
+                                this.hasInitialData = true;
+
+                                // Calculate and update market cap
+                                this.currentMarketCap = calculateMarketCap(close);
+                                updateTotalMarketCap();  // Update total market cap immediately when price changes
+
+                                // Reset inactivity timer
+                                if (this.inactivityTimer) {
+                                    clearTimeout(this.inactivityTimer);
+                                }
+                                this.inactivityTimer = setTimeout(() => {
+                                    console.log(`No price updates for 10s for ${this.streamId}, disconnecting stream`);
+                                    this.disconnect();
+                                }, 10000);
 
                                 // Update the UI with the new price
-                                const launchContainer = this.graphElement.parentElement.parentElement;
-                                
-                                // Update price display
-                                const priceDisplay = launchContainer.querySelector('.text-right p:first-child');
-                                if (priceDisplay) {
-                                    priceDisplay.textContent = `$${close < 1 ? close.toFixed(4) : close.toFixed(2)}`;
-                                }
-
-                                // Calculate and update Market Cap and TVL
-                                const marketCap = close * 700000;
-                                const tvl = close * 240000;
-
-                                const allMetrics = launchContainer.querySelectorAll('.flex.items-center.gap-8 div p:last-child');
-                                if (allMetrics.length >= 3) {
-                                    allMetrics[1].textContent = `$${formatNumber(tvl)}`;
-                                    allMetrics[2].textContent = `$${formatNumber(marketCap)}`;
+                                const container = this.graphElement.closest('.flex');
+                                if (container) {
+                                    // Update price display
+                                    const priceDisplay = container.querySelector('.text-right p:first-child');
+                                    if (priceDisplay) {
+                                        priceDisplay.textContent = `$${close < 1 ? close.toFixed(4) : close.toFixed(2)}`;
+                                    }
                                 }
 
                                 this.timestampedPrices.push({ timestamp, price: close });
@@ -440,11 +477,6 @@
                     updateMetricsDisplay(price) {
                         if (!price || price <= 0) return;
 
-                        // Calculate Market Cap and TVL
-                        const marketCap = price * 700000;
-                        const tvl = price * 220000;
-                        
-                        // Update displays in the table
                         const container = this.graphElement.closest('.flex');
                         if (!container) return;
 
@@ -460,15 +492,18 @@
                         }
                         
                         if (metricsContainer) {
-                            const volumeMetric = metricsContainer.querySelector('div:first-child p:last-child');
-                            const tvlMetric = metricsContainer.querySelector('div:nth-child(2) p:last-child');
-                            const marketCapMetric = metricsContainer.querySelector('div:last-child p:last-child');
-                            
-                            // Update metrics with calculated values
-                            if (volumeMetric) volumeMetric.textContent = `$${formatNumber(parseFloat(this.volume || 0))}`;
-                            if (tvlMetric) tvlMetric.textContent = `$${formatNumber(tvl)}`;
-                            if (marketCapMetric) marketCapMetric.textContent = `$${formatNumber(marketCap)}`;
+                            const marketCapDiv = metricsContainer.children[1];
+                            if (marketCapDiv) {
+                                const marketCapMetric = marketCapDiv.querySelector('p:last-child');
+                                if (marketCapMetric) {
+                                    this.currentMarketCap = calculateMarketCap(price);
+                                    marketCapMetric.textContent = `$${formatNumber(this.currentMarketCap)}`;
+                                }
+                            }
                         }
+
+                        // Update total market cap after updating individual market cap
+                        updateTotalMarketCap();
                     }
 
                     updateGraph(price, timestamp) {
@@ -495,16 +530,43 @@
                         // Find price from 24h ago
                         const oldestPrice = this.timestampedPrices[0]?.price || price;
                         const priceChange = ((price - oldestPrice) / oldestPrice) * 100;
+                        const graphColor = priceChange >= 0 ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)';
+                        this.path.setAttribute('stroke', graphColor);
                         
-                        // Update price change display
                         const container = this.graphElement.closest('.flex');
                         if (container) {
+                            // Update performance display
                             const priceContainer = container.querySelector('.text-right');
                             if (priceContainer) {
                                 const changeDisplay = priceContainer.querySelector('p:last-child');
                                 if (changeDisplay) {
                                     changeDisplay.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%`;
                                     changeDisplay.className = `text-sm ${priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+                                }
+                            }
+
+                            // Calculate TVL and Market Cap using current price
+                            const metricsContainer = container.parentElement.querySelector('.flex.items-center.gap-8.ml-auto');
+                            if (metricsContainer) {
+                                const tvlDiv = metricsContainer.children[0];
+                                const marketCapDiv = metricsContainer.children[1];
+                                
+                                if (tvlDiv) {
+                                    const tvlMetric = tvlDiv.querySelector('p:last-child');
+                                    if (tvlMetric) {
+                                        const tvl = calculateTVL(price);
+                                        console.log(`Updating TVL for ${this.streamId} to $${formatNumber(tvl)}`);
+                                        tvlMetric.textContent = `$${formatNumber(tvl)}`;
+                                    }
+                                }
+                                
+                                if (marketCapDiv) {
+                                    const marketCapMetric = marketCapDiv.querySelector('p:last-child');
+                                    if (marketCapMetric) {
+                                        const marketCap = calculateMarketCap(price);
+                                        console.log(`Updating Market Cap for ${this.streamId} to $${formatNumber(marketCap)}`);
+                                        marketCapMetric.textContent = `$${formatNumber(marketCap)}`;
+                                    }
                                 }
                             }
                         }
@@ -594,22 +656,21 @@
                     }
 
                     disconnect() {
+                        // Clear inactivity timer if it exists
+                        if (this.inactivityTimer) {
+                            clearTimeout(this.inactivityTimer);
+                            this.inactivityTimer = null;
+                        }
+
                         if (this.xhr) {
+                            console.log(`Disconnecting stream for ${this.streamId}`);
                             this.xhr.abort();
                             this.xhr = null;
                         }
-                        // Reset connection state
-                        this.lastTimestamp = 0;
-                        this.priceData = [];
-                        this.timestampedPrices = [];
-                        this.minPrice = Infinity;
-                        this.maxPrice = -Infinity;
-                        this.historicalRange = { min: Infinity, max: -Infinity };
 
-                        // Reset the graph path
-                        if (this.path) {
-                            this.path.setAttribute('d', '');
-                        }
+                        // Don't reset the data, just mark the connection as closed
+                        this.hasInitialData = true;  // Keep the data flag true
+                        console.log(`Disconnected stream for ${this.streamId}, preserving ${this.priceData.length} data points`);
                     }
                 }
 
@@ -623,13 +684,26 @@
                     });
                 });
 
-                // Function to initialize the page
+                // Global market cap tracking
+                let allPriceStreams = [];
+
+                function updateTotalMarketCap() {
+                    const totalMarketCap = allPriceStreams.reduce((sum, stream) => {
+                        return sum + (stream.currentMarketCap || 0);
+                    }, 0);
+                    
+                    const volumeElement = document.querySelector('.volume');
+                    if (volumeElement) {
+                        volumeElement.textContent = '$' + formatNumber(totalMarketCap);
+                    }
+                }
+
                 async function initializeLaunchesPage() {
                     try {
-                        // Use the launchesData directly instead of fetching
-                        const metadata = launchesData;
+                        // Clear existing streams
+                        allPriceStreams = [];
                         
-                        // Update total launches
+                        const metadata = launchesData;
                         document.querySelector('.total-launches').textContent = metadata.tokens.length;
 
                         // Fetch current market data
@@ -644,32 +718,27 @@
                         console.log('Market Data Structure:', marketData[1][0]);
                         console.log('Metadata:', metadata);
 
-                        // Calculate total 24h volume
-                        const totalVolume = marketData[1].reduce((sum, token) => {
-                            return sum + parseFloat(token.dayNtlVlm);
-                        }, 0);
-
-                        // Format and display volume
-                        document.querySelector('.volume').textContent = '$' + formatNumber(totalVolume);
-
-                        // Find best performer
-                        let bestPerformance = -Infinity;
-                        let bestToken = '';
-
-                        metadata.tokens.forEach(token => {
+                        // Calculate total market cap instead of volume
+                        const totalMarketCap = metadata.tokens.reduce((sum, token) => {
                             const tokenData = marketData[1].find(t => t.coin === token.id);
                             if (tokenData) {
-                                const currentPrice = parseFloat(tokenData.markPx);
-                                const performance = 0; // We'll implement this later with launch price data
-                                if (performance > bestPerformance) {
-                                    bestPerformance = performance;
-                                    bestToken = token.ticker;
-                                }
+                                const price = parseFloat(tokenData.markPx);
+                                return sum + calculateMarketCap(price);
                             }
-                        });
+                            return sum;
+                        }, 0);
 
-                        // Display best performer
-                        document.querySelector('.best-performer').textContent = bestToken || '-';
+                        // Format and display market cap
+                        document.querySelector('.volume').textContent = '$' + formatNumber(totalMarketCap);
+
+                        // Set static best performer - using the correct selector
+                        const bestPerformerContainer = document.querySelector('.col-span-1 .flex.items-center.gap-2');
+                        if (bestPerformerContainer) {
+                            bestPerformerContainer.innerHTML = `
+                                <img src="/assets/logo.png" alt="PURRG" class="w-6 h-6 object-contain">
+                                <span class="text-lg font-normal">PURRG</span>
+                            `;
+                        }
 
                         // Create launch elements
                         const container = document.getElementById('launches-container');
@@ -683,6 +752,17 @@
                             tempDiv.innerHTML = templateHtml;
                             const element = tempDiv.firstElementChild;
                             
+                            // Add click handler to open hypurr link
+                            if (token.hypurr) {
+                                element.style.cursor = 'pointer';
+                                element.addEventListener('click', (e) => {
+                                    // Don't trigger if clicking on links or price graph
+                                    if (!e.target.closest('.social-link') && !e.target.closest('.price-graph')) {
+                                        window.open(token.hypurr, '_blank');
+                                    }
+                                });
+                            }
+                            
                             // Update element data
                             element.querySelector('img').src = token.icon;
                             const spans = element.querySelectorAll('span');
@@ -690,20 +770,64 @@
                             spans[1].textContent = token.name;
                             
                             // Update social links
-                            const links = element.querySelectorAll('.social-link');
-                            if (token.links.website) links[0].href = token.links.website;
-                            if (token.links.twitter) links[1].href = token.links.twitter;
+                            const socialLinksContainer = element.querySelector('.flex.items-center.gap-3');
+                            socialLinksContainer.innerHTML = ''; // Clear default links
+
+                            // Add website link if exists
+                            if (token.links.website) {
+                                const websiteLink = document.createElement('a');
+                                websiteLink.href = token.links.website;
+                                websiteLink.target = '_blank';
+                                websiteLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
+                                websiteLink.innerHTML = `
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                    </svg>
+                                `;
+                                socialLinksContainer.appendChild(websiteLink);
+                            }
+
+                            // Add Twitter link if exists
+                            if (token.links.twitter) {
+                                const twitterLink = document.createElement('a');
+                                twitterLink.href = token.links.twitter;
+                                twitterLink.target = '_blank';
+                                twitterLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
+                                twitterLink.innerHTML = `
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                    </svg>
+                                `;
+                                socialLinksContainer.appendChild(twitterLink);
+                            }
+
+                            // Add Telegram link if exists
+                            if (token.links.telegram) {
+                                const telegramLink = document.createElement('a');
+                                telegramLink.href = token.links.telegram;
+                                telegramLink.target = '_blank';
+                                telegramLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
+                                telegramLink.innerHTML = `
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42l10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701l-.332 4.865c.487 0 .703-.22.975-.48l2.34-2.278l4.863 3.587c.896.495 1.54.24 1.764-.83l3.213-15.12c.33-1.31-.507-1.9-1.3-1.513z"/>
+                                    </svg>
+                                `;
+                                socialLinksContainer.appendChild(telegramLink);
+                            }
                             
                             // Initialize price stream for this token
                             const graphElement = element.querySelector('.price-graph');
                             if (token.streamId && graphElement) {
                                 const stream = new PriceStream(token.streamId, graphElement);
-                                // Actually connect the stream
+                                allPriceStreams.push(stream);  // Add to global tracking
                                 stream.connect();
                             }
                             
                             container.appendChild(element);
                         });
+
+                        // Initial total market cap update
+                        updateTotalMarketCap();
 
                         // Initialize search
                         const searchInput = document.querySelector('#tokenSearchInput');
@@ -735,10 +859,18 @@
                 window.initializeLaunchesPage = initializeLaunchesPage;
 
                 function formatNumber(num) {
-                    if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-                    if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-                    if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-                    return num.toFixed(2);
+                    if (num === undefined || num === null || isNaN(num)) return '$0';
+                    
+                    try {
+                        // Return full integer with commas for thousand separators
+                        return num.toLocaleString('en-US', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        });
+                    } catch (e) {
+                        console.error('Error formatting number:', num, e);
+                        return '$0';
+                    }
                 }
             </script>
         </div>
