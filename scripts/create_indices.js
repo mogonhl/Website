@@ -1,5 +1,5 @@
 const { Redis } = require('@upstash/redis');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 // Validate environment variables
 if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {

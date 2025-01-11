@@ -1,6 +1,5 @@
 const { Redis } = require('@upstash/redis');
-const { SPOT_TICKERS } = require('../app/types/spot_tickers');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL,
@@ -157,21 +156,21 @@ async function createIndex() {
         const performersInfo = {
             bestPerformer: {
                 tokenId: first[0],
-                ticker: SPOT_TICKERS[`@${first[0]}`]?.ticker || `Token ${first[0]}`,
+                ticker: `Token ${first[0]}`,
                 initialPrice: first[1].initialPrice,
                 finalPrice: first[1].finalPrice,
                 return_pct: first[1].return_pct
             },
             secondBestPerformer: second ? {
                 tokenId: second[0],
-                ticker: SPOT_TICKERS[`@${second[0]}`]?.ticker || `Token ${second[0]}`,
+                ticker: `Token ${second[0]}`,
                 initialPrice: second[1].initialPrice,
                 finalPrice: second[1].finalPrice,
                 return_pct: second[1].return_pct
             } : null,
             thirdBestPerformer: third ? {
                 tokenId: third[0],
-                ticker: SPOT_TICKERS[`@${third[0]}`]?.ticker || `Token ${third[0]}`,
+                ticker: `Token ${third[0]}`,
                 initialPrice: third[1].initialPrice,
                 finalPrice: third[1].finalPrice,
                 return_pct: third[1].return_pct
@@ -204,8 +203,7 @@ async function createIndex() {
             // Print top performers
             console.log('\nTop 3 Performing Tokens:');
             topPerformers.forEach(([tokenIdx, perf], rank) => {
-                const ticker = SPOT_TICKERS[`@${tokenIdx}`]?.ticker || `Token ${tokenIdx}`;
-                console.log(`${rank + 1}. ${ticker}:`);
+                console.log(`${rank + 1}. Token ${tokenIdx}:`);
                 console.log(`   Initial Price: $${perf.initialPrice.toFixed(4)}`);
                 console.log(`   Final Price: $${perf.finalPrice.toFixed(4)}`);
                 console.log(`   Return: ${perf.return_pct.toFixed(2)}%`);
