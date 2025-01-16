@@ -15,8 +15,9 @@ const redis = new Redis({
     token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-async function fetchSpotData(tokenId, interval, days) {
-    console.log(`\nFetching ${interval} data for token @${tokenId} (${days} days)...`);
+async function fetchSpotData(coin, interval, days) {
+    const isTokenId = coin.startsWith('@');
+    console.log(`\nFetching ${interval} data for ${isTokenId ? 'token' : 'pair'} ${coin} (${days} days)...`);
     
     const now = Date.now();
     const startTime = now - (days * 24 * 60 * 60 * 1000);
@@ -24,7 +25,7 @@ async function fetchSpotData(tokenId, interval, days) {
     const payload = {
         type: "candleSnapshot",
         req: {
-            coin: `@${tokenId}`,
+            coin: coin,
             interval: interval,
             startTime: startTime,
             endTime: now
@@ -46,14 +47,14 @@ async function fetchSpotData(tokenId, interval, days) {
 
         const data = await response.json();
         
-        // If we get an empty array or invalid response, assume this token ID doesn't exist
+        // If we get an empty array or invalid response, assume this token/pair doesn't exist
         if (!Array.isArray(data) || data.length === 0) {
             return null;
         }
 
         // Print the latest candle data
         const latestCandle = data[data.length - 1];
-        console.log(`Latest ${interval} data for @${tokenId}:`, {
+        console.log(`Latest ${interval} data for ${coin}:`, {
             timestamp: new Date(latestCandle.t).toISOString(),
             close: latestCandle.c,
             volume: latestCandle.v,
@@ -64,13 +65,13 @@ async function fetchSpotData(tokenId, interval, days) {
 
         // Transform the data into the format we need
         return {
-            tokenId,
+            tokenId: coin,
             prices: data.map(candle => [candle.t, parseFloat(candle.c)]),
             total_volumes: data.map(candle => [candle.t, parseFloat(candle.v)]),
             market_caps: data.map(candle => [candle.t, 0]) // We don't have market cap data
         };
     } catch (error) {
-        console.error(`Error fetching ${interval} data for token @${tokenId}:`, error.message);
+        console.error(`Error fetching ${interval} data for ${coin}:`, error.message);
         return null;
     }
 }
@@ -78,12 +79,21 @@ async function fetchSpotData(tokenId, interval, days) {
 async function populateSpotTokens() {
     console.log('Starting spot tokens population...');
     
+    // First handle PURR/USDC specifically
+    console.log('\nFetching PURR/USDC data...');
+    const purrData = await fetchSpotData('PURR/USDC', '1h', 7);
+    const hourlyData = [];
+
+    if (purrData) {
+        console.log('Successfully fetched PURR/USDC data');
+        hourlyData.push(purrData);
+    } else {
+        console.error('Failed to fetch PURR/USDC data');
+    }
+    
     let tokenId = 1;
     let consecutiveEmptyResponses = 0;
     const MAX_EMPTY_RESPONSES = 5;
-    
-    const hourlyData = [];  // 7 days of hourly data
-    const dailyData = [];   // All available daily data
     
     while (consecutiveEmptyResponses < MAX_EMPTY_RESPONSES) {
         // Add delay between requests to avoid rate limiting
@@ -91,11 +101,10 @@ async function populateSpotTokens() {
             await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
-        // Fetch 7 days of hourly data and 365 days of daily data
-        const hourly = await fetchSpotData(tokenId, '1h', 7);
-        const daily = await fetchSpotData(tokenId, '1d', 365);
+        // Fetch 7 days of hourly data
+        const hourly = await fetchSpotData(`@${tokenId}`, '1h', 7);
         
-        if (!hourly && !daily) {
+        if (!hourly) {
             console.log(`No data found for token @${tokenId}`);
             consecutiveEmptyResponses++;
             tokenId++;
@@ -104,10 +113,7 @@ async function populateSpotTokens() {
 
         // Reset consecutive empty responses counter if we got data
         consecutiveEmptyResponses = 0;
-
-        if (hourly) hourlyData.push(hourly);
-        if (daily) dailyData.push(daily);
-
+        hourlyData.push(hourly);
         tokenId++;
     }
 
@@ -129,18 +135,9 @@ async function populateSpotTokens() {
     try {
         const numChunks = Math.ceil(hourlyData.length / CHUNK_SIZE);
         await redis.set('spot_data_7d_chunks', numChunks.toString());
-        console.log(`\nStored chunk count: ${numChunks}`);
+        console.log(`\nStored hourly chunk count: ${numChunks}`);
     } catch (error) {
-        console.error('Error storing chunk count:', error.message);
-    }
-
-    // Store all daily data
-    try {
-        console.log(`\nStoring daily data for ${dailyData.length} tokens...`);
-        await redis.set('spot_data_daily_all', JSON.stringify(dailyData));
-        console.log('Successfully stored daily data');
-    } catch (error) {
-        console.error('Error storing daily data:', error.message);
+        console.error('Error storing hourly chunk count:', error.message);
     }
 
     // Verify the data was stored
@@ -148,22 +145,18 @@ async function populateSpotTokens() {
         const keys = await redis.keys('*');
         console.log('\nCurrent Redis keys:', keys);
         
-        // Check a sample chunk
-        const chunk0 = await redis.get('spot_data_7d_0');
-        const dailyVerify = await redis.get('spot_data_daily_all');
-        const numChunksVerify = await redis.get('spot_data_7d_chunks');
+        // Check samples
+        const hourlyChunk0 = await redis.get('spot_data_7d_0');
         
         console.log('\nData verification:');
-        console.log('First hourly chunk exists:', !!chunk0);
-        console.log('Daily data exists:', !!dailyVerify);
-        console.log('Number of chunks:', numChunksVerify);
+        console.log('First hourly chunk exists:', !!hourlyChunk0);
         
-        if (chunk0) {
-            const parsed = JSON.parse(chunk0);
-            console.log('\nFirst chunk details:');
+        if (hourlyChunk0) {
+            const parsed = JSON.parse(hourlyChunk0);
+            console.log('\nFirst hourly chunk details:');
             console.log('Number of tokens in chunk:', parsed.length);
             if (parsed.length > 0) {
-                console.log('First token ID:', parsed[0].tokenId);
+                console.log('First token data:', parsed[0].tokenId);
                 console.log('Sample price points:', parsed[0].prices.length);
             }
         }

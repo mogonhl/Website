@@ -509,7 +509,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update performance in top stats
                 const performanceElement = document.querySelector('.performance');
                 if (performanceElement) {
-                    performanceElement.textContent = `+$${formatTooltipNumber(performanceValue)}`;
+                    const isPositive = performanceValue >= 0;
+                    const formattedValue = formatTooltipNumber(Math.abs(performanceValue));
+                    performanceElement.textContent = `${isPositive ? '+' : '-'}$${formattedValue}`;
+                    performanceElement.parentElement.classList.remove('text-emerald-400', 'text-red-400');
+                    performanceElement.parentElement.classList.add(isPositive ? 'text-emerald-400' : 'text-red-400');
                 }
 
                 // Update multiplier in top stats
@@ -517,6 +521,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (multiplierElement) {
                     const multiplier = currentPrice / initialPrice;
                     multiplierElement.textContent = `${multiplier.toFixed(1)}x`;
+                    multiplierElement.classList.remove('bg-emerald-400/20', 'text-emerald-400', 'bg-red-400/20', 'text-red-400');
+                    multiplierElement.classList.add(
+                        multiplier >= 1 ? 'bg-emerald-400/20' : 'bg-red-400/20',
+                        multiplier >= 1 ? 'text-emerald-400' : 'text-red-400'
+                    );
                 }
             }
 

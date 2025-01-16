@@ -69,7 +69,7 @@ module.exports = async function handler(req, res) {
         // Convert hex tokenId to number for Redis key lookup
         const numericId = parseInt(tokenId.replace('0x', ''), 16);
         const chunkIndex = Math.floor(numericId / 20);
-        const key = `spot_data_7d_${chunkIndex}`;
+        const key = `spot_data_30d_${chunkIndex}`;
 
         try {
             // Get data from Redis with timeout

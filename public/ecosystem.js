@@ -127,21 +127,50 @@ async function fetchMarketData() {
 
 async function fetchBatchedSnapshotData(tokenIds) {
     const batchSize = 20;
-    const uniqueBatches = new Set(tokenIds.map(id => Math.floor(parseInt(id) / batchSize)));
+    const uniqueBatches = new Set(tokenIds.map(id => {
+        // Skip PURR token for batch calculation
+        if (id === 'purr') return -1;
+        return Math.floor(parseInt(id) / batchSize);
+    }));
     
-    const batchPromises = Array.from(uniqueBatches).map(batchNum => 
+    // Create array of promises for all data fetches
+    const fetchPromises = [];
+
+    // Add PURR data fetch if needed
+    if (tokenIds.includes('purr')) {
+        fetchPromises.push(
+            fetch(`/api/redis/get?key=spot_data_7d_purr`).then(async r => {
+                const data = await r.json();
+                // Ensure data is in the correct format
+                if (data && Array.isArray(data) && data[0]) {
+                    return [{
+                        ...data[0],
+                        tokenId: 'purr'  // Ensure we have a consistent tokenId
+                    }];
+                }
+                return [];
+            })
+        );
+    }
+
+    // Add regular batch fetches
+    const batchPromises = Array.from(uniqueBatches).filter(num => num >= 0).map(batchNum => 
         fetch(`/api/redis/get?key=spot_data_7d_${batchNum}`).then(r => r.json())
     );
+    fetchPromises.push(...batchPromises);
 
     try {
-        const batchResults = await Promise.all(batchPromises);
-        const allData = batchResults.flat();
+        const allResults = await Promise.all(fetchPromises);
+        const allData = allResults.flat();
         const tokenDataMap = {};
         
         // Create a map for quick lookup
         allData.forEach(data => {
-            if (data && data.tokenId) {
-                tokenDataMap[data.tokenId] = data;
+            if (data) {
+                const id = data.tokenId || (data.coin === 'PURR/USDC' ? 'purr' : data.coin?.replace('@', ''));
+                if (id) {
+                    tokenDataMap[id] = data;
+                }
             }
         });
 
@@ -244,9 +273,15 @@ function updateTokenList(data) {
     // Clear existing content
     container.innerHTML = '';
 
-    // Filter out excluded tokens
+    // Filter out excluded tokens and tokens with no volume
     const excludedTokens = ['@71', '@98', '@131'];
-    let filteredTokens = data.tokens.filter(token => !excludedTokens.includes(token.coin));
+    let filteredTokens = data.tokens.filter(token => {
+        // Always include PURR/USDC regardless of volume
+        if (token.coin === 'PURR/USDC') return true;
+        
+        // For other tokens, apply normal filtering
+        return !excludedTokens.includes(token.coin) && token.volume24h > 0;
+    });
 
     // Apply search filter if there's a search query
     if (searchQuery) {
@@ -307,7 +342,7 @@ function updateTokenList(data) {
             <div class="col-span-2 flex items-center gap-3">
                 <div class="relative w-8 h-8">
                     <div class="absolute inset-0 rounded-full shimmer-effect"></div>
-                    <img src="${token.displayName === 'HYPE' ? '/assets/icons/Hype.png' : `/assets/icons/${token.displayName}.svg`}" 
+                    <img src="${token.displayName === 'HYPE' ? '/assets/icons/Hype.png' : `/assets/icons/spot/${token.displayName}.svg`}" 
                          alt="${token.displayName}" 
                          class="absolute inset-0 w-full h-full rounded-full opacity-0 transition-opacity duration-300" 
                          onload="this.classList.add('opacity-100'); this.previousElementSibling.style.display = 'none';"
@@ -396,8 +431,8 @@ function updateSnapshotChart(tokenId, priceData) {
 
     // Find the current token's price from marketData
     const currentToken = marketData.tokens.find(token => {
-        const tokenIdFromCoin = token.coin === 'PURR/USDC' ? 'purr' : token.coin.replace('@', '');
-        return tokenIdFromCoin === tokenId;
+        if (tokenId === 'purr') return token.coin === 'PURR/USDC';
+        return token.coin === `@${tokenId}`;
     });
 
     if (!currentToken) return;
@@ -425,37 +460,11 @@ function updateSnapshotChart(tokenId, priceData) {
         y: padding + ((maxPrice - p[1]) / priceRange) * (40 - 2 * padding)
     }));
 
-    // Create smooth curve
+    // Create path with minimal smoothing - just connect the points
     let pathD = `M ${points[0].x} ${points[0].y}`;
     
-    for (let i = 0; i < points.length - 1; i++) {
-        const p0 = i === 0 ? points[0] : points[i - 1];
-        const p1 = points[i];
-        const p2 = points[i + 1];
-        const p3 = i === points.length - 2 ? p2 : points[i + 2];
-
-        // Generate smooth segments between points
-        for (let t = 1; t <= 5; t++) {
-            const t1 = t / 5;
-            const t2 = t1 * t1;
-            const t3 = t2 * t1;
-            
-            const x = 0.5 * (
-                (2 * p1.x) +
-                (-p0.x + p2.x) * t1 +
-                (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
-                (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3
-            );
-            
-            const y = 0.5 * (
-                (2 * p1.y) +
-                (-p0.y + p2.y) * t1 +
-                (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
-                (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3
-            );
-
-            pathD += ` L ${x} ${y}`;
-        }
+    for (let i = 1; i < points.length; i++) {
+        pathD += ` L ${points[i].x} ${points[i].y}`;
     }
 
     // Calculate if price went up or down using the first and current price

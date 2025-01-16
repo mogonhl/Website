@@ -774,11 +774,24 @@
                         // For other indices, show actual change from initial value
                         performanceValue = currentPrice - initialPrice;
                     }
-                    document.querySelector('.performance').textContent = `+$${formatFullNumber(performanceValue)}`;
+                    
+                    // Update performance with proper sign and color
+                    const performanceElement = document.querySelector('.performance');
+                    const isPositive = performanceValue >= 0;
+                    const formattedValue = formatFullNumber(Math.abs(performanceValue));
+                    performanceElement.textContent = `${isPositive ? '+' : '-'}$${formattedValue}`;
+                    performanceElement.parentElement.classList.remove('text-emerald-400', 'text-red-400');
+                    performanceElement.parentElement.classList.add(isPositive ? 'text-emerald-400' : 'text-red-400');
                     
                     // Calculate and update multiplier
                     const multiplier = currentPrice / initialPrice;
-                    document.querySelector('.multiplier').textContent = `${multiplier.toFixed(1)}x`;
+                    const multiplierElement = document.querySelector('.multiplier');
+                    multiplierElement.textContent = `${multiplier.toFixed(1)}x`;
+                    multiplierElement.classList.remove('bg-emerald-400/20', 'text-emerald-400', 'bg-red-400/20', 'text-red-400');
+                    multiplierElement.classList.add(
+                        multiplier >= 1 ? 'bg-emerald-400/20' : 'bg-red-400/20',
+                        multiplier >= 1 ? 'text-emerald-400' : 'text-red-400'
+                    );
                 }
             } catch (error) {
                 console.error('Error updating index stats:', error);
