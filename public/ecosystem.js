@@ -291,10 +291,22 @@ function updateTokenList(data) {
         });
     }
 
+    // Get list of starred tokens from localStorage
+    const starredTokens = new Set(JSON.parse(localStorage.getItem('starredTokens') || '[]'));
+
     // Sort tokens if a sort column is selected
     if (currentSortColumn) {
         filteredTokens.sort((a, b) => {
-            // For coin/pair sorting
+            // First, check if either token is starred
+            const aIsStarred = starredTokens.has(a.coin);
+            const bIsStarred = starredTokens.has(b.coin);
+
+            // If star status is different, starred tokens go first
+            if (aIsStarred !== bIsStarred) {
+                return aIsStarred ? -1 : 1;
+            }
+
+            // If both have same star status, sort by the selected column
             if (currentSortColumn === 'coin') {
                 return isAscending 
                     ? a.displayName.localeCompare(b.displayName)
@@ -319,6 +331,13 @@ function updateTokenList(data) {
 
             return isAscending ? aValue - bValue : bValue - aValue;
         });
+    } else {
+        // If no sort column is selected, just put starred items at the top
+        filteredTokens.sort((a, b) => {
+            const aIsStarred = starredTokens.has(a.coin);
+            const bIsStarred = starredTokens.has(b.coin);
+            return aIsStarred === bIsStarred ? 0 : aIsStarred ? -1 : 1;
+        });
     }
 
     // Only show the first currentDisplayCount tokens
@@ -338,18 +357,36 @@ function updateTokenList(data) {
         // Special handling for PURR tokenId
         const tokenId = token.coin === 'PURR/USDC' ? 'purr' : token.coin.replace('@', '');
         
+        // Try to find existing snapshot chart
+        const existingChart = container.querySelector(`[data-token-id="${tokenId}"]`)?.innerHTML;
+        const snapshotHtml = existingChart || `
+            <div class="w-full h-10 snapshot-placeholder">
+                <svg class="w-full h-10" viewBox="0 0 200 40" preserveAspectRatio="none">
+                    <path d="M0 20 C 50 10, 100 30, 150 15, 200 25" 
+                          stroke="#2a2a2a" 
+                          stroke-width="1.5"
+                          fill="none"/>
+                </svg>
+            </div>
+        `;
+        
         row.innerHTML = `
-            <div class="col-span-2 flex items-center gap-3">
-                <div class="relative w-8 h-8">
-                    <div class="absolute inset-0 rounded-full shimmer-effect"></div>
-                    <img src="${token.displayName === 'HYPE' ? '/assets/icons/Hype.png' : `/assets/icons/spot/${token.displayName}.svg`}" 
-                         alt="${token.displayName}" 
-                         class="absolute inset-0 w-full h-full rounded-full opacity-0 transition-opacity duration-300" 
-                         onload="this.classList.add('opacity-100'); this.previousElementSibling.style.display = 'none';"
-                         onerror="this.src='/assets/icons/default.svg'; this.previousElementSibling.style.display = 'none';"
-                         loading="lazy">
+            <div class="col-span-2 flex items-center">
+                <svg class="star-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.84 5.75l6.34.92l-4.59 4.47l1.08 6.31L12 17.25l-5.67 2.7l1.08-6.31l-4.59-4.47l6.34-.92L12 2.5z" />
+                </svg>
+                <div class="asset-info">
+                    <div class="relative w-8 h-8">
+                        <div class="absolute inset-0 rounded-full shimmer-effect"></div>
+                        <img src="${token.displayName === 'HYPE' ? '/assets/icons/Hype.png' : `/assets/icons/spot/${token.displayName}.svg`}" 
+                             alt="${token.displayName}" 
+                             class="absolute inset-0 w-full h-full rounded-full opacity-0 transition-opacity duration-300" 
+                             onload="this.classList.add('opacity-100'); this.previousElementSibling.style.display = 'none';"
+                             onerror="this.src='/assets/icons/default.svg'; this.previousElementSibling.style.display = 'none';"
+                             loading="lazy">
+                    </div>
+                    <span class="text-white text-sm">${token.displayName}/USDC</span>
                 </div>
-                <span class="text-white text-sm">${token.displayName}/USDC</span>
             </div>
             <div class="flex items-center text-[rgb(148,158,156)] text-sm">$${token.price.toFixed(6)}</div>
             <div class="flex items-center ${token.priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'} text-sm">
@@ -358,18 +395,85 @@ function updateTokenList(data) {
             <div class="flex items-center text-[rgb(148,158,156)] text-sm">$${token.volume24h.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
             <div class="flex items-center text-[rgb(148,158,156)] text-sm">$${token.marketCap.toLocaleString('en-US', { maximumFractionDigits: 2 })}</div>
             <div class="flex items-center snapshot-container" data-token-id="${tokenId}">
-                <div class="w-full h-10 snapshot-placeholder">
-                    <svg class="w-full h-10" viewBox="0 0 200 40" preserveAspectRatio="none">
-                        <path d="M0 20 C 50 10, 100 30, 150 15, 200 25" 
-                              stroke="#2a2a2a" 
-                              stroke-width="1.5"
-                              fill="none"/>
-                    </svg>
-                </div>
+                ${snapshotHtml}
             </div>
         `;
 
         container.appendChild(row);
+
+        // Add click handler for star icon
+        const starIcon = row.querySelector('.star-icon');
+        let pendingStarChange = false;
+
+        // Check if this token is starred and update UI accordingly
+        if (starredTokens.has(token.coin)) {
+            starIcon.classList.add('active');
+            row.classList.add('starred');
+        }
+
+        starIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const icon = e.target.closest('.star-icon');
+            const tokenCoin = token.coin;
+            const rowElement = icon.closest('.token-list > div');
+            
+            // Remove animation class first
+            icon.classList.remove('animate');
+            
+            // Force reflow to ensure animation plays again
+            void icon.offsetWidth;
+            
+            // Toggle active state and add animation
+            icon.classList.toggle('active');
+            icon.classList.add('animate');
+            
+            // Toggle starred class on the row
+            rowElement.classList.toggle('starred');
+            
+            // Update localStorage
+            const starredTokens = new Set(JSON.parse(localStorage.getItem('starredTokens') || '[]'));
+            if (icon.classList.contains('active')) {
+                starredTokens.add(tokenCoin);
+            } else {
+                starredTokens.delete(tokenCoin);
+            }
+            localStorage.setItem('starredTokens', JSON.stringify([...starredTokens]));
+            
+            // Mark that we have a pending change
+            pendingStarChange = true;
+            
+            // Remove animation class after it completes
+            setTimeout(() => {
+                icon.classList.remove('animate');
+            }, 300);
+
+            // Add mouseleave handler to the row
+            row.addEventListener('mouseleave', () => {
+                if (pendingStarChange) {
+                    pendingStarChange = false;
+                    
+                    // Quick swap: store current charts HTML
+                    const currentCharts = {};
+                    container.querySelectorAll('.snapshot-container').forEach(chart => {
+                        const tokenId = chart.getAttribute('data-token-id');
+                        if (tokenId) {
+                            currentCharts[tokenId] = chart.innerHTML;
+                        }
+                    });
+                    
+                    // Update the list
+                    updateTokenList(marketData);
+                    
+                    // Restore charts
+                    Object.entries(currentCharts).forEach(([tokenId, chartHtml]) => {
+                        const chart = container.querySelector(`[data-token-id="${tokenId}"]`);
+                        if (chart) {
+                            chart.innerHTML = chartHtml;
+                        }
+                    });
+                }
+            }, { once: true });
+        });
     });
 
     // Update total market cap immediately
@@ -407,22 +511,20 @@ function updateTokenList(data) {
         showMoreContainer.remove();
     }
 
-    // Load snapshot data in the background
-    const tokenIds = tokensToShow.map(token => {
-        // Special handling for PURR
-        if (token.coin === 'PURR/USDC') {
-            return 'purr';
-        }
-        return token.coin.replace('@', '');
-    });
+    // Load snapshot data only for tokens that don't have charts yet
+    const tokenIds = tokensToShow
+        .map(token => token.coin === 'PURR/USDC' ? 'purr' : token.coin.replace('@', ''))
+        .filter(tokenId => !container.querySelector(`[data-token-id="${tokenId}"] path[stroke]:not([stroke="#2a2a2a"])`));
     
-    fetchBatchedSnapshotData(tokenIds).then(snapshotDataMap => {
-        Object.entries(snapshotDataMap).forEach(([tokenId, data]) => {
-            if (data && data.prices) {
-                updateSnapshotChart(tokenId, data.prices);
-            }
+    if (tokenIds.length > 0) {
+        fetchBatchedSnapshotData(tokenIds).then(snapshotDataMap => {
+            Object.entries(snapshotDataMap).forEach(([tokenId, data]) => {
+                if (data && data.prices) {
+                    updateSnapshotChart(tokenId, data.prices);
+                }
+            });
         });
-    });
+    }
 }
 
 function updateSnapshotChart(tokenId, priceData) {
@@ -513,11 +615,16 @@ function showPlaceholderTable() {
         row.className = 'grid grid-cols-7 gap-4 px-6 py-4 border-b border-[#0a2622]';
         
         row.innerHTML = `
-            <div class="col-span-2 flex items-center gap-3">
-                <div class="relative w-8 h-8">
-                    <div class="absolute inset-0 rounded-full shimmer-effect"></div>
+            <div class="col-span-2 flex items-center">
+                <svg class="star-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.84 5.75l6.34.92l-4.59 4.47l1.08 6.31L12 17.25l-5.67 2.7l1.08-6.31l-4.59-4.47l6.34-.92L12 2.5z" />
+                </svg>
+                <div class="asset-info">
+                    <div class="relative w-8 h-8">
+                        <div class="absolute inset-0 rounded-full shimmer-effect"></div>
+                    </div>
+                    <div class="w-24 h-5 shimmer-effect rounded"></div>
                 </div>
-                <div class="w-24 h-5 shimmer-effect rounded"></div>
             </div>
             <div class="flex items-center">
                 <div class="w-20 h-5 shimmer-effect rounded"></div>
@@ -544,6 +651,28 @@ function showPlaceholderTable() {
         `;
 
         container.appendChild(row);
+
+        // Add click handler for star icon
+        const starIcon = row.querySelector('.star-icon');
+        starIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const icon = e.target.closest('.star-icon');
+            
+            // Remove animation class first
+            icon.classList.remove('animate');
+            
+            // Force reflow to ensure animation plays again
+            void icon.offsetWidth;
+            
+            // Toggle active state and add animation
+            icon.classList.toggle('active');
+            icon.classList.add('animate');
+            
+            // Remove animation class after it completes
+            setTimeout(() => {
+                icon.classList.remove('animate');
+            }, 300);
+        });
     }
 }
 
