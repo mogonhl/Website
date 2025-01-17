@@ -144,15 +144,18 @@ async function findLatestToken() {
             const tokenData = Array.isArray(parsedBatchData) ? 
                 parsedBatchData.find(d => d.tokenId === tokenId) : null;
 
-            if (!tokenData || !Array.isArray(tokenData.prices) || tokenData.prices.length === 0) {
-                console.log('No historical data found for token:', token.coin);
-                continue;
+            let launchTime, launchPrice;
+            if (tokenData && Array.isArray(tokenData.prices) && tokenData.prices.length > 0) {
+                // If we have historical data, use it
+                const sortedPrices = [...tokenData.prices].sort((a, b) => a[0] - b[0]);
+                launchTime = sortedPrices[0][0];
+                launchPrice = sortedPrices[0][1];
+            } else {
+                // For new tokens without historical data, use current time and price
+                console.log('No historical data found for token:', token.coin, 'Using current data');
+                launchTime = Date.now();
+                launchPrice = parseFloat(token.markPx);
             }
-
-            // Sort prices by timestamp to get the earliest
-            const sortedPrices = [...tokenData.prices].sort((a, b) => a[0] - b[0]);
-            const launchTime = sortedPrices[0][0];
-            const launchPrice = sortedPrices[0][1];
 
             newLaunches.push({
                 fullName: token.coin,

@@ -42,7 +42,7 @@ async function consolidateSpotData() {
                     
                     // Find price from exactly 24h ago
                     const oneDayAgo = latestTimestamp - (24 * 60 * 60 * 1000);
-                    let price24hAgo = latestPrice;
+                    let price24hAgo = latestPrice; // Default to latest price if no 24h data
                     let closestTimeDiff = Infinity;
                     
                     // Find the closest price point to 24h ago
@@ -78,7 +78,10 @@ async function consolidateSpotData() {
                         .filter(([timestamp]) => timestamp >= sevenDaysAgo)
                         .map(([timestamp, price]) => [timestamp, price]);
                     
-                    consolidatedData[token.tokenId] = {
+                    // Ensure we have the token ID in the correct format
+                    const tokenIdStr = token.tokenId.toString().replace('@', '');
+                    
+                    consolidatedData[tokenIdStr] = {
                         p: latestPrice, // latest price
                         op: price24hAgo, // price 24h ago
                         pc: priceChange24h, // 24h price change percentage
@@ -87,15 +90,16 @@ async function consolidateSpotData() {
                         s: snapshotData // snapshot data for chart (all hourly points)
                     };
 
-                    console.log(`Processed token ${token.tokenId}:`, {
-                        price: latestPrice,
-                        price24hAgo,
+                    console.log(`Processed token ${tokenIdStr}:`, {
+                        price: latestPrice.toFixed(4),
+                        price24hAgo: price24hAgo.toFixed(4),
                         priceChange: priceChange24h.toFixed(2) + '%',
                         volume24h: volume24h.toLocaleString('en-US', {
                             style: 'currency',
                             currency: 'USD'
                         }),
-                        timestamp: new Date(latestTimestamp).toISOString()
+                        timestamp: new Date(latestTimestamp).toISOString(),
+                        snapshotPoints: snapshotData.length
                     });
                 });
             } else {

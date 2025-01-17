@@ -623,7 +623,7 @@
     </div>
     <script>
     // Track current launch index and cache data
-    let currentLaunchIndex = 2;
+    let currentLaunchIndex = -1; // Will be set to last index after data loads
     let launches = [];
     let tokenDataCache = new Map();
 
@@ -632,7 +632,16 @@
         try {
             // Get launches from Redis
             const response = await fetch('/api/redis/get?key=latest_launches');
-            launches = await response.json();
+            const data = await response.json();
+            
+            if (!Array.isArray(data) || data.length === 0) {
+                console.error('Invalid or empty launches data');
+                return false;
+            }
+            
+            launches = data;
+            // Set the index to the last item (most recent launch)
+            currentLaunchIndex = launches.length - 1;
             console.log('Latest launches:', launches);
 
             // Fetch all token data at once
@@ -660,8 +669,10 @@
 
             // Update UI with initial launch
             await updateLatestLaunch(launches[currentLaunchIndex]);
+            return true;
         } catch (error) {
             console.error('Error preloading launch data:', error);
+            return false;
         }
     }
 
@@ -716,8 +727,8 @@
         const prevBtn = document.getElementById('prevLaunchBtn');
         const nextBtn = document.getElementById('nextLaunchBtn');
         
-        // Update previous button state
-        if (currentLaunchIndex < launches.length - 1) {
+        // Update previous button state (show older launches)
+        if (currentLaunchIndex > 0) {
             prevBtn.classList.add('hover:text-emerald-400');
             prevBtn.style.opacity = '1';
         } else {
@@ -725,8 +736,8 @@
             prevBtn.style.opacity = '0.5';
         }
         
-        // Update next button state
-        if (currentLaunchIndex > 0) {
+        // Update next button state (show newer launches)
+        if (currentLaunchIndex < launches.length - 1) {
             nextBtn.classList.add('hover:text-emerald-400');
             nextBtn.style.opacity = '1';
         } else {
@@ -742,7 +753,12 @@
                 // Get launches from Redis if not already loaded
                 if (launches.length === 0) {
                     const response = await fetch('/api/redis/get?key=latest_launches');
-                    launches = await response.json();
+                    const data = await response.json();
+                    if (!Array.isArray(data) || data.length === 0) {
+                        console.error('Invalid or empty launches data');
+                        return;
+                    }
+                    launches = data;
                     console.log('Latest launches:', launches);
                 }
             }
@@ -824,19 +840,9 @@
         }
     }
 
-    // Function to show previous launch
+    // Function to show previous launch (older)
     async function showPreviousLaunch() {
         console.log('Showing previous launch. Current index:', currentLaunchIndex, 'Launches:', launches);
-        if (currentLaunchIndex < launches.length - 1) {
-            currentLaunchIndex++;
-            console.log('Moving to index:', currentLaunchIndex);
-            await updateLatestLaunch(launches[currentLaunchIndex]);
-        }
-    }
-
-    // Function to show next launch
-    async function showNextLaunch() {
-        console.log('Showing next launch. Current index:', currentLaunchIndex, 'Launches:', launches);
         if (currentLaunchIndex > 0) {
             currentLaunchIndex--;
             console.log('Moving to index:', currentLaunchIndex);
@@ -844,7 +850,17 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    // Function to show next launch (newer)
+    async function showNextLaunch() {
+        console.log('Showing next launch. Current index:', currentLaunchIndex, 'Launches:', launches);
+        if (currentLaunchIndex < launches.length - 1) {
+            currentLaunchIndex++;
+            console.log('Moving to index:', currentLaunchIndex);
+            await updateLatestLaunch(launches[currentLaunchIndex]);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
         // Function to update the token value and performance
         async function updateIndexStats() {
             try {
@@ -897,11 +913,15 @@
             }
         }
 
-        // Preload data and update stats immediately
-        preloadLaunchData();
-        updateIndexStats();
-        setInterval(updateIndexStats, 60000);
-        setInterval(updateLatestLaunch, 60000);
+        // Wait for data to be preloaded before proceeding
+        const dataLoaded = await preloadLaunchData();
+        if (dataLoaded) {
+            updateIndexStats();
+            setInterval(updateIndexStats, 60000);
+            setInterval(updateLatestLaunch, 60000);
+        } else {
+            console.error('Failed to load initial launch data');
+        }
     });
     </script>
 </body>

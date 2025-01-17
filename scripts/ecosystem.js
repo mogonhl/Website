@@ -203,14 +203,15 @@ async function fetchSpotData(coin, interval, days) {
             circulatingSupply = tokenDetails ? parseFloat(tokenDetails.circulatingSupply) : null;
 
             if (!circulatingSupply) {
-                console.log(`No supply data found for token ${coinStr}`);
-                return null;
+                console.log(`No supply data found for token ${coinStr}, will use 0 for market cap calculations`);
+                circulatingSupply = 0;
             }
 
-            console.log(`Found circulating supply for ${coinStr}: ${circulatingSupply.toLocaleString()}`);
+            console.log(`Using circulating supply for ${coinStr}: ${circulatingSupply.toLocaleString()}`);
         } catch (error) {
             console.error(`Error fetching supply data for ${coinStr}:`, error.message);
-            return null;
+            console.log('Will use 0 for market cap calculations');
+            circulatingSupply = 0;
         }
     }
 
@@ -241,20 +242,41 @@ async function fetchSpotData(coin, interval, days) {
         const data = await response.json();
         
         if (!Array.isArray(data) || data.length === 0) {
+            console.log(`No data array returned for ${coinStr}`);
             return null;
         }
+
+        console.log(`Raw data points for ${coinStr}:`, data.length);
+        console.log('First point:', {
+            timestamp: new Date(data[0].t).toISOString(),
+            price: data[0].c,
+            volume: data[0].v
+        });
+        console.log('Last point:', {
+            timestamp: new Date(data[data.length - 1].t).toISOString(),
+            price: data[data.length - 1].c,
+            volume: data[data.length - 1].v
+        });
 
         const marketCaps = data.map(candle => [
             candle.t, 
             isTokenId ? parseFloat(candle.c) * circulatingSupply : 0
         ]);
 
-        return {
+        const result = {
             tokenId: coinStr,
             prices: data.map(candle => [candle.t, parseFloat(candle.c)]),
             total_volumes: data.map(candle => [candle.t, parseFloat(candle.v)]),
             market_caps: marketCaps
         };
+
+        console.log(`Processed data for ${coinStr}:`, {
+            pricePoints: result.prices.length,
+            volumePoints: result.total_volumes.length,
+            timespan: `${new Date(result.prices[0][0]).toISOString()} to ${new Date(result.prices[result.prices.length-1][0]).toISOString()}`
+        });
+
+        return result;
     } catch (error) {
         console.error(`Error fetching ${interval} data for ${coinStr}:`, error.message);
         return null;
@@ -262,89 +284,181 @@ async function fetchSpotData(coin, interval, days) {
 }
 
 async function populateSpotData() {
-    console.log('\n=== Populating Spot Data ===');
+    console.log('\n=== Populating spot data ===');
+    
+    // First get the latest token ID from the API
+    const response = await fetch('https://api.hyperliquid.xyz/info', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type: "spotMetaAndAssetCtxs" })
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const tokens = data[1];
+    const maxTokenId = Math.max(...tokens
+        .filter(t => t.coin.startsWith('@'))
+        .map(t => parseInt(t.coin.replace('@', ''))));
+
+    console.log(`Found max token ID: ${maxTokenId}`);
     
     const dailyData = [];
-    const CHUNK_SIZE = 5;
+    const hourlyData = [];
+    const CHUNK_SIZE = 5; // Reduced chunk size to avoid request size limit
     
-    let tokenId = 1;
-    let consecutiveEmptyResponses = 0;
-    const MAX_EMPTY_RESPONSES = 5;
-    
-    while (consecutiveEmptyResponses < MAX_EMPTY_RESPONSES) {
+    // Start from token ID 1 and go up to maxTokenId
+    for (let tokenId = 1; tokenId <= maxTokenId; tokenId++) {
         if (tokenId > 1) {
             await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
+        console.log(`\n=== Processing token @${tokenId} ===`);
+        
+        // Fetch both daily and hourly data
+        console.log('Fetching daily data...');
         const daily = await fetchSpotData(tokenId, '1d', 365);
         
-        if (!daily) {
-            console.log(`No data found for token @${tokenId}`);
-            consecutiveEmptyResponses++;
-            tokenId++;
-            continue;
+        console.log('Fetching hourly data...');
+        const hourly = await fetchSpotData(tokenId, '1h', 7);
+        
+        if (daily) {
+            console.log(`Got daily data for token @${tokenId} (${daily.prices.length} points)`);
+            dailyData.push(daily);
+        } else {
+            console.log(`No daily data for token @${tokenId}`);
         }
 
-        consecutiveEmptyResponses = 0;
-        dailyData.push(daily);
-        tokenId++;
+        if (hourly) {
+            console.log(`Got hourly data for token @${tokenId} (${hourly.prices.length} points)`);
+            hourlyData.push(hourly);
+        } else {
+            console.log(`No hourly data for token @${tokenId}`);
+        }
 
+        // Store daily data chunks
         if (dailyData.length >= CHUNK_SIZE) {
             try {
                 const chunkNumber = Math.floor((tokenId - 1) / CHUNK_SIZE);
-                console.log(`\nStoring chunk ${chunkNumber} (tokens ${tokenId - CHUNK_SIZE} to ${tokenId - 1})...`);
+                console.log(`\nStoring daily chunk ${chunkNumber} (tokens ${tokenId - CHUNK_SIZE + 1} to ${tokenId})...`);
                 
                 const dataStr = JSON.stringify(dailyData);
                 if (dataStr.length > 900000) {
-                    console.log('Data size too large, splitting chunk further...');
+                    console.log('Daily chunk too large, splitting...');
                     const halfSize = Math.ceil(dailyData.length / 2);
                     const firstHalf = dailyData.slice(0, halfSize);
                     const secondHalf = dailyData.slice(halfSize);
                     
                     await redis.set(`spot_data_daily_chunk_${chunkNumber}_a`, JSON.stringify(firstHalf));
                     await redis.set(`spot_data_daily_chunk_${chunkNumber}_b`, JSON.stringify(secondHalf));
+                    console.log('Successfully stored split daily chunks');
                 } else {
                     await redis.set(`spot_data_daily_chunk_${chunkNumber}`, dataStr);
+                    console.log('Successfully stored daily chunk');
                 }
                 
                 dailyData.length = 0;
             } catch (error) {
-                console.error('Error storing data chunk:', error);
+                console.error('Error storing daily chunk:', error);
+                throw error;
+            }
+        }
+
+        // Store hourly data chunks
+        if (hourlyData.length >= CHUNK_SIZE) {
+            try {
+                const chunkNumber = Math.floor((tokenId - 1) / CHUNK_SIZE);
+                console.log(`\nStoring hourly chunk ${chunkNumber} (tokens ${tokenId - CHUNK_SIZE + 1} to ${tokenId})...`);
+                
+                const dataStr = JSON.stringify(hourlyData);
+                if (dataStr.length > 900000) {
+                    console.log('Hourly chunk too large, splitting...');
+                    const halfSize = Math.ceil(hourlyData.length / 2);
+                    const firstHalf = hourlyData.slice(0, halfSize);
+                    const secondHalf = hourlyData.slice(halfSize);
+                    
+                    await redis.set(`spot_data_7d_${chunkNumber}_a`, JSON.stringify(firstHalf));
+                    await redis.set(`spot_data_7d_${chunkNumber}_b`, JSON.stringify(secondHalf));
+                    console.log('Successfully stored split hourly chunks');
+                } else {
+                    await redis.set(`spot_data_7d_${chunkNumber}`, JSON.stringify(hourlyData));
+                    console.log('Successfully stored hourly chunk');
+                }
+                
+                hourlyData.length = 0;
+            } catch (error) {
+                console.error('Error storing hourly chunk:', error);
                 throw error;
             }
         }
     }
 
+    // Store any remaining daily data
     if (dailyData.length > 0) {
         try {
-            const chunkNumber = Math.floor((tokenId - 1) / CHUNK_SIZE);
-            console.log(`\nStoring final chunk ${chunkNumber} (${dailyData.length} tokens)...`);
+            const chunkNumber = Math.floor(maxTokenId / CHUNK_SIZE);
+            console.log(`\nStoring final daily chunk ${chunkNumber} (${dailyData.length} tokens)...`);
             
             const dataStr = JSON.stringify(dailyData);
             if (dataStr.length > 900000) {
+                console.log('Final daily chunk too large, splitting...');
                 const halfSize = Math.ceil(dailyData.length / 2);
                 const firstHalf = dailyData.slice(0, halfSize);
                 const secondHalf = dailyData.slice(halfSize);
                 
                 await redis.set(`spot_data_daily_chunk_${chunkNumber}_a`, JSON.stringify(firstHalf));
                 await redis.set(`spot_data_daily_chunk_${chunkNumber}_b`, JSON.stringify(secondHalf));
+                console.log('Successfully stored split final daily chunks');
             } else {
                 await redis.set(`spot_data_daily_chunk_${chunkNumber}`, dataStr);
+                console.log('Successfully stored final daily chunk');
             }
         } catch (error) {
-            console.error('Error storing final chunk:', error);
+            console.error('Error storing final daily chunk:', error);
             throw error;
         }
     }
 
+    // Store any remaining hourly data
+    if (hourlyData.length > 0) {
+        try {
+            const chunkNumber = Math.floor(maxTokenId / CHUNK_SIZE);
+            console.log(`\nStoring final hourly chunk ${chunkNumber} (${hourlyData.length} tokens)...`);
+            
+            const dataStr = JSON.stringify(hourlyData);
+            if (dataStr.length > 900000) {
+                console.log('Final hourly chunk too large, splitting...');
+                const halfSize = Math.ceil(hourlyData.length / 2);
+                const firstHalf = hourlyData.slice(0, halfSize);
+                const secondHalf = hourlyData.slice(halfSize);
+                
+                await redis.set(`spot_data_7d_${chunkNumber}_a`, JSON.stringify(firstHalf));
+                await redis.set(`spot_data_7d_${chunkNumber}_b`, JSON.stringify(secondHalf));
+                console.log('Successfully stored split final hourly chunks');
+            } else {
+                await redis.set(`spot_data_7d_${chunkNumber}`, JSON.stringify(hourlyData));
+                console.log('Successfully stored final hourly chunk');
+            }
+        } catch (error) {
+            console.error('Error storing final hourly chunk:', error);
+            throw error;
+        }
+    }
+
+    // Store metadata about the chunks
     try {
         const metadata = {
-            totalChunks: Math.ceil((tokenId - 1) / CHUNK_SIZE),
-            lastTokenId: tokenId - 1,
+            totalChunks: Math.ceil(maxTokenId / CHUNK_SIZE),
+            lastTokenId: maxTokenId,
             chunkSize: CHUNK_SIZE,
             timestamp: Date.now()
         };
         await redis.set('spot_data_daily_metadata', JSON.stringify(metadata));
+        await redis.set('spot_data_7d_chunks', Math.ceil(maxTokenId / CHUNK_SIZE).toString());
         console.log('\nStored metadata:', metadata);
     } catch (error) {
         console.error('Error storing metadata:', error);
@@ -389,7 +503,7 @@ async function consolidateSpotData() {
                     const latestTimestamp = token.prices[token.prices.length - 1][0];
                     
                     const oneDayAgo = latestTimestamp - (24 * 60 * 60 * 1000);
-                    let price24hAgo = latestPrice;
+                    let price24hAgo = latestPrice; // Default to latest price if no 24h data
                     let closestTimeDiff = Infinity;
                     
                     for (let j = 0; j < token.prices.length; j++) {
@@ -420,21 +534,51 @@ async function consolidateSpotData() {
                         .filter(([timestamp]) => timestamp >= sevenDaysAgo)
                         .map(([timestamp, price]) => [timestamp, price]);
                     
-                    consolidatedData[token.tokenId] = {
-                        p: latestPrice,
-                        op: price24hAgo,
-                        pc: priceChange24h,
-                        v: volume24h,
-                        t: latestTimestamp,
-                        s: snapshotData
+                    // Ensure we have the token ID in the correct format
+                    const tokenIdStr = token.tokenId.toString().replace('@', '');
+                    
+                    consolidatedData[tokenIdStr] = {
+                        p: latestPrice, // latest price
+                        op: price24hAgo, // price 24h ago
+                        pc: priceChange24h, // 24h price change percentage
+                        v: volume24h, // 24h volume in USDC
+                        t: latestTimestamp, // timestamp of latest price
+                        s: snapshotData // snapshot data for chart (all hourly points)
                     };
+
+                    console.log(`Processed token ${tokenIdStr}:`, {
+                        price: latestPrice.toFixed(4),
+                        price24hAgo: price24hAgo.toFixed(4),
+                        priceChange: priceChange24h.toFixed(2) + '%',
+                        volume24h: volume24h.toLocaleString('en-US', {
+                            style: 'currency',
+                            currency: 'USD'
+                        }),
+                        timestamp: new Date(latestTimestamp).toISOString(),
+                        snapshotPoints: snapshotData.length
+                    });
                 });
+            } else {
+                console.log(`No data found for chunk ${i}`);
             }
         }
 
         console.log('Storing consolidated data...');
         await redis.set('spot_data_latest', JSON.stringify(consolidatedData));
         console.log('Successfully stored consolidated data');
+
+        // Print some stats
+        console.log('\nConsolidated Data Stats:');
+        console.log('Total tokens:', Object.keys(consolidatedData).length);
+        Object.entries(consolidatedData).forEach(([tokenId, data]) => {
+            console.log(`Token @${tokenId}:`, {
+                price: data.p.toFixed(4),
+                '24h_change': data.pc.toFixed(2) + '%',
+                '24h_volume': `$${data.v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                'last_update': new Date(data.t).toISOString(),
+                'snapshot_points': data.s.length
+            });
+        });
 
         return consolidatedData;
     } catch (error) {
@@ -613,25 +757,31 @@ async function findLatestToken() {
         const data = await response.json();
         const tokens = data[1];
 
+        // Get all tokens and sort by ID
         const activeTokens = tokens
-            .filter(token => 
-                token.coin.startsWith('@') && 
-                token.markPx !== '1.0' && 
-                parseFloat(token.circulatingSupply) > 0)
+            .filter(token => {
+                if (!token.coin.startsWith('@')) return false;
+                // Check if token has any volume
+                const volume = parseFloat(token.dayVol);
+                return !isNaN(volume) && volume > 0;
+            })
             .sort((a, b) => {
                 const idA = parseInt(a.coin.replace('@', ''));
                 const idB = parseInt(b.coin.replace('@', ''));
                 return idB - idA;
             });
 
+        console.log('Active tokens with volume:', activeTokens.map(t => `${t.coin} (vol: ${t.dayVol})`));
+
         const latestTokens = activeTokens.slice(0, 3);
         if (latestTokens.length === 0) {
-            console.log('No tokens found');
+            console.log('No tokens found with volume');
             return;
         }
 
         const newLaunches = [];
         for (const token of latestTokens) {
+            console.log('Processing token:', token);
             const tokenId = parseInt(token.coin.replace('@', ''));
             const batchNum = Math.floor(tokenId / 20);
             
@@ -641,17 +791,24 @@ async function findLatestToken() {
             const tokenData = Array.isArray(parsedBatchData) ? 
                 parsedBatchData.find(d => d.tokenId === tokenId) : null;
 
-            if (!tokenData || !Array.isArray(tokenData.prices) || tokenData.prices.length === 0) {
-                console.log('No historical data found for token:', token.coin);
-                continue;
+            let launchTime, launchPrice;
+            if (tokenData && Array.isArray(tokenData.prices) && tokenData.prices.length > 0) {
+                // If we have historical data, use it
+                const sortedPrices = [...tokenData.prices].sort((a, b) => a[0] - b[0]);
+                launchTime = sortedPrices[0][0];
+                launchPrice = sortedPrices[0][1];
+            } else {
+                // For new tokens without historical data, use current time and price
+                console.log('No historical data found for token:', token.coin, 'Using current data');
+                launchTime = Date.now();
+                launchPrice = parseFloat(token.markPx);
             }
 
-            const sortedPrices = [...tokenData.prices].sort((a, b) => a[0] - b[0]);
             newLaunches.push({
                 fullName: token.coin,
                 name: tokenNames[token.coin] || token.coin,
-                launchTime: sortedPrices[0][0],
-                launchPrice: sortedPrices[0][1]
+                launchTime,
+                launchPrice
             });
         }
 

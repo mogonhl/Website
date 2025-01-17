@@ -49,14 +49,15 @@ async function fetchSpotData(coin, interval, days) {
             circulatingSupply = tokenDetails ? parseFloat(tokenDetails.circulatingSupply) : null;
 
             if (!circulatingSupply) {
-                console.log(`No supply data found for token ${coinStr}`);
-                return null;
+                console.log(`No supply data found for token ${coinStr}, will use 0 for market cap calculations`);
+                circulatingSupply = 0;
             }
 
-            console.log(`Found circulating supply for ${coinStr}: ${circulatingSupply.toLocaleString()}`);
+            console.log(`Using circulating supply for ${coinStr}: ${circulatingSupply.toLocaleString()}`);
         } catch (error) {
             console.error(`Error fetching supply data for ${coinStr}:`, error.message);
-            return null;
+            console.log('Will use 0 for market cap calculations');
+            circulatingSupply = 0;
         }
     }
 

@@ -248,7 +248,15 @@
                  */
                 async function fetchRedisData(streamId) {
                     try {
-                        const response = await fetch('https://witty-dassie-40050.upstash.io/get/' + streamId, {
+                        // Encode the streamId to match the server's encoding format
+                        const encodedStreamId = encodeURIComponent(streamId);
+                        console.log('Fetching Redis data:', {
+                            originalStreamId: streamId,
+                            encodedStreamId: encodedStreamId,
+                            url: 'https://witty-dassie-40050.upstash.io/get/' + encodedStreamId
+                        });
+
+                        const response = await fetch('https://witty-dassie-40050.upstash.io/get/' + encodedStreamId, {
                             method: 'GET',
                             headers: {
                                 'Authorization': 'Bearer AZxyAAIjcDE3Mzk2MTJkNzJjMDg0Yzk0ODMyZWE3YmRjOGRmZTQxZHAxMA'
@@ -261,14 +269,27 @@
                         }
                         
                         const data = await response.json();
-                        console.log('Redis response for', streamId, ':', data);
+                        console.log('Redis raw response:', {
+                            streamId: streamId,
+                            hasResult: !!data.result,
+                            resultType: typeof data.result,
+                            resultLength: data.result ? data.result.length : 0
+                        });
                         
                         // Parse the JSON string from Redis if it exists
                         if (data.result) {
                             try {
-                                return JSON.parse(data.result);
+                                const parsedData = JSON.parse(data.result);
+                                console.log('Parsed Redis data:', {
+                                    streamId: streamId,
+                                    isArray: Array.isArray(parsedData),
+                                    length: Array.isArray(parsedData) ? parsedData.length : 0,
+                                    samplePoint: Array.isArray(parsedData) && parsedData.length > 0 ? parsedData[0] : null
+                                });
+                                return parsedData;
                             } catch (e) {
                                 console.error('Error parsing Redis data:', e);
+                                console.error('Raw data that failed to parse:', data.result);
                                 return [];
                             }
                         }
