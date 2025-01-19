@@ -94,6 +94,13 @@ async function findLatestToken() {
         const tokenNames = loadTokenNames();
         console.log('Loaded token names:', tokenNames);
 
+        // Get total number of chunks from Redis
+        const totalChunks = await redis.get('spot_data_7d_chunks');
+        console.log('Total chunks:', totalChunks);
+        if (!totalChunks) {
+            throw new Error('Could not get chunk count from Redis');
+        }
+
         const response = await fetch('https://api.hyperliquid.xyz/info', {
             method: 'POST',
             headers: {
@@ -133,16 +140,27 @@ async function findLatestToken() {
         for (const token of latestTokens) {
             console.log('Processing token:', token);
             const tokenId = parseInt(token.coin.replace('@', ''));
-            const batchNum = Math.floor(tokenId / 20);
             
-            // Get historical hourly data from Redis
-            console.log('Fetching hourly data from batch:', batchNum);
-            const batchData = await redis.get(`spot_data_7d_${batchNum}`);
-            const parsedBatchData = typeof batchData === 'string' ? JSON.parse(batchData) : batchData;
+            // Try each chunk from newest to oldest until we find the token's data
+            let tokenData = null;
+            let foundChunk = null;
             
-            // Find this token's data in the batch
-            const tokenData = Array.isArray(parsedBatchData) ? 
-                parsedBatchData.find(d => d.tokenId === tokenId) : null;
+            // Start from the newest chunk (totalChunks - 1) and work backwards
+            for (let chunk = totalChunks - 1; chunk >= 0; chunk--) {
+                console.log(`Checking chunk ${chunk} for token ${token.coin}`);
+                const batchData = await redis.get(`spot_data_7d_${chunk}`);
+                const parsedBatchData = typeof batchData === 'string' ? JSON.parse(batchData) : batchData;
+                
+                if (Array.isArray(parsedBatchData)) {
+                    const found = parsedBatchData.find(d => d.tokenId === token.coin);
+                    if (found) {
+                        tokenData = found;
+                        foundChunk = chunk;
+                        console.log(`Found ${token.coin} in chunk ${chunk}`);
+                        break;
+                    }
+                }
+            }
 
             let launchTime, launchPrice;
             if (tokenData && Array.isArray(tokenData.prices) && tokenData.prices.length > 0) {
@@ -150,6 +168,7 @@ async function findLatestToken() {
                 const sortedPrices = [...tokenData.prices].sort((a, b) => a[0] - b[0]);
                 launchTime = sortedPrices[0][0];
                 launchPrice = sortedPrices[0][1];
+                console.log(`Found historical data for ${token.coin} in chunk ${foundChunk}:`, { launchTime, launchPrice });
             } else {
                 // For new tokens without historical data, use current time and price
                 console.log('No historical data found for token:', token.coin, 'Using current data');

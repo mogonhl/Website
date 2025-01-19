@@ -338,7 +338,7 @@ async function updateSpotData() {
     }
 
     // Update hourly data chunks
-    const CHUNK_SIZE = 20;
+    const CHUNK_SIZE = 5;
     for (let i = 0; i < hourlyData.length; i += CHUNK_SIZE) {
         const chunk = hourlyData.slice(i, i + CHUNK_SIZE);
         const chunkNumber = Math.floor(i / CHUNK_SIZE);

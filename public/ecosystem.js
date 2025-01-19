@@ -57,6 +57,7 @@ window.formatChange = function(change) {
 
 let marketData = null;
 let snapshotData = {};
+let graphCache = new Map(); // Cache for storing loaded graph data
 let currentDisplayCount = 10; // Number of tokens currently displayed
 const tokensPerLoad = 10; // Number of tokens to load each time
 let isLoading = false; // Track loading state
@@ -104,6 +105,7 @@ async function fetchMarketData() {
         const response = await fetch('/api/market-data');
         if (!response.ok) throw new Error('Failed to fetch market data');
         marketData = await response.json();
+        graphCache.clear(); // Clear graph cache when market data is refreshed
 
         // Fetch token names mapping
         const tokenNamesResponse = await fetch('/api/token-names');
@@ -116,6 +118,35 @@ async function fetchMarketData() {
             }));
         }
 
+        // Calculate and assign tags once when fetching market data
+        let highestPerformance = -Infinity;
+        let lowestPerformance = Infinity;
+        let highestPerformerCoin = null;
+        let lowestPerformerCoin = null;
+        
+        marketData.tokens.forEach(token => {
+            if (token.priceChange > highestPerformance) {
+                highestPerformance = token.priceChange;
+                highestPerformerCoin = token.coin;
+            }
+            if (token.priceChange < lowestPerformance) {
+                lowestPerformance = token.priceChange;
+                lowestPerformerCoin = token.coin;
+            }
+        });
+
+        // Get the newest launch
+        const newestLaunch = launches[0]?.fullName;
+
+        // Assign tags to tokens
+        marketData.tokens = marketData.tokens.map(token => ({
+            ...token,
+            isHighestPerformer: token.coin === highestPerformerCoin,
+            isLowestPerformer: token.coin === lowestPerformerCoin,
+            isNewLaunch: token.coin === newestLaunch,
+            isFake: token.displayName === 'MOG'
+        }));
+
         return marketData;
     } catch (error) {
         console.error('Error fetching market data:', error);
@@ -125,27 +156,29 @@ async function fetchMarketData() {
     }
 }
 
-async function fetchBatchedSnapshotData(tokenIds) {
-    const batchSize = 20;
+async function fetchBatchedSnapshotData(tokenIds, retryCount = 0) {
+    const maxRetries = 5;
+    const batchSize = 5;
+    
+    if (retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
     const uniqueBatches = new Set(tokenIds.map(id => {
-        // Skip PURR token for batch calculation
         if (id === 'purr') return -1;
         return Math.floor(parseInt(id) / batchSize);
     }));
     
-    // Create array of promises for all data fetches
     const fetchPromises = [];
 
-    // Add PURR data fetch if needed
     if (tokenIds.includes('purr')) {
         fetchPromises.push(
             fetch(`/api/redis/get?key=spot_data_7d_purr`).then(async r => {
                 const data = await r.json();
-                // Ensure data is in the correct format
                 if (data && Array.isArray(data) && data[0]) {
                     return [{
                         ...data[0],
-                        tokenId: 'purr'  // Ensure we have a consistent tokenId
+                        tokenId: 'purr'
                     }];
                 }
                 return [];
@@ -153,7 +186,6 @@ async function fetchBatchedSnapshotData(tokenIds) {
         );
     }
 
-    // Add regular batch fetches
     const batchPromises = Array.from(uniqueBatches).filter(num => num >= 0).map(batchNum => 
         fetch(`/api/redis/get?key=spot_data_7d_${batchNum}`).then(r => r.json())
     );
@@ -164,19 +196,40 @@ async function fetchBatchedSnapshotData(tokenIds) {
         const allData = allResults.flat();
         const tokenDataMap = {};
         
-        // Create a map for quick lookup
         allData.forEach(data => {
             if (data) {
-                const id = data.tokenId || (data.coin === 'PURR/USDC' ? 'purr' : data.coin?.replace('@', ''));
-                if (id) {
-                    tokenDataMap[id] = data;
+                if (data.coin === 'PURR/USDC') {
+                    tokenDataMap['purr'] = data;
+                } else {
+                    const id = data.tokenId?.replace('@', '') || data.coin?.replace('@', '');
+                    if (id) {
+                        tokenDataMap[id] = data;
+                    }
                 }
             }
         });
 
+        // Check if we got data for all requested tokens
+        const missingTokens = tokenIds.filter(id => !tokenDataMap[id]);
+        if (missingTokens.length > 0 && retryCount < maxRetries) {
+            console.log(`Missing data for tokens: ${missingTokens.join(', ')}. Retrying... (${retryCount + 1}/${maxRetries})`);
+            // Increase delay between retries exponentially
+            const delay = Math.min(2000 * Math.pow(2, retryCount), 10000);
+            console.log(`Waiting ${delay}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            const retryData = await fetchBatchedSnapshotData(missingTokens, retryCount + 1);
+            return { ...tokenDataMap, ...retryData };
+        }
+
         return tokenDataMap;
     } catch (error) {
         console.error('Error fetching batched snapshot data:', error);
+        if (retryCount < maxRetries) {
+            const delay = Math.min(2000 * Math.pow(2, retryCount), 10000);
+            console.log(`Error occurred. Waiting ${delay}ms before retry... (${retryCount + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchBatchedSnapshotData(tokenIds, retryCount + 1);
+        }
         return {};
     }
 }
@@ -385,7 +438,15 @@ function updateTokenList(data) {
                              onerror="this.src='/assets/icons/default.svg'; this.previousElementSibling.style.display = 'none';"
                              loading="lazy">
                     </div>
-                    <span class="text-white text-sm">${token.displayName}/USDC</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-white text-sm">${token.displayName}/USDC</span>
+                        <div class="flex gap-1.5">
+                            ${token.isHighestPerformer ? '<span class="px-1.5 py-0.5 text-[10px] font-medium bg-emerald-400/10 text-emerald-400/80 rounded-full">PURRG\'EM</span>' : ''}
+                            ${token.isLowestPerformer ? '<span class="px-1.5 py-0.5 text-[10px] font-medium bg-red-400/10 text-red-400/80 rounded-full">PURRGED</span>' : ''}
+                            ${token.isNewLaunch ? '<span class="px-1.5 py-0.5 text-[10px] font-medium bg-amber-400/10 text-amber-400/80 rounded-full">NEW</span>' : ''}
+                            ${token.isFake ? '<span class="px-1.5 py-0.5 text-[10px] font-medium bg-white/5 text-white/60 rounded-full">FAKE</span>' : ''}
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="flex items-center text-[rgb(148,158,156)] text-sm">$${token.price.toFixed(6)}</div>
@@ -480,7 +541,7 @@ function updateTokenList(data) {
     document.querySelector('.market-cap').textContent = 
         `$${data.totalMarketCap.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
 
-    // Show/Hide "Show More" button based on remaining tokens and search query
+    // Show/Hide "Show More" button based on remaining tokens
     const showMoreContainer = document.querySelector('.show-more-container') || document.createElement('div');
     showMoreContainer.className = 'show-more-container flex justify-center mb-32 pb-16';
     
@@ -499,7 +560,14 @@ function updateTokenList(data) {
         const showMoreBtn = showMoreContainer.querySelector('.show-more-btn');
         showMoreBtn.addEventListener('click', () => {
             currentDisplayCount += tokensPerLoad;
+            
+            // Store current graph cache to avoid reloading existing graphs
+            const currentCache = new Map(graphCache);
+            
             updateTokenList(marketData);
+            
+            // Restore cached graphs
+            graphCache = new Map([...currentCache, ...graphCache]);
         });
 
         // Move the button outside the table container
@@ -511,20 +579,17 @@ function updateTokenList(data) {
         showMoreContainer.remove();
     }
 
-    // Load snapshot data only for tokens that don't have charts yet
-    const tokenIds = tokensToShow
-        .map(token => token.coin === 'PURR/USDC' ? 'purr' : token.coin.replace('@', ''))
-        .filter(tokenId => !container.querySelector(`[data-token-id="${tokenId}"] path[stroke]:not([stroke="#2a2a2a"])`));
+    // Since we preloaded all data, we just need to update the graphs from cache
+    const visibleTokenIds = tokensToShow
+        .map(token => token.coin === 'PURR/USDC' ? 'purr' : token.coin.replace('@', ''));
     
-    if (tokenIds.length > 0) {
-        fetchBatchedSnapshotData(tokenIds).then(snapshotDataMap => {
-            Object.entries(snapshotDataMap).forEach(([tokenId, data]) => {
-                if (data && data.prices) {
-                    updateSnapshotChart(tokenId, data.prices);
-                }
-            });
-        });
-    }
+    // Update all visible graphs from cache
+    visibleTokenIds.forEach(tokenId => {
+        const cachedData = graphCache.get(tokenId);
+        if (cachedData) {
+            updateSnapshotChart(tokenId, cachedData);
+        }
+    });
 }
 
 function updateSnapshotChart(tokenId, priceData) {
@@ -687,6 +752,25 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Then load the real data
     const data = await fetchMarketData();
     if (data) {
+        // Preload ALL graph data immediately
+        const allTokenIds = data.tokens
+            .filter(token => token.volume24h > 0 && !['@71', '@98', '@131'].includes(token.coin))
+            .map(token => token.coin === 'PURR/USDC' ? 'purr' : token.coin.replace('@', ''));
+
+        // Fetch all graph data at once
+        try {
+            const allSnapshotData = await fetchBatchedSnapshotData(allTokenIds);
+            // Store all data in cache
+            Object.entries(allSnapshotData).forEach(([tokenId, data]) => {
+                if (data && data.prices) {
+                    graphCache.set(tokenId, data.prices);
+                }
+            });
+        } catch (error) {
+            console.error('Error preloading graph data:', error);
+        }
+
+        // Now update the display with initial count
         updateTokenList(data);
     }
 });
@@ -716,3 +800,46 @@ window.sortTokens = function(column) {
         updateTokenList(marketData);
     }
 }; 
+
+async function preloadLaunchData() {
+    try {
+        // Get launches from Redis
+        const response = await fetch('/api/redis/get?key=latest_launches');
+        const data = await response.json();
+        
+        if (!Array.isArray(data) || data.length === 0) {
+            console.error('Invalid or empty launches data');
+            return false;
+        }
+        
+        // Reverse the array so newest launches come first
+        launches = data.reverse();
+        currentLaunchIndex = 0;
+        console.log('Latest launches:', launches);
+
+        // Fetch all token data at once
+        const currentData = await fetch('https://api.hyperliquid.xyz/info', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: "spotMetaAndAssetCtxs" })
+        }).then(r => r.json());
+
+        // Cache all token data
+        const now = Date.now();
+        launches.forEach(launch => {
+            const tokenData = currentData[1].find(t => t.coin === launch.fullName);
+            if (tokenData) {
+                tokenDataCache.set(launch.fullName, tokenData);
+                tokenDataCache.set(launch.fullName + '_time', now);
+            }
+        });
+
+        // Update UI with initial launch
+        await updateLatestLaunch(launches[currentLaunchIndex]);
+        updateNavigationState(); // Add this line to update navigation state right after loading
+        return true;
+    } catch (error) {
+        console.error('Error preloading launch data:', error);
+        return false;
+    }
+} 

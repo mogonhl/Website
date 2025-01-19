@@ -84,16 +84,122 @@
             border-radius: 6px;
         }
 
+        /* Token row hover styles */
+        #launches-container > div {
+            position: relative;
+            transition: background-color 0.2s ease;
+            background-color: rgba(15, 26, 31, 0.95);
+        }
+
+        #launches-container > div:hover {
+            background-color: rgba(15, 26, 31, 0.98);
+        }
+
+        /* Add vertical line for starred rows */
+        #launches-container > div {
+            position: relative;
+        }
+
+        #launches-container > div::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: rgba(72, 255, 225, 0.9);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        #launches-container > div.starred::before {
+            opacity: 1;
+        }
+
+        #launches-container > div:hover::before {
+            opacity: 0;
+        }
+
+        /* Asset info container styles */
+        .asset-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        /* Star icon styles */
+        .star-icon {
+            position: absolute;
+            left: 20px;
+            opacity: 0;
+            width: 16px;
+            height: 16px;
+            color: rgb(148, 158, 156);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-8px);
+        }
+
+        .star-icon path {
+            transition: fill 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+            stroke-width: 2;
+        }
+
+        .star-icon:hover {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .star-icon.active {
+            color: rgba(72, 255, 225, 0.9);
+        }
+
+        .star-icon.active path {
+            fill: currentColor;
+        }
+
+        /* Click animation */
+        @keyframes starPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.85); }
+            100% { transform: scale(1); }
+        }
+
+        .star-icon.animate path {
+            animation: starPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Hover animations */
+        #launches-container > div:hover .asset-info {
+            transform: translateX(24px);
+        }
+
+        #launches-container > div:hover .star-icon {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
         .sort-button {
             transition: color 0.2s ease;
+            position: relative;
         }
 
         .sort-button:hover {
-            color: rgba(72,255,225,0.9);
+            color: white;
         }
 
         .sort-button.active {
-            color: rgba(72,255,225,0.9);
+            color: white;
+        }
+
+        .sort-button.active svg {
+            opacity: 1;
+        }
+
+        .sort-button.active.ascending svg {
+            transform: rotate(180deg);
         }
     </style>
 </head>
@@ -115,7 +221,7 @@
                     <p class="text-2xl market-cap font-normal total-launches">0</p>
                 </div>
                 <div class="flex justify-center items-center">
-                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                    <div class="h-8 w-px bg-[#0a2622] ml-6"></div>
                 </div>
                 <div class="col-span-1">
                     <p class="text-[rgb(148,158,156)] text-sm mb-1">Market Cap</p>
@@ -124,7 +230,7 @@
                     </p>
                 </div>
                 <div class="flex justify-center items-center">
-                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                    <div class="h-8 w-px bg-[#0a2622] ml-6"></div>
                 </div>
                 <div class="col-span-1">
                     <p class="text-[rgb(148,158,156)] text-sm mb-1">Best Performer</p>
@@ -139,73 +245,91 @@
             <!-- Search and Sort Tools -->
             <div class="flex justify-between items-center mb-4">
                 <span class="text-xl text-white font-medium">All Launches</span>
-                <div class="relative">
-                    <input 
-                        type="text" 
-                        id="tokenSearchInput"
-                        placeholder="Search tokens..." 
-                        class="search-input w-[300px] pr-10"
-                    />
-                    <button 
-                        id="tokenSearchButton"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[rgba(72,255,225,0.9)] transition-colors"
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </button>
+                <div class="flex items-center">
+                    <div class="flex items-center gap-3">
+                        <button class="sort-button text-xs text-[rgb(148,158,156)] hover:text-white inline-flex items-center" data-sort="mcap">
+                            Market Cap
+                            <svg class="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <button class="sort-button text-xs text-[rgb(148,158,156)] hover:text-white inline-flex items-center" data-sort="performance">
+                            Performance
+                            <svg class="w-4 h-4 ml-1 opacity-0 group-hover:opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <button class="sort-button text-xs text-[rgb(148,158,156)] hover:text-white inline-flex items-center" data-sort="potential">
+                            Potential
+                            <div class="w-4 h-4 ml-1"></div>
+                        </button>
+                    </div>
+                    <div class="h-3 w-px bg-transparent mr-2"></div>
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="tokenSearchInput"
+                            placeholder="Search tokens..." 
+                            class="search-input w-[300px] pr-10"
+                        />
+                        <button 
+                            id="tokenSearchButton"
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[rgba(72,255,225,0.9)] transition-colors"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Launches Container -->
-            <div class="space-y-4" id="launches-container">
+            <div class="space-y-2" id="launches-container">
                 <!-- Launch Element Template -->
-                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-6 cursor-pointer hover:border-[rgba(72,255,225,0.3)] transition-colors">
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-5 cursor-pointer hover:border-[rgba(72,255,225,0.3)] transition-colors">
                     <div class="flex items-center w-full">
                         <div class="flex items-center gap-4 min-w-[300px]">
-                            <div class="w-12 h-12 rounded-lg bg-[#0f1a1f] flex items-center justify-center overflow-hidden">
-                                <img src="/assets/logo.png" alt="Token" class="w-10 h-10 object-contain rounded-lg">
-                            </div>
-                            <div class="min-w-[200px]">
-                                <span class="text-white text-sm font-medium">@undefined</span>
-                                <div class="flex items-center gap-2 mt-0.5">
-                                    <span class="text-[rgb(148,158,156)] text-xs">@MON</span>
+                            <svg class="star-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <div class="asset-info">
+                                <div class="w-11 h-11 rounded-lg bg-[#0f1a1f] flex items-center justify-center overflow-hidden">
+                                    <img src="/assets/logo.png" alt="Token" class="w-9 h-9 object-contain rounded-lg">
+                                </div>
+                                <div class="min-w-[200px]">
+                                    <span class="text-white text-sm font-medium token-name">@undefined</span>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-[rgb(148,158,156)] text-xs token-description">THE CAT STAYS ARROGANT.</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3 min-w-[100px] ml-4">
-                            <a href="#" class="social-link text-[rgb(148,158,156)] hover:text-white">
-                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                                </svg>
-                            </a>
-                            <a href="#" class="social-link text-[rgb(148,158,156)] hover:text-white">
-                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                                </svg>
-                            </a>
+                        <div class="flex items-center gap-3 min-w-[100px] ml-4 social-links">
+                            <!-- Social links will be added dynamically -->
                         </div>
-                        <div class="flex items-center gap-8 ml-auto">
-                            <div class="text-right min-w-[120px]">
-                                <p class="text-[rgb(148,158,156)] text-xs mb-1">TVL</p>
-                                <p class="text-sm tvl-value">$0</p>
+                        <div class="flex items-center gap-6 ml-auto">
+                            <div class="flex items-center gap-2 ml-8">
+                                <div class="text-right min-w-[120px]">
+                                    <p class="text-[rgb(148,158,156)] text-xs mb-0.5">TVL</p>
+                                    <p class="text-sm tvl-value">$0</p>
+                                </div>
+                                <div class="text-right min-w-[120px]">
+                                    <p class="text-[rgb(148,158,156)] text-xs mb-0.5">Market Cap</p>
+                                    <p class="text-sm mcap-value">$0</p>
+                                </div>
                             </div>
-                            <div class="text-right min-w-[120px]">
-                                <p class="text-[rgb(148,158,156)] text-xs mb-1">Market Cap</p>
-                                <p class="text-sm mcap-value">$0</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-8 ml-12">
-                            <div class="text-right min-w-[100px]">
+                            <div class="h-8 w-px bg-[#0a2622] ml-6"></div>
+                            <div class="text-right min-w-[100px] mr-2">
                                 <p class="text-sm font-medium price-value">$0.00</p>
                                 <p class="text-emerald-400 text-sm">+0.00%</p>
                             </div>
-                            <div class="w-[240px] h-[80px] rounded overflow-hidden price-graph -mt-4">
-                                <svg class="w-full h-full" viewBox="0 0 240 80" preserveAspectRatio="none">
+                            <div class="w-[240px] h-[60px] rounded overflow-hidden price-graph">
+                                <svg class="w-full h-full" viewBox="0 0 240 60" preserveAspectRatio="none">
                                     <path 
-                                        d="M0 60 L48 50 L96 70 L144 40 L192 56 L240 30" 
-                                        fill="none" 
-                                        stroke="rgba(16, 185, 129, 0.5)" 
+                                        d="M0 45 L48 37.5 L96 52.5 L144 30 L192 42 L240 22.5" 
+                                        fill="none"
+                                        stroke="rgba(16, 185, 129, 0.9)"
                                         stroke-width="2"
                                     />
                                 </svg>
@@ -314,24 +438,7 @@
                         this.currentPrice = 0;
                         this.currentMarketCap = 0;
                         this.hasInitialData = false;
-                        this.initGraph();
                         this.loadRedisData();
-                    }
-
-                    initGraph() {
-                        // Create SVG path for the graph
-                        const svg = this.graphElement.querySelector('svg');
-                        this.path = svg.querySelector('path');
-                        if (!this.path) {
-                            this.path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                            this.path.setAttribute('fill', 'none');
-                            this.path.setAttribute('stroke', 'rgba(239, 68, 68, 0.5)'); // Default to red
-                            this.path.setAttribute('stroke-width', '2');
-                            svg.appendChild(this.path);
-                        } else {
-                            // Ensure existing path has default red color
-                            this.path.setAttribute('stroke', 'rgba(239, 68, 68, 0.5)');
-                        }
                     }
 
                     updateGraph() {
@@ -342,66 +449,89 @@
                         const oldestPrice = this.timestampedPrices[this.timestampedPrices.length - 1].price;
                         const priceChange = ((latestPrice - oldestPrice) / oldestPrice) * 100;
 
-                        // Reverse the points array so newest points are on the right
-                        const points = this.timestampedPrices
-                            .slice()
-                            .reverse()
-                            .map((p, i, arr) => {
-                                const x = (i / (arr.length - 1)) * 240;
-                                const normalizedPrice = (p.price - this.historicalRange.min) / (this.historicalRange.max - this.historicalRange.min);
-                                const y = 80 - (normalizedPrice * 80 * 0.9 + 80 * 0.05);
-                                return { x, y };
-                            });
-
-                        let pathData = `M ${points[0].x} ${points[0].y}`;
+                        // Create points array from all price data
+                        const points = [];
+                        const totalPoints = Math.min(this.timestampedPrices.length, 100); // Increased from 50 to 100 for more granularity
+                        const step = Math.max(1, Math.floor(this.timestampedPrices.length / totalPoints));
                         
+                        // Process points in chronological order for smoother line
+                        for (let i = this.timestampedPrices.length - 1; i >= 0; i -= step) {
+                            const price = this.timestampedPrices[i].price;
+                            const x = ((this.timestampedPrices.length - 1 - i) / (this.timestampedPrices.length - 1)) * 240;
+                            const normalizedPrice = (price - this.historicalRange.min) / (this.historicalRange.max - this.historicalRange.min);
+                            const y = 60 - (normalizedPrice * 60 * 0.9 + 60 * 0.05);
+                            points.push({ x, y });
+                        }
+
+                        // Create path data
+                        let pathData = `M ${points[0].x} ${points[0].y}`;
                         for (let i = 1; i < points.length; i++) {
-                            const current = points[i - 1];
-                            const next = points[i];
-                            const controlX = (current.x + next.x) / 2;
-                            pathData += ` C ${controlX} ${current.y}, ${controlX} ${next.y}, ${next.x} ${next.y}`;
+                            pathData += ` L ${points[i].x} ${points[i].y}`;
                         }
 
                         // Set path color based on price change
                         let pathColor;
-                        if (Math.abs(priceChange) <= 0.01) { // Using slightly larger threshold
-                            pathColor = 'rgba(239, 68, 68, 0.5)'; // Red for 0% or very small changes
+                        if (Math.abs(priceChange) <= 0.01) {
+                            pathColor = 'rgb(239, 68, 68)';
                         } else if (priceChange > 0) {
-                            pathColor = 'rgba(16, 185, 129, 0.5)'; // Green for positive
+                            pathColor = 'rgb(16, 185, 129)';
                         } else {
-                            pathColor = 'rgba(239, 68, 68, 0.5)'; // Red for negative
+                            pathColor = 'rgb(239, 68, 68)';
                         }
 
-                        this.path.setAttribute('d', pathData);
-                        this.path.setAttribute('stroke', pathColor);
+                        // Update SVG with just the line
+                        this.graphElement.innerHTML = `
+                            <svg class="w-full h-full" viewBox="0 0 240 60" preserveAspectRatio="none">
+                                <path 
+                                    d="${pathData}" 
+                                    fill="none"
+                                    stroke="${pathColor.replace('rgb', 'rgba').replace(')', ', 0.95)')}"
+                                    stroke-width="2"
+                                />
+                            </svg>
+                        `;
                     }
 
                     updatePriceChange(priceChange) {
                         const container = this.graphElement.parentElement;
-                        const priceContainer = container.querySelector('.text-right');
-                        if (priceContainer) {
-                            const changeDisplay = priceContainer.querySelector('p:last-child');
+                        const launchItem = container.parentElement.parentElement;
+                        if (launchItem) {
+                            // Find the div containing the price value, then get its sibling performance element
+                            const priceDiv = launchItem.querySelector('.price-value')?.parentElement;
+                            const changeDisplay = priceDiv?.querySelector('p:last-child');
                             if (changeDisplay) {
                                 // Format the price change text
                                 let displayText;
                                 let colorClass;
 
-                                if (Math.abs(priceChange) <= 0.01) { // Using slightly larger threshold
-                                    displayText = '0.00%';
-                                    colorClass = 'text-[rgb(148,158,156)]'; // Grey for 0%
+                                if (Math.abs(priceChange) <= 0.01) {
+                                    displayText = 'Bonded';
+                                    colorClass = 'text-[rgb(148,158,156)]';
                                 } else if (priceChange > 0) {
                                     displayText = `+${priceChange.toFixed(2)}%`;
-                                    colorClass = 'text-emerald-400'; // Green for positive
+                                    colorClass = 'text-emerald-400';
                                 } else {
                                     displayText = `${priceChange.toFixed(2)}%`;
-                                    colorClass = 'text-red-400'; // Red for negative
+                                    colorClass = 'text-red-400';
                                 }
 
                                 changeDisplay.textContent = displayText;
                                 changeDisplay.className = `text-sm ${colorClass}`;
 
                                 // Update graph color to match
-                                this.updateGraph();
+                                const path = this.graphElement.querySelector('path');
+                                if (path) {
+                                    let pathColor;
+                                    if (Math.abs(priceChange) <= 0.01) {
+                                        pathColor = 'rgb(16, 185, 129)'; // Green for bonded
+                                    } else if (priceChange > 0) {
+                                        pathColor = 'rgb(16, 185, 129)';
+                                    } else {
+                                        pathColor = 'rgb(239, 68, 68)';
+                                    }
+                                    path.setAttribute('stroke', pathColor.replace('rgb', 'rgba').replace(')', ', 0.9)'));
+                                    path.setAttribute('stroke-width', '2');
+                                }
                             }
                         }
                     }
@@ -432,10 +562,15 @@
                             
                             this.updateMetricsDisplay(this.currentPrice);
                             
-                            // Calculate and update price change
+                            // Calculate 24h price change
                             if (data.length >= 2) {
-                                const oldPrice = data[data.length - 1].price;
-                                const priceChange = ((this.currentPrice - oldPrice) / oldPrice) * 100;
+                                const now = Date.now();
+                                const oneDayAgo = now - (24 * 60 * 60 * 1000);
+                                
+                                // Find the price closest to 24h ago
+                                const dayOldPrice = data.find(point => point.timestamp <= oneDayAgo)?.price || data[data.length - 1].price;
+                                
+                                const priceChange = ((this.currentPrice - dayOldPrice) / dayOldPrice) * 100;
                                 this.updatePriceChange(priceChange);
                             } else {
                                 // If we only have one data point, show 0% change
@@ -454,55 +589,62 @@
                             return;
                         }
 
-                        // Update price display
-                        const priceContainer = container.querySelector('.text-right');
-                        if (priceContainer) {
-                            const priceDisplay = priceContainer.querySelector('p:first-child');
-                            if (priceDisplay) {
-                                const formattedPrice = price < 1 ? price.toFixed(6) : price.toFixed(2);
-                                priceDisplay.textContent = `$${formattedPrice}`;
-                            }
-                        }
+                        // Calculate market cap and TVL
+                        const marketCap = calculateMarketCap(price);
+                        const tvl = calculateTVL(price);
+                        this.currentMarketCap = marketCap;
 
-                        // Calculate and update TVL and Market Cap
-                        let marketCap;
-                        if (price >= 3.0) {
-                            marketCap = Math.round(price * 890000); // ~2.95M for price of 3.31
-                        } else if (price >= 0.4) {
-                            marketCap = Math.round(price * 701000); // ~315K for price of 0.45
-                        } else if (price >= 0.3) {
-                            marketCap = Math.round(price * 676000); // ~259K for price of 0.38
-                        } else {
-                            marketCap = Math.round(price * 380000); // ~50K for price of 0.12
-                        }
-
-                        let tvl;
-                        if (price >= 3.0) {
-                            tvl = Math.round(price * 98000); // ~323K for price of 3.31
-                        } else if (price >= 0.4) {
-                            tvl = Math.round(price * 209000); // ~94K for price of 0.45
-                        } else if (price >= 0.3) {
-                            tvl = Math.round(price * 219000); // ~84K for price of 0.38
-                        } else {
-                            tvl = Math.round(price * 243000); // ~29K for price of 0.12
-                        }
-
-                        // Find the parent container that holds both metrics
-                        const metricsContainer = container.parentElement.querySelector('.flex.items-center.gap-8.ml-auto');
-                        if (metricsContainer) {
+                        // Find the launch item container
+                        const launchItem = container.parentElement.parentElement;
+                        if (launchItem) {
                             // Update TVL
-                            const tvlValue = metricsContainer.querySelector('.tvl-value');
+                            const tvlValue = launchItem.querySelector('.tvl-value');
                             if (tvlValue) {
                                 tvlValue.textContent = `$${formatNumber(tvl)}`;
                             }
 
-                            // Update Market Cap
-                            const mcapValue = metricsContainer.querySelector('.mcap-value');
+                            // Update market cap
+                            const mcapValue = launchItem.querySelector('.mcap-value');
                             if (mcapValue) {
                                 mcapValue.textContent = `$${formatNumber(marketCap)}`;
-                                this.currentMarketCap = marketCap; // Store for total calculation
                             }
+
+                            // Update price
+                            const priceValue = launchItem.querySelector('.price-value');
+                            if (priceValue) {
+                                const formattedPrice = price < 1 ? price.toFixed(6) : price.toFixed(2);
+                                priceValue.textContent = `$${formattedPrice}`;
+                            }
+
+                            // Update hover border color based on performance
+                            const latestPrice = this.timestampedPrices[0].price;
+                            const oldestPrice = this.timestampedPrices[this.timestampedPrices.length - 1].price;
+                            const priceChange = ((latestPrice - oldestPrice) / oldestPrice) * 100;
+                            
+                            let borderColor;
+                            if (Math.abs(priceChange) <= 0.01) {
+                                borderColor = 'rgba(148, 158, 156, 0.4)'; // Gray for neutral
+                            } else if (priceChange > 0) {
+                                borderColor = 'rgba(16, 185, 129, 0.4)'; // Green for positive
+                            } else {
+                                borderColor = 'rgba(239, 68, 68, 0.4)'; // Red for negative
+                            }
+                            
+                            // Apply the custom hover style
+                            launchItem.style.transition = 'border-color 0.2s ease';
+                            launchItem.addEventListener('mouseenter', () => {
+                                launchItem.style.borderColor = borderColor;
+                            });
+                            launchItem.addEventListener('mouseleave', () => {
+                                launchItem.style.borderColor = '#0a2622';
+                            });
                         }
+
+                        // Update the graph
+                        this.updateGraph();
+
+                        // Update total market cap
+                        updateTotalMarketCap();
                     }
                 }
 
@@ -518,6 +660,8 @@
 
                 // Global market cap tracking
                 let allPriceStreams = [];
+                // Track original order globally
+                const originalOrder = new Map();
 
                 function updateTotalMarketCap() {
                     const totalMarketCap = allPriceStreams.reduce((sum, stream) => {
@@ -530,6 +674,109 @@
                     }
                 }
 
+                // Load starred tokens from localStorage
+                const starredTokens = new Set(JSON.parse(localStorage.getItem('starredTokens') || '[]'));
+
+                // Function to sort items with consistent starred behavior
+                function sortWithStarred(items, sortFn = null) {
+                    return items.sort((a, b) => {
+                        // Always keep starred items at the top
+                        const aIsStarred = a.classList.contains('starred');
+                        const bIsStarred = b.classList.contains('starred');
+                        if (aIsStarred !== bIsStarred) return aIsStarred ? -1 : 1;
+                        
+                        // If no sort function provided, use original order
+                        if (!sortFn) {
+                            const aOrder = originalOrder.get(a);
+                            const bOrder = originalOrder.get(b);
+                            return aOrder - bOrder;
+                        }
+                        
+                        // Use provided sort function for non-starred comparison
+                        return sortFn(a, b);
+                    });
+                }
+
+                // Function to update starred tokens
+                function updateStarredTokens() {
+                    localStorage.setItem('starredTokens', JSON.stringify([...starredTokens]));
+                    
+                    // Move starred items to the top while maintaining original order
+                    const container = document.getElementById('launches-container');
+                    const items = Array.from(container.children);
+                    
+                    sortWithStarred(items).forEach(item => container.appendChild(item));
+                }
+
+                // Add global search function
+                function searchTokens(query) {
+                    const container = document.getElementById('launches-container');
+                    if (!container) return;
+                    
+                    Array.from(container.children).forEach(element => {
+                        const tokenName = element.querySelector('.token-name')?.textContent.toLowerCase();
+                        const tokenDesc = element.querySelector('.token-description')?.textContent.toLowerCase();
+                        element.style.display = (tokenName && tokenName.includes(query.toLowerCase())) || 
+                                             (tokenDesc && tokenDesc.includes(query.toLowerCase())) ? 'grid' : 'none';
+                    });
+                }
+
+                // Initialize search event listener
+                document.addEventListener('DOMContentLoaded', () => {
+                    // Initialize search
+                    const searchInput = document.querySelector('#tokenSearchInput');
+                    if (searchInput) {
+                        searchInput.addEventListener('input', (e) => {
+                            searchTokens(e.target.value);
+                        });
+                    }
+
+                    // Initialize sort buttons
+                    document.querySelectorAll('.sort-button').forEach(button => {
+                        button.addEventListener('click', () => {
+                            const sortType = button.getAttribute('data-sort');
+                            const container = document.getElementById('launches-container');
+                            if (!container) return;
+
+                            if (sortType === 'potential') {
+                                // Toggle Potential filter
+                                const isActive = button.classList.contains('active');
+                                
+                                // Reset all buttons first
+                                document.querySelectorAll('.sort-button').forEach(btn => {
+                                    btn.classList.remove('active', 'ascending');
+                                });
+
+                                if (isActive) {
+                                    // If was active, deactivate and show all in original order
+                                    const items = Array.from(container.children);
+                                    sortWithStarred(items).forEach(element => {
+                                        element.style.display = 'grid';
+                                        container.appendChild(element);
+                                    });
+                                } else {
+                                    // If was not active, activate and show only PURRG
+                                    button.classList.add('active');
+                                    Array.from(container.children).forEach(element => {
+                                        const tokenName = element.querySelector('.token-name');
+                                        if (tokenName) {
+                                            element.style.display = tokenName.textContent.trim() === 'PURRG' ? 'grid' : 'none';
+                                        }
+                                    });
+                                }
+                            } else {
+                                // For other sort types, ensure all items are visible first
+                                Array.from(container.children).forEach(element => {
+                                    element.style.display = 'grid';
+                                });
+                                // Then apply the sort
+                                sortItems(sortType);
+                            }
+                        });
+                    });
+                });
+
+                // Initialize launches page
                 async function initializeLaunchesPage() {
                     try {
                         // Clear existing streams
@@ -544,73 +791,215 @@
                         const templateHtml = container.firstElementChild.outerHTML;
                         container.innerHTML = ''; // Clear the placeholder
 
-                        metadata.tokens.forEach(token => {
+                        // Initialize sorting state
+                        let currentSort = { type: null, ascending: false, clicks: 0 };
+                        
+                        // Function to sort items
+                        window.sortItems = function(sortType) {
+                            const items = Array.from(container.children);
+                            
+                            // Update click count and handle sort direction
+                            if (currentSort.type === sortType) {
+                                currentSort.clicks++;
+                                if (currentSort.clicks === 3) {
+                                    // Reset on third click - restore original order
+                                    currentSort.type = null;
+                                    currentSort.ascending = false;
+                                    currentSort.clicks = 0;
+                                } else {
+                                    // Toggle direction on first and second clicks
+                                    currentSort.ascending = !currentSort.ascending;
+                                }
+                            } else {
+                                // New sort type - start with descending
+                                currentSort.type = sortType;
+                                currentSort.ascending = false;
+                                currentSort.clicks = 1;
+                            }
+
+                            // Update button states
+                            document.querySelectorAll('.sort-button').forEach(button => {
+                                button.classList.remove('active', 'ascending');
+                                if (button.dataset.sort === currentSort.type) {
+                                    button.classList.add('active');
+                                    if (currentSort.ascending) {
+                                        button.classList.add('ascending');
+                                    }
+                                }
+                            });
+
+                            // If no sort type (reset), restore original order with starred items at top
+                            if (!currentSort.type) {
+                                sortWithStarred(items).forEach(item => container.appendChild(item));
+                                return;
+                            }
+
+                            // Sort with the appropriate comparison function
+                            const sortFn = (a, b) => {
+                                if (sortType === 'mcap') {
+                                    const aMcap = parseFloat(a.querySelector('.mcap-value').textContent.replace(/[^0-9]/g, '')) || 0;
+                                    const bMcap = parseFloat(b.querySelector('.mcap-value').textContent.replace(/[^0-9]/g, '')) || 0;
+                                    return currentSort.ascending ? aMcap - bMcap : bMcap - aMcap;
+                                } else if (sortType === 'performance') {
+                                    const aPerf = parseFloat(a.querySelector('.price-value').nextElementSibling.textContent) || 0;
+                                    const bPerf = parseFloat(b.querySelector('.price-value').nextElementSibling.textContent) || 0;
+                                    return currentSort.ascending ? aPerf - bPerf : bPerf - aPerf;
+                                }
+                                return 0;
+                            };
+
+                            sortWithStarred(items, sortFn).forEach(item => container.appendChild(item));
+                        }
+
+                        // Create and append tokens in order
+                        metadata.tokens.forEach((token, index) => {
                             // Create new element from template HTML
                             const tempDiv = document.createElement('div');
                             tempDiv.innerHTML = templateHtml;
                             const element = tempDiv.firstElementChild;
                             
+                            // Store the original order
+                            originalOrder.set(element, index);
+
                             // Add click handler to open hypurr link
                             if (token.hypurr) {
                                 element.style.cursor = 'pointer';
                                 element.addEventListener('click', (e) => {
-                                    // Don't trigger if clicking on links or price graph
-                                    if (!e.target.closest('.social-link') && !e.target.closest('.price-graph')) {
-                                        window.open(token.hypurr, '_blank');
+                                    // Get click position relative to the container
+                                    const rect = element.getBoundingClientRect();
+                                    const clickX = e.clientX - rect.left;
+                                    
+                                    // Find the icon container's right edge
+                                    const iconContainer = element.querySelector('.w-11.h-11');
+                                    if (!iconContainer) return;
+                                    const iconRect = iconContainer.getBoundingClientRect();
+                                    const iconRightEdge = iconRect.right - rect.left;
+                                    
+                                    // Don't trigger if clicking before the icon's right edge or on special elements
+                                    if (clickX <= iconRightEdge || 
+                                        e.target.closest('.star-icon') || 
+                                        e.target.closest('.social-link') || 
+                                        e.target.closest('.price-graph')) {
+                                        return;
+                                    }
+                                    window.open(token.hypurr, '_blank');
+                                });
+                            }
+
+                            // Setup star functionality
+                            const starIcon = element.querySelector('.star-icon');
+                            if (starIcon) {
+                                // Check if this token is starred
+                                if (starredTokens.has(token.ticker)) {
+                                    starIcon.classList.add('active');
+                                    element.classList.add('starred');
+                                }
+
+                                let pendingStarChange = null;
+
+                                starIcon.addEventListener('click', (e) => {
+                                    e.stopPropagation();
+                                    
+                                    // Store the pending change
+                                    pendingStarChange = {
+                                        shouldStar: !starIcon.classList.contains('active'),
+                                        ticker: token.ticker
+                                    };
+
+                                    // Show immediate visual feedback and animation
+                                    starIcon.classList.remove('animate');
+                                    void starIcon.offsetWidth; // Force reflow
+                                    starIcon.classList.toggle('active', pendingStarChange.shouldStar);
+                                    starIcon.classList.add('animate');
+                                    
+                                    // Remove animation class after it completes
+                                    setTimeout(() => {
+                                        starIcon.classList.remove('animate');
+                                    }, 300);
+                                });
+
+                                element.addEventListener('mouseleave', () => {
+                                    if (pendingStarChange) {
+                                        // Apply the pending change to element and storage
+                                        element.classList.toggle('starred', pendingStarChange.shouldStar);
+                                        
+                                        if (pendingStarChange.shouldStar) {
+                                            starredTokens.add(pendingStarChange.ticker);
+                                        } else {
+                                            starredTokens.delete(pendingStarChange.ticker);
+                                        }
+
+                                        // Update localStorage and reorder
+                                        updateStarredTokens();
+                                        
+                                        // Clear the pending change
+                                        pendingStarChange = null;
                                     }
                                 });
                             }
                             
                             // Update element data
-                            element.querySelector('img').src = token.icon;
-                            const spans = element.querySelectorAll('span');
-                            spans[0].textContent = token.ticker;
-                            spans[1].textContent = token.name;
+                            const tokenImg = element.querySelector('img');
+                            if (tokenImg) {
+                                tokenImg.src = token.icon || '/assets/logo.png';
+                                tokenImg.alt = token.ticker;
+                            }
+                            
+                            const tokenName = element.querySelector('.token-name');
+                            const tokenDescription = element.querySelector('.token-description');
+                            if (tokenName) {
+                                tokenName.textContent = token.ticker;
+                            }
+                            if (tokenDescription) {
+                                tokenDescription.textContent = token.name;
+                            }
                             
                             // Update social links
-                            const socialLinksContainer = element.querySelector('.flex.items-center.gap-3');
-                            socialLinksContainer.innerHTML = ''; // Clear default links
+                            const socialLinksContainer = element.querySelector('.social-links');
+                            if (socialLinksContainer) {
+                                socialLinksContainer.innerHTML = ''; // Clear default links
 
-                            // Add website link if exists
-                            if (token.links.website) {
-                                const websiteLink = document.createElement('a');
-                                websiteLink.href = token.links.website;
-                                websiteLink.target = '_blank';
-                                websiteLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
-                                websiteLink.innerHTML = `
-                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                                    </svg>
-                                `;
-                                socialLinksContainer.appendChild(websiteLink);
-                            }
+                                // Add website link if exists
+                                if (token.links.website) {
+                                    const websiteLink = document.createElement('a');
+                                    websiteLink.href = token.links.website;
+                                    websiteLink.target = '_blank';
+                                    websiteLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
+                                    websiteLink.innerHTML = `
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                        </svg>
+                                    `;
+                                    socialLinksContainer.appendChild(websiteLink);
+                                }
 
-                            // Add Twitter link if exists
-                            if (token.links.twitter) {
-                                const twitterLink = document.createElement('a');
-                                twitterLink.href = token.links.twitter;
-                                twitterLink.target = '_blank';
-                                twitterLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
-                                twitterLink.innerHTML = `
-                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                                    </svg>
-                                `;
-                                socialLinksContainer.appendChild(twitterLink);
-                            }
+                                // Add Twitter link if exists
+                                if (token.links.twitter) {
+                                    const twitterLink = document.createElement('a');
+                                    twitterLink.href = token.links.twitter;
+                                    twitterLink.target = '_blank';
+                                    twitterLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
+                                    twitterLink.innerHTML = `
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                        </svg>
+                                    `;
+                                    socialLinksContainer.appendChild(twitterLink);
+                                }
 
-                            // Add Telegram link if exists
-                            if (token.links.telegram) {
-                                const telegramLink = document.createElement('a');
-                                telegramLink.href = token.links.telegram;
-                                telegramLink.target = '_blank';
-                                telegramLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
-                                telegramLink.innerHTML = `
-                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42l10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701l-.332 4.865c.487 0 .703-.22.975-.48l2.34-2.278l4.863 3.587c.896.495 1.54.24 1.764-.83l3.213-15.12c.33-1.31-.507-1.9-1.3-1.513z"/>
-                                    </svg>
-                                `;
-                                socialLinksContainer.appendChild(telegramLink);
+                                // Add Telegram link if exists
+                                if (token.links.telegram) {
+                                    const telegramLink = document.createElement('a');
+                                    telegramLink.href = token.links.telegram;
+                                    telegramLink.target = '_blank';
+                                    telegramLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
+                                    telegramLink.innerHTML = `
+                                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42l10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701l-.332 4.865c.487 0 .703-.22.975-.48l2.34-2.278l4.863 3.587c.896.495 1.54.24 1.764-.83l3.213-15.12c.33-1.31-.507-1.9-1.3-1.513z"/>
+                                        </svg>
+                                    `;
+                                    socialLinksContainer.appendChild(telegramLink);
+                                }
                             }
                             
                             // Initialize price stream for this token
@@ -619,18 +1008,9 @@
                                 // Initialize metrics to empty
                                 const metricsContainer = element.querySelector('.flex.items-center.gap-8.ml-auto');
                                 if (metricsContainer) {
-                                    const tvlDiv = metricsContainer.children[0];
-                                    const marketCapDiv = metricsContainer.children[1];
-                                    
-                                    if (tvlDiv) {
-                                        const tvlMetric = tvlDiv.querySelector('p:last-child');
-                                        if (tvlMetric) {
-                                            tvlMetric.textContent = '$0';
-                                        }
-                                    }
-                                    
+                                    const marketCapDiv = metricsContainer.querySelector('.text-right');
                                     if (marketCapDiv) {
-                                        const marketCapMetric = marketCapDiv.querySelector('p:last-child');
+                                        const marketCapMetric = marketCapDiv.querySelector('.mcap-value');
                                         if (marketCapMetric) {
                                             marketCapMetric.textContent = '$0';
                                         }
@@ -638,17 +1018,9 @@
                                 }
 
                                 // Initialize price display
-                                const priceContainer = element.querySelector('.text-right');
+                                const priceContainer = element.querySelector('.price-value');
                                 if (priceContainer) {
-                                    const priceDisplay = priceContainer.querySelector('p:first-child');
-                                    const changeDisplay = priceContainer.querySelector('p:last-child');
-                                    if (priceDisplay) {
-                                        priceDisplay.textContent = '$0.00';
-                                    }
-                                    if (changeDisplay) {
-                                        changeDisplay.textContent = '0.00%';
-                                        changeDisplay.className = 'text-sm text-emerald-400';
-                                    }
+                                    priceContainer.textContent = '$0.00';
                                 }
 
                                 const stream = new PriceStream(token.streamId, graphElement);
@@ -659,29 +1031,17 @@
                             container.appendChild(element);
                         });
 
+                        // Sort by starred status while maintaining original order within groups
+                        const items = Array.from(container.children);
+                        sortWithStarred(items).forEach(item => container.appendChild(item));
+
                         // Initial total market cap update
                         updateTotalMarketCap();
-
-                        // Initialize search
-                        const searchInput = document.querySelector('#tokenSearchInput');
-                        if (searchInput) {
-                            searchInput.addEventListener('input', (e) => {
-                                const query = e.target.value.toLowerCase();
-                                Array.from(container.children).forEach(element => {
-                                    const ticker = element.querySelector('span').textContent.toLowerCase();
-                                    const name = element.querySelectorAll('span')[1].textContent.toLowerCase();
-                                    element.style.display = ticker.includes(query) || name.includes(query) ? 'block' : 'none';
-                                });
-                            });
-                        }
 
                     } catch (error) {
                         console.error('Error:', error);
                     }
                 }
-
-                // Initialize on DOMContentLoaded
-                document.addEventListener('DOMContentLoaded', initializeLaunchesPage);
 
                 // Initialize when navigated to via SPA
                 if (document.readyState === 'complete') {
@@ -690,6 +1050,9 @@
 
                 // Export the initialization function for external use
                 window.initializeLaunchesPage = initializeLaunchesPage;
+
+                // Initialize on DOMContentLoaded
+                document.addEventListener('DOMContentLoaded', initializeLaunchesPage);
 
                 function formatNumber(num) {
                     if (num === undefined || num === null || isNaN(num)) return '$0';

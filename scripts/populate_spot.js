@@ -117,8 +117,8 @@ async function populateSpotTokens() {
         tokenId++;
     }
 
-    // Store hourly data in chunks of 20 tokens
-    const CHUNK_SIZE = 20;
+    // Store hourly data in chunks of 5 tokens
+    const CHUNK_SIZE = 5;
     for (let i = 0; i < hourlyData.length; i += CHUNK_SIZE) {
         const chunk = hourlyData.slice(i, i + CHUNK_SIZE);
         const chunkNumber = Math.floor(i / CHUNK_SIZE);

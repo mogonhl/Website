@@ -325,7 +325,7 @@ async function populateSpotData() {
         
         console.log('Fetching hourly data...');
         const hourly = await fetchSpotData(tokenId, '1h', 7);
-        
+
         if (daily) {
             console.log(`Got daily data for token @${tokenId} (${daily.prices.length} points)`);
             dailyData.push(daily);
@@ -474,6 +474,7 @@ async function consolidateSpotData() {
     console.log('\n=== Consolidating Spot Data ===');
     
     try {
+        // Get number of chunks
         const numChunks = await redis.get('spot_data_7d_chunks');
         if (!numChunks) {
             console.error('No spot data chunks found');
@@ -483,10 +484,12 @@ async function consolidateSpotData() {
         console.log(`Found ${numChunks} chunks to process...`);
         const consolidatedData = {};
 
+        // Process each chunk
         for (let i = 0; i < parseInt(numChunks); i++) {
             console.log(`Processing chunk ${i}...`);
             const chunkData = await redis.get(`spot_data_7d_${i}`);
             if (chunkData) {
+                // Handle both string and object responses
                 const tokens = typeof chunkData === 'string' ? JSON.parse(chunkData) : chunkData;
                 if (!Array.isArray(tokens)) {
                     console.error(`Invalid data in chunk ${i}:`, tokens);
@@ -559,7 +562,152 @@ async function consolidateSpotData() {
                     });
                 });
             } else {
-                console.log(`No data found for chunk ${i}`);
+                // Try to load split chunks if main chunk doesn't exist
+                console.log(`No main data found for chunk ${i}, trying split chunks...`);
+                const chunkAData = await redis.get(`spot_data_7d_${i}_a`);
+                const chunkBData = await redis.get(`spot_data_7d_${i}_b`);
+                
+                [chunkAData, chunkBData].forEach((splitChunk, idx) => {
+                    if (splitChunk) {
+                        const tokens = typeof splitChunk === 'string' ? JSON.parse(splitChunk) : splitChunk;
+                        if (!Array.isArray(tokens)) {
+                            console.error(`Invalid data in split chunk ${i}_${idx ? 'b' : 'a'}:`, tokens);
+                            return;
+                        }
+
+                        tokens.forEach(token => {
+                            if (!token.prices || token.prices.length === 0) {
+                                console.log(`Skipping token ${token.tokenId} - no price data`);
+                                return;
+                            }
+
+                            const latestPrice = token.prices[token.prices.length - 1][1];
+                            const latestTimestamp = token.prices[token.prices.length - 1][0];
+                            
+                            const oneDayAgo = latestTimestamp - (24 * 60 * 60 * 1000);
+                            let price24hAgo = latestPrice;
+                            let closestTimeDiff = Infinity;
+                            
+                            for (let j = 0; j < token.prices.length; j++) {
+                                const timeDiff = Math.abs(token.prices[j][0] - oneDayAgo);
+                                if (timeDiff < closestTimeDiff) {
+                                    closestTimeDiff = timeDiff;
+                                    price24hAgo = token.prices[j][1];
+                                }
+                            }
+
+                            let volume24h = 0;
+                            if (token.total_volumes) {
+                                for (let j = token.total_volumes.length - 1; j >= 0; j--) {
+                                    const [timestamp, volume] = token.total_volumes[j];
+                                    if (timestamp >= oneDayAgo) {
+                                        const priceAtTime = findClosestPrice(token.prices, timestamp);
+                                        volume24h += volume * priceAtTime;
+                                    } else {
+                                        break;
+                                    }
+                                }
+                            }
+
+                            const priceChange24h = ((latestPrice - price24hAgo) / price24hAgo) * 100;
+
+                            const sevenDaysAgo = latestTimestamp - (7 * 24 * 60 * 60 * 1000);
+                            const snapshotData = token.prices
+                                .filter(([timestamp]) => timestamp >= sevenDaysAgo)
+                                .map(([timestamp, price]) => [timestamp, price]);
+                            
+                            const tokenIdStr = token.tokenId.toString().replace('@', '');
+                            
+                            consolidatedData[tokenIdStr] = {
+                                p: latestPrice,
+                                op: price24hAgo,
+                                pc: priceChange24h,
+                                v: volume24h,
+                                t: latestTimestamp,
+                                s: snapshotData
+                            };
+
+                            console.log(`Processed token ${tokenIdStr} from split chunk:`, {
+                                price: latestPrice.toFixed(4),
+                                price24hAgo: price24hAgo.toFixed(4),
+                                priceChange: priceChange24h.toFixed(2) + '%',
+                                volume24h: volume24h.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: 'USD'
+                                }),
+                                timestamp: new Date(latestTimestamp).toISOString(),
+                                snapshotPoints: snapshotData.length
+                            });
+                        });
+                    }
+                });
+            }
+        }
+
+        // Process PURR data if available
+        const purrData = await redis.get('spot_data_7d_purr');
+        if (purrData) {
+            console.log('Processing PURR data...');
+            const tokens = typeof purrData === 'string' ? JSON.parse(purrData) : purrData;
+            if (Array.isArray(tokens) && tokens.length > 0) {
+                const token = tokens[0];
+                if (token.prices && token.prices.length > 0) {
+                    const latestPrice = token.prices[token.prices.length - 1][1];
+                    const latestTimestamp = token.prices[token.prices.length - 1][0];
+                    
+                    const oneDayAgo = latestTimestamp - (24 * 60 * 60 * 1000);
+                    let price24hAgo = latestPrice;
+                    let closestTimeDiff = Infinity;
+                    
+                    for (let j = 0; j < token.prices.length; j++) {
+                        const timeDiff = Math.abs(token.prices[j][0] - oneDayAgo);
+                        if (timeDiff < closestTimeDiff) {
+                            closestTimeDiff = timeDiff;
+                            price24hAgo = token.prices[j][1];
+                        }
+                    }
+
+                    let volume24h = 0;
+                    if (token.total_volumes) {
+                        for (let j = token.total_volumes.length - 1; j >= 0; j--) {
+                            const [timestamp, volume] = token.total_volumes[j];
+                            if (timestamp >= oneDayAgo) {
+                                const priceAtTime = findClosestPrice(token.prices, timestamp);
+                                volume24h += volume * priceAtTime;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+
+                    const priceChange24h = ((latestPrice - price24hAgo) / price24hAgo) * 100;
+
+                    const sevenDaysAgo = latestTimestamp - (7 * 24 * 60 * 60 * 1000);
+                    const snapshotData = token.prices
+                        .filter(([timestamp]) => timestamp >= sevenDaysAgo)
+                        .map(([timestamp, price]) => [timestamp, price]);
+                    
+                    consolidatedData['purr'] = {
+                        p: latestPrice,
+                        op: price24hAgo,
+                        pc: priceChange24h,
+                        v: volume24h,
+                        t: latestTimestamp,
+                        s: snapshotData
+                    };
+
+                    console.log('Processed PURR token:', {
+                        price: latestPrice.toFixed(4),
+                        price24hAgo: price24hAgo.toFixed(4),
+                        priceChange: priceChange24h.toFixed(2) + '%',
+                        volume24h: volume24h.toLocaleString('en-US', {
+                            style: 'currency',
+                            currency: 'USD'
+                        }),
+                        timestamp: new Date(latestTimestamp).toISOString(),
+                        snapshotPoints: snapshotData.length
+                    });
+                }
             }
         }
 
@@ -571,7 +719,7 @@ async function consolidateSpotData() {
         console.log('\nConsolidated Data Stats:');
         console.log('Total tokens:', Object.keys(consolidatedData).length);
         Object.entries(consolidatedData).forEach(([tokenId, data]) => {
-            console.log(`Token @${tokenId}:`, {
+            console.log(`Token ${tokenId}:`, {
                 price: data.p.toFixed(4),
                 '24h_change': data.pc.toFixed(2) + '%',
                 '24h_volume': `$${data.v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
@@ -656,6 +804,7 @@ async function determineStableStartPoint(tokens, minTokens = 5) {
         if (activeTokens.size >= minTokens) {
             console.log(`Found stable start point at ${new Date(timestamp).toISOString()}`);
             console.log(`Number of active tokens: ${activeTokens.size}`);
+            console.log('Active tokens:', Array.from(activeTokens).join(', '));
             return timestamp;
         }
     }
@@ -667,8 +816,10 @@ async function determineStableStartPoint(tokens, minTokens = 5) {
 async function createIndices(tokens) {
     console.log('\n=== Creating Multiple Indices ===');
 
+    // Determine stable start point for regular indices (minimum 5 tokens)
     const stableStartTimestamp = await determineStableStartPoint(tokens, 5);
     
+    // Create indices with different calculation methods
     console.log('\nCreating Market Cap Index (with HYPE)...');
     await createMarketCapIndex(tokens, true, 'spot_data_mcap_index', stableStartTimestamp);
     
@@ -679,10 +830,47 @@ async function createIndices(tokens) {
 async function createMarketCapIndex(tokens, includeHype, redisKey, stableStartTimestamp) {
     console.log(`\nProcessing index with includeHype = ${includeHype}`);
     
+    // Filter out HYPE token if needed and validate data
     const tokensToProcess = includeHype 
         ? tokens 
-        : tokens.filter(t => String(t.tokenId) !== '107');
+        : tokens.filter(t => t.tokenId !== '@107');
 
+    // Log token counts and HYPE token presence
+    console.log(`Total tokens before filtering: ${tokens.length}`);
+    console.log(`Tokens after filtering: ${tokensToProcess.length}`);
+    const hypeToken = tokens.find(t => t.tokenId === '@107');
+    console.log('HYPE token found:', hypeToken ? 'Yes' : 'No', hypeToken ? `(ID: ${hypeToken.tokenId})` : '');
+
+    // Debug: Log first few tokens' data structure
+    console.log('\nSample token data:');
+    tokensToProcess.slice(0, 3).forEach(token => {
+        console.log(`\nToken ${token.tokenId}:`);
+        console.log('Has prices:', !!token.prices, 'Length:', token.prices?.length || 0);
+        console.log('Has market_caps:', !!token.market_caps, 'Length:', token.market_caps?.length || 0);
+        if (token.prices?.length > 0) {
+            console.log('First price entry:', token.prices[0]);
+            console.log('Last price entry:', token.prices[token.prices.length - 1]);
+        }
+        if (token.market_caps?.length > 0) {
+            console.log('First mcap entry:', token.market_caps[0]);
+            console.log('Last mcap entry:', token.market_caps[token.market_caps.length - 1]);
+        }
+    });
+
+    // Validate token data structure
+    let validTokens = 0;
+    tokensToProcess.forEach((token, index) => {
+        if (!token.prices || !Array.isArray(token.prices)) {
+            console.warn(`Token ${token.tokenId} has invalid price data`);
+        } else if (!token.market_caps || !Array.isArray(token.market_caps)) {
+            console.warn(`Token ${token.tokenId} has invalid market cap data`);
+        } else {
+            validTokens++;
+        }
+    });
+    console.log(`\nFound ${validTokens} tokens with valid data out of ${tokensToProcess.length}`);
+    
+    // Get all unique timestamps from price data
     const timestamps = new Set();
     tokensToProcess.forEach(token => {
         if (!token.prices) return;
@@ -693,13 +881,18 @@ async function createMarketCapIndex(tokens, includeHype, redisKey, stableStartTi
         });
     });
 
+    // Convert to sorted array
     const sortedTimestamps = Array.from(timestamps).sort((a, b) => a - b);
+    console.log(`\nFound ${sortedTimestamps.length} unique timestamps`);
     
+    // Calculate index values for each timestamp
     const indexValues = sortedTimestamps.map(timestamp => {
         let totalMcap = 0;
         let weightedSum = 0;
         let validTokenCount = 0;
+        let debugInfo = [];
         
+        // Calculate total market cap for this timestamp
         tokensToProcess.forEach(token => {
             const pricePoint = token.prices?.find(([t]) => t === timestamp);
             const mcapPoint = token.market_caps?.find(([t]) => t === timestamp);
@@ -710,10 +903,14 @@ async function createMarketCapIndex(tokens, includeHype, redisKey, stableStartTi
                 if (!isNaN(mcap) && mcap > 0) {
                     totalMcap += mcap;
                     validTokenCount++;
+                    if (String(token.tokenId) === '107') {
+                        debugInfo.push(`HYPE mcap: ${mcap}, price: ${price}`);
+                    }
                 }
             }
         });
         
+        // If we have valid total market cap, calculate weighted prices
         if (totalMcap > 0) {
             tokensToProcess.forEach(token => {
                 const pricePoint = token.prices?.find(([t]) => t === timestamp);
@@ -725,14 +922,33 @@ async function createMarketCapIndex(tokens, includeHype, redisKey, stableStartTi
                     if (!isNaN(price) && !isNaN(mcap) && mcap > 0) {
                         const weight = mcap / totalMcap;
                         weightedSum += price * weight;
+                        if (String(token.tokenId) === '107') {
+                            debugInfo.push(`HYPE weight: ${weight}, contribution: ${price * weight}`);
+                        }
                     }
                 }
             });
         }
         
+        if (validTokenCount === 0) {
+            console.log(`No valid tokens found for timestamp ${new Date(timestamp).toISOString()}`);
+        } else if (debugInfo.length > 0) {
+            console.log(`Timestamp ${new Date(timestamp).toISOString()}:`, debugInfo.join(', '));
+        }
+        
         return [timestamp, weightedSum];
     }).filter(([, value]) => !isNaN(value) && value > 0);
 
+    // Print statistics
+    console.log('\nIndex Statistics:');
+    console.log(`Start date: ${new Date(sortedTimestamps[0]).toISOString()}`);
+    console.log(`End date: ${new Date(sortedTimestamps[sortedTimestamps.length - 1]).toISOString()}`);
+    console.log(`Initial value: ${indexValues[0]?.[1]?.toFixed(4) || 'NaN'}`);
+    console.log(`Final value: ${indexValues[indexValues.length - 1]?.[1]?.toFixed(4) || 'NaN'}`);
+    console.log(`Number of tokens: ${tokensToProcess.length}`);
+    console.log(`Total data points: ${indexValues.length}`);
+
+    // Store in Redis
     await redis.set(redisKey, { prices: indexValues });
 }
 

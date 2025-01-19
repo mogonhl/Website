@@ -11,26 +11,104 @@ function getActivePage() {
 // Create and inject the navbar
 async function injectNavbar() {
     try {
+        // Create or get navbar container
+        let navbarContainer = document.getElementById('navbar-container');
+        if (!navbarContainer) {
+            navbarContainer = document.createElement('div');
+            navbarContainer.id = 'navbar-container';
+            navbarContainer.style.position = 'relative';
+            navbarContainer.style.height = '64px'; // Match navbar height
+            document.body.insertBefore(navbarContainer, document.body.firstChild);
+        }
+
+        // Show skeleton immediately
+        const skeletonNav = document.createElement('nav');
+        skeletonNav.className = 'bg-[#0f1a1f] border-b border-[#0a2622]';
+        skeletonNav.style.position = 'absolute';
+        skeletonNav.style.top = '0';
+        skeletonNav.style.left = '0';
+        skeletonNav.style.right = '0';
+        skeletonNav.style.zIndex = '10';
+        
+        // Create skeleton structure that matches the navbar exactly
+        skeletonNav.innerHTML = `
+            <div class="flex justify-between items-center h-16 px-8">
+                <div class="flex items-center">
+                    <a class="flex items-center justify-center h-16 mr-8">
+                        <div class="h-8 w-8 bg-white/10 rounded animate-pulse"></div>
+                    </a>
+                    <div class="flex items-center space-x-8">
+                        <div class="h-4 w-[72px] bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-[64px] bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-[72px] bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-[64px] bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-4 w-[72px] bg-white/10 rounded animate-pulse"></div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="h-4 w-[40px] bg-white/10 rounded animate-pulse"></div>
+                    <div class="flex items-center">
+                        <div class="h-7 w-[72px] bg-[rgba(72,255,225,0.2)] rounded animate-pulse"></div>
+                        <div class="mx-3 h-4 w-px bg-white/10"></div>
+                        <div class="h-7 w-[72px] bg-white/10 rounded animate-pulse"></div>
+                    </div>
+                    <div class="h-[18px] w-[18px] bg-white/10 rounded animate-pulse"></div>
+                </div>
+            </div>
+        `;
+        
+        // Clear container and add skeleton
+        navbarContainer.innerHTML = '';
+        navbarContainer.appendChild(skeletonNav);
+
+        // Load actual navbar
         const response = await fetch('/components/navbar.html');
         if (!response.ok) {
             throw new Error(`Failed to load navbar: ${response.status} ${response.statusText}`);
         }
         const html = await response.text();
         
-        // Find the navbar container or create one if it doesn't exist
-        let navbarContainer = document.getElementById('navbar-container');
-        if (!navbarContainer) {
-            navbarContainer = document.createElement('div');
-            navbarContainer.id = 'navbar-container';
-            document.body.insertBefore(navbarContainer, document.body.firstChild);
+        // Create a temporary container for the actual navbar
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const actualNav = tempDiv.querySelector('nav');
+        
+        if (!actualNav) {
+            throw new Error('Could not find nav element in navbar HTML');
         }
         
-        // Insert the navbar HTML
-        navbarContainer.innerHTML = html;
+        // Set up actual navbar
+        actualNav.style.position = 'absolute';
+        actualNav.style.top = '0';
+        actualNav.style.left = '0';
+        actualNav.style.right = '0';
+        actualNav.style.opacity = '0';
+        actualNav.style.transition = 'opacity 0.2s ease';
+        actualNav.style.zIndex = '20';
+        
+        // Add the actual navbar but keep it invisible
+        navbarContainer.appendChild(actualNav);
+        
+        // Force reflow
+        actualNav.offsetHeight;
+        
+        // Fade in the actual navbar and remove skeleton
+        requestAnimationFrame(() => {
+            actualNav.style.opacity = '1';
+            skeletonNav.style.opacity = '0';
+            skeletonNav.style.transition = 'opacity 0.2s ease';
+            
+            // Remove skeleton after transition
+            setTimeout(() => {
+                if (skeletonNav.parentNode === navbarContainer) {
+                    navbarContainer.removeChild(skeletonNav);
+                }
+            }, 200);
+        });
         
         // Add active states and event listeners
         const activePage = getActivePage();
-        const links = navbarContainer.querySelectorAll('.nav-link');
+        const links = actualNav.querySelectorAll('.nav-link');
         
         links.forEach(link => {
             const href = link.getAttribute('href');
