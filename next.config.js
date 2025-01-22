@@ -36,6 +36,10 @@ const nextConfig = {
                 destination: '/pages/launches/index.html'
             },
             {
+                source: '/dashboard',
+                destination: '/pages/dashboard/index.html'
+            },
+            {
                 source: '/api/:path*',
                 destination: '/api/:path*'
             },

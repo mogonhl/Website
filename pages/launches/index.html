@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
     <link href="/styles/navbar.css" rel="stylesheet" />
     <script src="/components/navbar.js"></script>
-    <script src="/js/launches-data.js"></script>
     <style>
         html, body {
             margin: 0;
@@ -201,6 +200,46 @@
         .sort-button.active.ascending svg {
             transform: rotate(180deg);
         }
+
+        /* Add progress bar styles */
+        .progress-bar-container {
+            background: rgba(10, 38, 34, 0.5);
+            position: relative;
+        }
+
+        .progress-bar, .progress-bar-old {
+            transition: width 0.3s ease, background-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                var(--shimmer-color, rgba(72, 255, 225, 0.2)),
+                var(--shimmer-color, rgba(72, 255, 225, 0.4)),
+                var(--shimmer-color, rgba(72, 255, 225, 0.2)),
+                transparent
+            );
+            animation: shimmer 4s ease-in-out infinite;
+            transform: skewX(-25deg);
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -50%;
+            }
+            100% {
+                left: 150%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -217,20 +256,29 @@
 
             <div class="grid grid-cols-7 mb-12">
                 <div class="col-span-1">
-                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Launches Tracked</p>
-                    <p class="text-2xl market-cap font-normal total-launches">0</p>
-                </div>
-                <div class="flex justify-center items-center">
-                    <div class="h-8 w-px bg-[#0a2622] ml-6"></div>
-                </div>
-                <div class="col-span-1">
                     <p class="text-[rgb(148,158,156)] text-sm mb-1">Market Cap</p>
                     <p class="text-2xl text-emerald-400 flex items-center font-normal">
                         <span class="volume">$0</span>
                     </p>
                 </div>
                 <div class="flex justify-center items-center">
-                    <div class="h-8 w-px bg-[#0a2622] ml-6"></div>
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Auction Price</p>
+                    <p class="text-2xl flex items-center font-normal">
+                        <span class="auction-value text-white">$0</span>
+                    </p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
+                </div>
+                <div class="col-span-1">
+                    <p class="text-[rgb(148,158,156)] text-sm mb-1">Launches Tracked</p>
+                    <p class="text-2xl market-cap font-normal total-launches">0</p>
+                </div>
+                <div class="flex justify-center items-center">
+                    <div class="h-full w-[1px] bg-[rgba(72,255,225,0.2)]"></div>
                 </div>
                 <div class="col-span-1">
                     <p class="text-[rgb(148,158,156)] text-sm mb-1">Best Performer</p>
@@ -312,7 +360,16 @@
                             <div class="flex items-center gap-2 ml-8">
                                 <div class="text-right min-w-[120px]">
                                     <p class="text-[rgb(148,158,156)] text-xs mb-0.5">TVL</p>
-                                    <p class="text-sm tvl-value">$0</p>
+                                    <div class="flex items-center justify-end gap-1">
+                                        <svg class="tvl-checkmark w-3.5 h-3.5 text-emerald-400 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                            <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <p class="text-sm tvl-value">$0</p>
+                                    </div>
+                                    <div class="progress-bar-container mt-1 w-full bg-[#0a2622] rounded overflow-hidden hidden" style="height: 3px;">
+                                        <div class="progress-bar-old h-full transition-all duration-300" style="width: 0%; opacity: 0.3; position: absolute; top: 0; left: 0;"></div>
+                                        <div class="progress-bar h-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
                                 </div>
                                 <div class="text-right min-w-[120px]">
                                     <p class="text-[rgb(148,158,156)] text-xs mb-0.5">Market Cap</p>
@@ -354,17 +411,93 @@
 
             <script>
                 function calculateMarketCap(price) {
-                    if (price >= 2) return price * 880000;      // Higher range
-                    if (price >= 0.4) return price * 687000;    // High range
-                    if (price >= 0.08) return price * 340000;   // Mid range
-                    return price * 177000;                      // Low range
+                    // Define price points and their corresponding market caps
+                    const data = [
+                        { price: 12.075, mcap: 11380000 },
+                        { price: 2.14, mcap: 1420000 },
+                        { price: 1.5272, mcap: 1320000 },
+                        { price: 0.6333, mcap: 474070 },
+                        { price: 0.5078, mcap: 365290 },
+                        { price: 0.25082, mcap: 150600 },
+                        { price: 0.20508, mcap: 114470 },
+                        { price: 0.19983, mcap: 110380 },
+                        { price: 0.18472, mcap: 98740 },
+                        { price: 0.1708, mcap: 88090 },
+                        { price: 0.14399, mcap: 68080 },
+                        { price: 0.1164, mcap: 48130 },
+                        { price: 0.08994, mcap: 29630 },
+                        { price: 0.07574, mcap: 20690 },
+                        { price: 0.06759, mcap: 15590 },
+                        { price: 0.05948, mcap: 10700 },
+                        { price: 0.05864, mcap: 10200 }
+                    ];
+
+                    // If price is higher than our highest data point, extrapolate using the ratio from highest point
+                    if (price > data[0].price) {
+                        return Math.round(price * (data[0].mcap / data[0].price));
+                    }
+
+                    // If price is lower than our lowest data point, extrapolate using the ratio from lowest point
+                    if (price < data[data.length - 1].price) {
+                        const lowest = data[data.length - 1];
+                        return Math.round(price * (lowest.mcap / lowest.price));
+                    }
+
+                    // Find the two closest price points and interpolate between them
+                    for (let i = 0; i < data.length - 1; i++) {
+                        if (price <= data[i].price && price > data[i + 1].price) {
+                            const ratio = (price - data[i + 1].price) / (data[i].price - data[i + 1].price);
+                            return Math.round(data[i + 1].mcap + ratio * (data[i].mcap - data[i + 1].mcap));
+                        }
+                    }
+
+                    // Fallback (should never happen given above conditions)
+                    return Math.round(price * (data[0].mcap / data[0].price));
                 }
 
                 function calculateTVL(price) {
-                    if (price >= 2) return price * 110000;     // Higher range
-                    if (price >= 0.4) return price * 215000;   // High range
-                    if (price >= 0.08) return price * 225000;  // Mid range
-                    return price * 146000;                     // Low range
+                    // Define price points and their corresponding TVL values
+                    const data = [
+                        { price: 12.075, tvl: 654980 },
+                        { price: 2.14, tvl: 219329 },
+                        { price: 1.5272, tvl: 210820 },
+                        { price: 0.6333, tvl: 119160 },
+                        { price: 0.5078, tvl: 102630 },
+                        { price: 0.25082, tvl: 60160 },
+                        { price: 0.20508, tvl: 50570 },
+                        { price: 0.19983, tvl: 49400 },
+                        { price: 0.18472, tvl: 45960 },
+                        { price: 0.1708, tvl: 42650 },
+                        { price: 0.14399, tvl: 35890 },
+                        { price: 0.1164, tvl: 29230 },
+                        { price: 0.08994, tvl: 19980 },
+                        { price: 0.07574, tvl: 15040 },
+                        { price: 0.06759, tvl: 12000 },
+                        { price: 0.05948, tvl: 8430 },
+                        { price: 0.05864, tvl: 8430 }
+                    ];
+
+                    // If price is higher than our highest data point, extrapolate using the ratio from highest point
+                    if (price > data[0].price) {
+                        return Math.round(price * (data[0].tvl / data[0].price));
+                    }
+
+                    // If price is lower than our lowest data point, extrapolate using the ratio from lowest point
+                    if (price < data[data.length - 1].price) {
+                        const lowest = data[data.length - 1];
+                        return Math.round(price * (lowest.tvl / lowest.price));
+                    }
+
+                    // Find the two closest price points and interpolate between them
+                    for (let i = 0; i < data.length - 1; i++) {
+                        if (price <= data[i].price && price > data[i + 1].price) {
+                            const ratio = (price - data[i + 1].price) / (data[i].price - data[i + 1].price);
+                            return Math.round(data[i + 1].tvl + ratio * (data[i].tvl - data[i + 1].tvl));
+                        }
+                    }
+
+                    // Fallback (should never happen given above conditions)
+                    return Math.round(price * (data[0].tvl / data[0].price));
                 }
 
                 /**
@@ -400,25 +533,22 @@
                             resultLength: data.result ? data.result.length : 0
                         });
                         
-                        // Parse the JSON string from Redis if it exists
-                        if (data.result) {
-                            try {
-                                const parsedData = JSON.parse(data.result);
-                                console.log('Parsed Redis data:', {
-                                    streamId: streamId,
-                                    isArray: Array.isArray(parsedData),
-                                    length: Array.isArray(parsedData) ? parsedData.length : 0,
-                                    samplePoint: Array.isArray(parsedData) && parsedData.length > 0 ? parsedData[0] : null
-                                });
-                                return parsedData;
-                            } catch (e) {
-                                console.error('Error parsing Redis data:', e);
-                                console.error('Raw data that failed to parse:', data.result);
-                                return [];
+                        // Parse the Redis response - expecting an array of price data
+                        let priceData;
+                        try {
+                            // If result is a string, parse it, otherwise use it directly
+                            priceData = typeof data.result === 'string' ? JSON.parse(data.result) : data.result;
+                            
+                            if (!Array.isArray(priceData)) {
+                                console.error('Invalid price data format:', priceData);
+                                throw new Error('Invalid price data format');
                             }
+
+                            return priceData;
+                        } catch (e) {
+                            console.error('Failed to parse price data:', e);
+                            throw new Error('Invalid price data format');
                         }
-                        
-                        return [];
                     } catch (error) {
                         console.error('Error fetching Redis data:', error);
                         return [];
@@ -439,6 +569,177 @@
                         this.currentMarketCap = 0;
                         this.hasInitialData = false;
                         this.loadRedisData();
+                        this.fetchGasAuctionData();
+                    }
+
+                    async fetchGasAuctionData() {
+                        try {
+                            const response = await fetch('https://api-ui.hyperliquid.xyz/info', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    type: "spotDeployState",
+                                    user: "0xAE551d73161bAC3315C5aDe0e2d499a44eBe2236"
+                                })
+                            });
+                            
+                            const data = await response.json();
+                            if (data.gasAuction && data.gasAuction.currentGas) {
+                                this.currentGas = parseFloat(data.gasAuction.currentGas);
+                                
+                                // Get auction parameters
+                                const startGas = parseFloat(data.gasAuction.startGas);
+                                const startTimeSeconds = data.gasAuction.startTimeSeconds;
+                                const durationSeconds = data.gasAuction.durationSeconds;
+                                const endGas = 10000; // Final auction price
+                                
+                                // Start the auction countdown
+                                this.startAuctionCountdown(startGas, startTimeSeconds, durationSeconds, endGas);
+                                
+                                this.updateProgressBar();
+                            }
+                        } catch (error) {
+                            console.error('Error fetching gas auction data:', error);
+                        }
+                    }
+
+                    startAuctionCountdown(startGas, startTimeSeconds, durationSeconds, endGas) {
+                        const auctionElement = document.querySelector('.auction-value');
+                        if (!auctionElement) return;
+
+                        // Calculate the rate of decrease per second
+                        const totalDecrease = startGas - endGas;
+                        const decreasePerSecond = totalDecrease / durationSeconds;
+                        
+                        // Calculate current position in auction
+                        const now = Math.floor(Date.now() / 1000);
+                        const elapsedSeconds = now - startTimeSeconds;
+                        const remainingSeconds = durationSeconds - elapsedSeconds;
+                        
+                        // If auction hasn't started yet
+                        if (elapsedSeconds < 0) {
+                            auctionElement.textContent = `$${formatNumber(startGas)}`;
+                            setTimeout(() => this.startAuctionCountdown(startGas, startTimeSeconds, durationSeconds, endGas), 1000);
+                            return;
+                        }
+                        
+                        // If auction has ended
+                        if (elapsedSeconds >= durationSeconds) {
+                            auctionElement.textContent = `$${formatNumber(endGas)}`;
+                            return;
+                        }
+
+                        // Store the last update time and value for smooth animation
+                        if (!this.lastAuctionUpdate) {
+                            this.lastAuctionUpdate = {
+                                time: now,
+                                value: startGas - (decreasePerSecond * elapsedSeconds)
+                            };
+                        }
+
+                        const animate = () => {
+                            const currentTime = Date.now() / 1000;
+                            const newElapsedSeconds = currentTime - startTimeSeconds;
+
+                            // Check if auction is still running
+                            if (newElapsedSeconds >= durationSeconds) {
+                                auctionElement.textContent = `$${formatNumber(endGas)}`;
+                                return;
+                            }
+
+                            // Calculate new price
+                            const newPrice = Math.max(startGas - (decreasePerSecond * newElapsedSeconds), endGas);
+                            
+                            // Update display
+                            auctionElement.textContent = `$${formatNumber(newPrice)}`;
+                            
+                            // Store current value
+                            this.lastAuctionUpdate = {
+                                time: currentTime,
+                                value: newPrice
+                            };
+
+                            // Continue animation
+                            requestAnimationFrame(animate);
+                        };
+
+                        // Start the animation
+                        requestAnimationFrame(animate);
+                    }
+
+                    updateProgressBar() {
+                        const container = this.graphElement.parentElement;
+                        if (!container) return;
+
+                        const launchItem = container.parentElement.parentElement;
+                        if (!launchItem) return;
+
+                        const tvlElement = launchItem.querySelector('.tvl-value');
+                        const progressBarContainer = launchItem.querySelector('.progress-bar-container');
+                        const progressBar = launchItem.querySelector('.progress-bar');
+                        const progressBarOld = launchItem.querySelector('.progress-bar-old');
+                        const performanceElement = launchItem.querySelector('.price-value').nextElementSibling;
+                        const checkmark = launchItem.querySelector('.tvl-checkmark');
+                        const mcapValue = launchItem.querySelector('.mcap-value');
+                        
+                        if (!tvlElement || !progressBarContainer || !progressBar || !progressBarOld || !this.currentGas || !checkmark || !mcapValue) return;
+
+                        const tvlValue = parseFloat(tvlElement.textContent.replace(/[^0-9]/g, ''));
+                        const marketCap = parseFloat(mcapValue.textContent.replace(/[^0-9]/g, ''));
+                        
+                        if (tvlValue > 0) {
+                            // Get performance value
+                            const performanceText = performanceElement.textContent;
+                            const performance = parseFloat(performanceText);
+                            const isBonded = performanceText.trim() === 'Bonded';
+
+                            // Show/hide elements based on conditions
+                            if (isBonded) {
+                                progressBarContainer.classList.add('hidden');
+                                checkmark.classList.remove('hidden');
+                            } else {
+                                checkmark.classList.add('hidden');
+                                progressBarContainer.classList.remove('hidden');
+                                
+                                // Calculate current bar ratio
+                                const currentRatio = Math.min((tvlValue / this.currentGas) * 100, 100);
+                                
+                                // Set colors based on performance
+                                let currentColor;
+                                if (Math.abs(performance) <= 0.01) {
+                                    currentColor = 'rgba(148, 158, 156, 0.9)'; // Grey for no movement
+                                } else if (performance > 0) {
+                                    currentColor = 'rgba(16, 185, 129, 0.9)'; // Green for positive
+                                } else {
+                                    currentColor = 'rgba(239, 68, 68, 0.9)'; // Red for negative
+                                }
+
+                                // Update current bar
+                                progressBar.style.width = `${currentRatio}%`;
+                                progressBar.style.backgroundColor = currentColor;
+                                progressBar.style.setProperty('--shimmer-color', currentColor.replace('0.9', '0.4'));
+
+                                // Only show 24h comparison for TVL >= 50000
+                                if (tvlValue >= 50000) {
+                                    // Calculate TVL 24h ago using the performance percentage
+                                    const tvl24hAgo = tvlValue / (1 + (performance / 100));
+                                    const oldRatio = Math.min((tvl24hAgo / this.currentGas) * 100, 100);
+                                    
+                                    // Show and update old bar
+                                    progressBarOld.style.display = 'block';
+                                    progressBarOld.style.width = `${oldRatio}%`;
+                                    progressBarOld.style.backgroundColor = currentColor;
+                                } else {
+                                    // Hide old bar for TVL < 50000
+                                    progressBarOld.style.display = 'none';
+                                }
+                            }
+
+                            // Update TVL display
+                            tvlElement.textContent = `$${formatNumber(tvlValue)}`;
+                        }
                     }
 
                     updateGraph() {
@@ -451,15 +752,24 @@
 
                         // Create points array from all price data
                         const points = [];
-                        const totalPoints = Math.min(this.timestampedPrices.length, 100); // Increased from 50 to 100 for more granularity
+                        const totalPoints = Math.min(this.timestampedPrices.length, 100);
                         const step = Math.max(1, Math.floor(this.timestampedPrices.length / totalPoints));
+                        
+                        // Handle case where min and max are equal (flat line)
+                        const range = this.historicalRange.max - this.historicalRange.min;
+                        const normalizePrice = (price) => {
+                            if (range === 0) {
+                                // If price range is 0, draw a horizontal line in the middle
+                                return 30; // 60 * 0.5 for middle of 60px height
+                            }
+                            return 60 - ((price - this.historicalRange.min) / range * 60 * 0.9 + 60 * 0.05);
+                        };
                         
                         // Process points in chronological order for smoother line
                         for (let i = this.timestampedPrices.length - 1; i >= 0; i -= step) {
                             const price = this.timestampedPrices[i].price;
                             const x = ((this.timestampedPrices.length - 1 - i) / (this.timestampedPrices.length - 1)) * 240;
-                            const normalizedPrice = (price - this.historicalRange.min) / (this.historicalRange.max - this.historicalRange.min);
-                            const y = 60 - (normalizedPrice * 60 * 0.9 + 60 * 0.05);
+                            const y = normalizePrice(price);
                             points.push({ x, y });
                         }
 
@@ -499,14 +809,23 @@
                             // Find the div containing the price value, then get its sibling performance element
                             const priceDiv = launchItem.querySelector('.price-value')?.parentElement;
                             const changeDisplay = priceDiv?.querySelector('p:last-child');
-                            if (changeDisplay) {
+                            const mcapValue = launchItem.querySelector('.mcap-value');
+                            if (changeDisplay && mcapValue) {
+                                // Get market cap value
+                                const marketCap = parseFloat(mcapValue.textContent.replace(/[^0-9]/g, ''));
+                                
                                 // Format the price change text
                                 let displayText;
                                 let colorClass;
 
                                 if (Math.abs(priceChange) <= 0.01) {
-                                    displayText = 'Bonded';
-                                    colorClass = 'text-[rgb(148,158,156)]';
+                                    if (marketCap >= 200000) {
+                                        displayText = 'Bonded';
+                                        colorClass = 'text-[rgb(148,158,156)]';
+                                    } else {
+                                        displayText = '+0.00%';
+                                        colorClass = 'text-[rgb(148,158,156)]';
+                                    }
                                 } else if (priceChange > 0) {
                                     displayText = `+${priceChange.toFixed(2)}%`;
                                     colorClass = 'text-emerald-400';
@@ -523,7 +842,11 @@
                                 if (path) {
                                     let pathColor;
                                     if (Math.abs(priceChange) <= 0.01) {
-                                        pathColor = 'rgb(16, 185, 129)'; // Green for bonded
+                                        if (marketCap >= 200000) {
+                                            pathColor = 'rgb(148, 158, 156)'; // Grey for bonded
+                                        } else {
+                                            pathColor = 'rgb(148, 158, 156)'; // Grey for no movement
+                                        }
                                     } else if (priceChange > 0) {
                                         pathColor = 'rgb(16, 185, 129)';
                                     } else {
@@ -601,6 +924,7 @@
                             const tvlValue = launchItem.querySelector('.tvl-value');
                             if (tvlValue) {
                                 tvlValue.textContent = `$${formatNumber(tvl)}`;
+                                this.updateProgressBar(); // Update progress bar when TVL changes
                             }
 
                             // Update market cap
@@ -616,24 +940,10 @@
                                 priceValue.textContent = `$${formattedPrice}`;
                             }
 
-                            // Update hover border color based on performance
-                            const latestPrice = this.timestampedPrices[0].price;
-                            const oldestPrice = this.timestampedPrices[this.timestampedPrices.length - 1].price;
-                            const priceChange = ((latestPrice - oldestPrice) / oldestPrice) * 100;
-                            
-                            let borderColor;
-                            if (Math.abs(priceChange) <= 0.01) {
-                                borderColor = 'rgba(148, 158, 156, 0.4)'; // Gray for neutral
-                            } else if (priceChange > 0) {
-                                borderColor = 'rgba(16, 185, 129, 0.4)'; // Green for positive
-                            } else {
-                                borderColor = 'rgba(239, 68, 68, 0.4)'; // Red for negative
-                            }
-                            
-                            // Apply the custom hover style
+                            // Set hover border color to always be green
                             launchItem.style.transition = 'border-color 0.2s ease';
                             launchItem.addEventListener('mouseenter', () => {
-                                launchItem.style.borderColor = borderColor;
+                                launchItem.style.borderColor = 'rgba(72, 255, 225, 0.4)';
                             });
                             launchItem.addEventListener('mouseleave', () => {
                                 launchItem.style.borderColor = '#0a2622';
@@ -675,7 +985,13 @@
                 }
 
                 // Load starred tokens from localStorage
-                const starredTokens = new Set(JSON.parse(localStorage.getItem('starredTokens') || '[]'));
+                const starredTokens = new Set(JSON.parse(localStorage.getItem('starredTokens') || '["PURRG"]'));
+
+                // Ensure PURRG is always in starredTokens
+                if (!starredTokens.has('PURRG')) {
+                    starredTokens.add('PURRG');
+                    localStorage.setItem('starredTokens', JSON.stringify([...starredTokens]));
+                }
 
                 // Function to sort items with consistent starred behavior
                 function sortWithStarred(items, sortFn = null) {
@@ -782,8 +1098,40 @@
                         // Clear existing streams
                         allPriceStreams = [];
                         
-                        const metadata = launchesData;
-                        document.querySelector('.total-launches').textContent = metadata.tokens.length;
+                        // Fetch launches data from Redis
+                        console.log('Fetching launches data from Redis...');
+                        const response = await fetch('https://witty-dassie-40050.upstash.io/get/launches_data', {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': 'Bearer AZxyAAIjcDE3Mzk2MTJkNzJjMDg0Yzk0ODMyZWE3YmRjOGRmZTQxZHAxMA'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            console.error(`Redis request failed with status ${response.status}: ${response.statusText}`);
+                            throw new Error('Failed to fetch launches data');
+                        }
+                        
+                        const data = await response.json();
+                        console.log('Redis raw response:', data);
+                        
+                        // Parse the Redis response - it's a JSON string inside result
+                        let parsedData;
+                        try {
+                            parsedData = JSON.parse(data.result);
+                            console.log('Parsed Redis data:', parsedData);
+                        } catch (e) {
+                            console.error('Failed to parse Redis data:', e);
+                            throw new Error('Invalid launches data format');
+                        }
+
+                        if (!parsedData.value || !parsedData.value.tokens || !Array.isArray(parsedData.value.tokens)) {
+                            console.error('Invalid metadata structure:', parsedData);
+                            throw new Error('Invalid launches data format');
+                        }
+
+                        const tokens = parsedData.value.tokens;
+                        document.querySelector('.total-launches').textContent = tokens.length;
 
                         // Create launch elements
                         const container = document.getElementById('launches-container');
@@ -852,7 +1200,7 @@
                         }
 
                         // Create and append tokens in order
-                        metadata.tokens.forEach((token, index) => {
+                        tokens.forEach((token, index) => {
                             // Create new element from template HTML
                             const tempDiv = document.createElement('div');
                             tempDiv.innerHTML = templateHtml;
@@ -951,7 +1299,12 @@
                                 tokenName.textContent = token.ticker;
                             }
                             if (tokenDescription) {
-                                tokenDescription.textContent = token.name;
+                                // Truncate description to 30 characters and add ellipsis if needed
+                                const maxLength = 30;
+                                const description = token.name;
+                                tokenDescription.textContent = description.length > maxLength 
+                                    ? description.substring(0, maxLength) + '...' 
+                                    : description;
                             }
                             
                             // Update social links
@@ -962,7 +1315,11 @@
                                 // Add website link if exists
                                 if (token.links.website) {
                                     const websiteLink = document.createElement('a');
-                                    websiteLink.href = token.links.website;
+                                    // Add https:// if the URL doesn't start with http:// or https://
+                                    const websiteUrl = token.links.website.match(/^https?:\/\//) ? 
+                                        token.links.website : 
+                                        `https://${token.links.website}`;
+                                    websiteLink.href = websiteUrl;
                                     websiteLink.target = '_blank';
                                     websiteLink.className = 'social-link text-[rgb(148,158,156)] hover:text-white';
                                     websiteLink.innerHTML = `

@@ -616,9 +616,9 @@ async function main() {
             console.log('No PURR/USDC hourly data found');
         }
 
-        /* Temporarily commenting out rest of processing for quick testing
         // Now proceed with the rest of the data
         // 1. Populate spot data (this includes daily data chunking)
+        console.log('\n=== Populating spot data for all tokens ===');
         const spotData = await populateSpotData();
         
         // 2. Create all indices
@@ -627,14 +627,22 @@ async function main() {
         // 3. Update 7-day snapshot data with hourly granularity
         console.log('\n=== Updating 7-day snapshot data with hourly granularity ===');
 
-        // Process other tokens
-        const tokenIds = Array.from({ length: lastTokenId }, (_, i) => i + 1);
-        const uniqueBatches = Math.ceil(tokenIds.length / CHUNK_SIZE);
+        // Get metadata to determine last token ID
+        const metadataStr = await redis.get('spot_data_daily_metadata');
+        const metadata = typeof metadataStr === 'string' ? JSON.parse(metadataStr) : metadataStr;
+        const lastTokenId = metadata.lastTokenId;
+        // Always check 5 more tokens beyond the last known token ID to catch new launches
+        const maxTokenId = lastTokenId + 5;
+        const BATCH_SIZE = 5;
 
-        console.log(`Processing ${tokenIds.length} tokens in ${uniqueBatches} batches...`);
+        // Process tokens including potential new ones
+        const tokenIds = Array.from({ length: maxTokenId }, (_, i) => i + 1);
+        const uniqueBatches = Math.ceil(tokenIds.length / BATCH_SIZE);
 
-        for (const batchNum of uniqueBatches) {
-            const batchTokenIds = tokenIds.filter(id => Math.floor(parseInt(id) / batchSize) === batchNum);
+        console.log(`Processing ${tokenIds.length} tokens in ${uniqueBatches} batches (including ${maxTokenId - lastTokenId} potential new tokens)...`);
+
+        for (let batchNum = 0; batchNum < uniqueBatches; batchNum++) {
+            const batchTokenIds = tokenIds.filter(id => Math.floor((id - 1) / BATCH_SIZE) === batchNum);
             console.log(`\nProcessing batch ${batchNum} with ${batchTokenIds.length} tokens...`);
             
             const batchData = [];
@@ -660,30 +668,28 @@ async function main() {
         }
 
         // Store the number of chunks
-        const numChunks = Math.max(...uniqueBatches) + 1;
-        await redis.set('spot_data_7d_chunks', numChunks);
-        console.log(`\nStored ${numChunks} chunks of hourly snapshot data`);
+        await redis.set('spot_data_7d_chunks', uniqueBatches.toString());
+        console.log(`\nStored ${uniqueBatches} chunks of hourly snapshot data`);
 
         // 4. Update latest launch data
         console.log('\n=== Updating latest launch data ===');
         // Find the token with the highest ID that has data
         const latestToken = spotData.reduce((latest, current) => {
-            return (!latest || current.tokenId > latest.tokenId) ? current : latest;
+            return (!latest || parseInt(current.tokenId.slice(1)) > parseInt(latest.tokenId.slice(1))) ? current : latest;
         }, null);
 
         if (latestToken) {
             const latestLaunchData = {
-                fullName: `@${latestToken.tokenId}`,
-                name: latestToken.displayName || `@${latestToken.tokenId}`,
+                fullName: latestToken.tokenId,
+                name: latestToken.tokenId,
                 launchTime: latestToken.prices[0][0],
                 launchPrice: latestToken.prices[0][1]
             };
             console.log('Latest launch data:', latestLaunchData);
             await redis.set('latest_launch', JSON.stringify(latestLaunchData));
         }
-        */
         
-        console.log('\nPURR data update completed successfully!');
+        console.log('\nSpot data update completed successfully!');
         process.exit(0);
     } catch (error) {
         console.error('Error in main execution:', error);

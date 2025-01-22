@@ -8,6 +8,7 @@ import re
 import time
 from typing import Dict, List
 import os
+import requests
 
 class HypurrScraper:
     def __init__(self, headless=False):
@@ -312,7 +313,34 @@ class HypurrScraper:
             
             data = {"tokens": top_30_launches}
             
-            # Format the output JSON
+            # Upload to Redis
+            print("\nUploading launches data to Redis...")
+            try:
+                response = requests.post(
+                    'https://witty-dassie-40050.upstash.io/set/launches_data',
+                    headers={
+                        'Authorization': 'Bearer AZxyAAIjcDE3Mzk2MTJkNzJjMDg0Yzk0ODMyZWE3YmRjOGRmZTQxZHAxMA'
+                    },
+                    json={
+                        'key': 'launches_data',
+                        'value': {
+                            'tokens': top_30_launches
+                        }
+                    }
+                )
+                print("Redis request payload:", {
+                    'key': 'launches_data',
+                    'value': str(data)[:100] + '...' if len(str(data)) > 100 else str(data)
+                })
+                if response.ok:
+                    print("Successfully uploaded launches data to Redis")
+                    print("Response:", response.json())
+                else:
+                    print(f"Failed to upload to Redis: {response.status_code} - {response.text}")
+            except Exception as e:
+                print(f"Error uploading to Redis: {str(e)}")
+
+            # Format the output JSON for the file
             output_json = json.dumps(data, indent=4, ensure_ascii=False)
             # Clean up any trailing commas in the formatted output
             output_json = re.sub(r',(\s*[}\]])', r'\1', output_json)

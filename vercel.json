@@ -14,12 +14,17 @@
     { "src": "pages/airdrops/**", "use": "@vercel/static" },
     { "src": "pages/ecosystem/**", "use": "@vercel/static" },
     { "src": "pages/launches/**", "use": "@vercel/static" },
+    { "src": "pages/dashboard/**", "use": "@vercel/static" },
     { "src": "styles/**", "use": "@vercel/static" }
   ],
   "routes": [
     {
       "src": "/components/(.*)",
       "dest": "/public/components/$1"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "/pages/dashboard/index.html"
     },
     {
       "src": "/ecosystem",

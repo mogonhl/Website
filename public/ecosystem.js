@@ -156,81 +156,83 @@ async function fetchMarketData() {
     }
 }
 
-async function fetchBatchedSnapshotData(tokenIds, retryCount = 0) {
-    const maxRetries = 5;
+async function fetchBatchedSnapshotData(tokenIds) {
     const batchSize = 5;
+    const tokenDataMap = {};
     
-    if (retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-    }
-    
-    const uniqueBatches = new Set(tokenIds.map(id => {
-        if (id === 'purr') return -1;
-        return Math.floor(parseInt(id) / batchSize);
-    }));
-    
-    const fetchPromises = [];
-
+    // Handle PURR data first if requested
     if (tokenIds.includes('purr')) {
-        fetchPromises.push(
-            fetch(`/api/redis/get?key=spot_data_7d_purr`).then(async r => {
-                const data = await r.json();
-                if (data && Array.isArray(data) && data[0]) {
-                    return [{
-                        ...data[0],
-                        tokenId: 'purr'
-                    }];
-                }
-                return [];
-            })
-        );
+        const purrResponse = await fetch(`/api/redis/get?key=spot_data_7d_purr`);
+        const purrData = await purrResponse.json();
+        console.log('PURR data from Redis:', purrData);
+        
+        if (purrData && purrData.prices && purrData.timestamps && purrData.total_volumes) {
+            // Create arrays of [timestamp, value] pairs
+            const prices = [];
+            const volumes = [];
+            
+            for (let i = 0; i < purrData.timestamps.length; i++) {
+                prices.push([purrData.timestamps[i], parseFloat(purrData.prices[i])]);
+                volumes.push([purrData.timestamps[i], parseFloat(purrData.total_volumes[i])]);
+            }
+            
+            tokenDataMap['purr'] = {
+                tokenId: 'purr',
+                coin: 'purr',
+                prices: prices,
+                total_volumes: volumes,
+                market_caps: prices.map(([timestamp]) => [timestamp, 0])
+            };
+            console.log('Processed PURR data:', tokenDataMap['purr']);
+        } else {
+            console.error('PURR data missing required fields:', purrData);
+        }
     }
-
-    const batchPromises = Array.from(uniqueBatches).filter(num => num >= 0).map(batchNum => 
-        fetch(`/api/redis/get?key=spot_data_7d_${batchNum}`).then(r => r.json())
-    );
-    fetchPromises.push(...batchPromises);
-
+    
+    // Handle other tokens in batches
+    const nonPurrTokens = tokenIds.filter(id => id !== 'purr');
+    const uniqueBatches = new Set(nonPurrTokens.map(id => Math.floor(parseInt(id) / batchSize)));
+    
     try {
-        const allResults = await Promise.all(fetchPromises);
-        const allData = allResults.flat();
-        const tokenDataMap = {};
+        const batchPromises = Array.from(uniqueBatches).map(batchNum => 
+            fetch(`/api/redis/get?key=spot_data_7d_${batchNum}`).then(r => r.json())
+        );
+        
+        const batchResults = await Promise.all(batchPromises);
+        const allData = batchResults.flat();
+        
+        console.log('Received data:', allData);
         
         allData.forEach(data => {
-            if (data) {
-                if (data.coin === 'PURR/USDC') {
-                    tokenDataMap['purr'] = data;
-                } else {
-                    const id = data.tokenId?.replace('@', '') || data.coin?.replace('@', '');
-                    if (id) {
-                        tokenDataMap[id] = data;
-                    }
+            if (!data) {
+                console.log('Skipping null/undefined data entry');
+                return;
+            }
+            
+            console.log('Processing data entry:', data);
+            try {
+                // Handle both string and number tokenIds
+                const tokenId = data.tokenId?.toString() || 
+                              data.coin?.toString() || 
+                              data.id?.toString();
+                
+                if (!tokenId) {
+                    console.log('Could not determine token ID from data:', data);
+                    return;
                 }
+
+                // Remove '@' prefix if it exists
+                const id = tokenId.startsWith('@') ? tokenId.substring(1) : tokenId;
+                tokenDataMap[id] = data;
+            } catch (error) {
+                console.error('Error processing data entry:', error);
             }
         });
-
-        // Check if we got data for all requested tokens
-        const missingTokens = tokenIds.filter(id => !tokenDataMap[id]);
-        if (missingTokens.length > 0 && retryCount < maxRetries) {
-            console.log(`Missing data for tokens: ${missingTokens.join(', ')}. Retrying... (${retryCount + 1}/${maxRetries})`);
-            // Increase delay between retries exponentially
-            const delay = Math.min(2000 * Math.pow(2, retryCount), 10000);
-            console.log(`Waiting ${delay}ms before retry...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            const retryData = await fetchBatchedSnapshotData(missingTokens, retryCount + 1);
-            return { ...tokenDataMap, ...retryData };
-        }
 
         return tokenDataMap;
     } catch (error) {
         console.error('Error fetching batched snapshot data:', error);
-        if (retryCount < maxRetries) {
-            const delay = Math.min(2000 * Math.pow(2, retryCount), 10000);
-            console.log(`Error occurred. Waiting ${delay}ms before retry... (${retryCount + 1}/${maxRetries})`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return fetchBatchedSnapshotData(tokenIds, retryCount + 1);
-        }
-        return {};
+        return tokenDataMap; // Return what we have
     }
 }
 

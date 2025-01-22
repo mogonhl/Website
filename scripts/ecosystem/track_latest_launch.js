@@ -35,7 +35,7 @@ async function testRedisConnection() {
 // Load token names from spot_names.json
 function loadTokenNames() {
     try {
-        const dataPath = path.join(process.cwd(), 'spot_names.json');
+        const dataPath = path.join(process.cwd(), 'public', 'spot_names.json');
         const tokenNames = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
         return tokenNames;
     } catch (error) {

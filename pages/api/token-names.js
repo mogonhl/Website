@@ -3,7 +3,7 @@ import path from 'path';
 
 export default function handler(req, res) {
     try {
-        const filePath = path.join(process.cwd(), 'spot_names.json');
+        const filePath = path.join(process.cwd(), 'public', 'spot_names.json');
         const fileContents = fs.readFileSync(filePath, 'utf8');
         const tokenNames = JSON.parse(fileContents);
         

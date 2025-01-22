@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="/styles/navbar.css" rel="stylesheet" />
+    <script src="/components/navbar.js"></script>
+    <!-- Base dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #002420;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            transform: translateY(20%);
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            opacity: 0.5;
+            z-index: -1;
+            transform: translateY(20%);
+        }
+
+        .section {
+            padding-top: 2rem;
+        }
+
+        .min-h-screen {
+            height: 100vh;
+        }
+
+        .tab-indicator {
+            height: 1px;
+            bottom: -1px;
+        }
+
+        #index-chart {
+            min-height: 300px;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-right {
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-right > div {
+            flex: 1;
+            min-height: 300px;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            background-color: #0f1a1f;
+            border: 1px solid #0a2622;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: rgba(72, 255, 225, 0.9);
+        }
+
+        /* Override fills.js styles to match our branding */
+        .fills-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: transparent;
+            color: #e0e0e0;
+            table-layout: fixed;
+        }
+
+        /* Column widths */
+        .fills-table th:nth-child(1),
+        .fills-table td:nth-child(1) {
+            width: 65px;  /* Type column */
+            padding-right: 4px;  /* Further reduce right padding */
+        }
+
+        .fills-table th:nth-child(2),
+        .fills-table td:nth-child(2) {
+            width: 180px;  /* Account column */
+            padding-left: 4px;  /* Reduce left padding */
+        }
+
+        .fills-table th:nth-child(3),
+        .fills-table td:nth-child(3) {
+            width: 120px;  /* Price column */
+        }
+
+        .fills-table th:nth-child(4),
+        .fills-table td:nth-child(4) {
+            width: 120px;  /* Amount column */
+        }
+
+        .fills-table th:nth-child(5),
+        .fills-table td:nth-child(5) {
+            width: 120px;  /* Total column */
+        }
+
+        .fills-table th:nth-child(6),
+        .fills-table td:nth-child(6) {
+            width: 100px;  /* Time column */
+        }
+
+        .fills-table th:nth-child(7),
+        .fills-table td:nth-child(7) {
+            width: 40px;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .fills-table thead {
+            background-color: transparent;
+        }
+
+        .fills-table th {
+            padding: 16px;
+            text-align: left;
+            color: rgb(148, 158, 156);
+            font-weight: normal;
+            border-bottom: 1px solid #0a2622;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .fills-table thead tr th:first-child {
+            padding-left: 16px;  /* Ensure first column aligns properly */
+        }
+
+        .fills-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #0a2622;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 14px;
+        }
+
+        .fills-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .fills-table tbody tr:hover {
+            background-color: rgba(16, 25, 31, 0.5);
+        }
+
+        .fill-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .fill-type.buy {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .fill-type.sell {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .fill-account {
+            font-family: 'Inter', sans-serif;
+            color: rgb(148, 158, 156);
+            font-size: 13px;
+        }
+
+        .fill-price {
+            color: rgb(148, 158, 156);
+            font-size: 13px;
+        }
+
+        .fill-amount {
+            color: rgb(148, 158, 156);
+            font-size: 13px;
+        }
+
+        .fill-usd {
+            font-size: 14px;
+        }
+
+        .fill-usd.buy {
+            color: #10b981;  /* Same green as the buy badge */
+        }
+
+        .fill-usd.sell {
+            color: #ef4444;  /* Same red as the sell badge */
+        }
+
+        .fill-time {
+            color: rgb(148, 158, 156);
+            font-size: 13px;
+        }
+
+        /* Sticker column styles */
+        .trade-sticker {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            vertical-align: middle;
+            margin-left: 4px;
+        }
+
+        .fill-sticker {
+            padding: 0 !important;
+        }
+
+        #high-value-toggle.active {
+            background-color: rgba(16, 185, 129, 0.1) !important;
+            border-color: rgba(72,255,225,0.9) !important;
+        }
+        #high-value-toggle.active span {
+            color: rgba(72,255,225,0.9);
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <div class="min-h-screen pt-12">
+        <div class="max-w-7xl mx-auto px-8 pt-20">
+            <div class="flex flex-col mb-8">
+                <h1 class="text-4xl font-bold">
+                    <span class="text-[rgba(72,255,225,0.9)]">Dashboard</span>
+                    <span> Overview</span>
+                </h1>
+                <p class="text-[rgb(148,158,156)] mt-2">All tools a degen needs. At your fingertips. it's about Speed.</p>
+            </div>
+
+            <!-- Transaction Feed Section -->
+            <div class="mt-8">
+                <div class="flex items-center justify-between mb-4 px-6">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl text-white font-medium">Transaction Feed</span>
+                        <span class="text-xs bg-[rgba(72,255,225,0.2)] text-[rgba(72,255,225,0.9)] px-2 py-0.5 rounded">Beta</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button 
+                            id="high-value-toggle"
+                            class="w-9 h-9 flex items-center justify-center rounded bg-[#0f1a1f] border border-[#0a2622] hover:border-[rgba(72,255,225,0.9)] transition-all duration-200"
+                            title="Toggle high-value transactions"
+                        >
+                            <img src="/assets/logo.png" alt="Toggle" class="w-7 h-7 object-contain">
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg">
+                    <div id="fills-container">
+                        <table class="fills-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Account</th>
+                                    <th>Price</th>
+                                    <th>Amount</th>
+                                    <th>Total</th>
+                                    <th>Time</th>
+                                    <th>Sticker</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Fills will be inserted here dynamically -->
+                            </tbody>
+                        </table>
+                        <div class="flex justify-end items-center gap-2 p-4 border-t border-[#0a2622]">
+                            <span class="text-[rgb(148,158,156)] text-sm" id="fills-pagination">1-15 of 0</span>
+                            <div class="flex gap-1">
+                                <button onclick="fills.changePage(-1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="fills-prev" disabled>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M15 18l-6-6 6-6"/>
+                                    </svg>
+                                </button>
+                                <button onclick="fills.changePage(1)" class="text-[rgba(72,255,225,0.9)] hover:text-[rgba(72,255,225,1)] px-2 disabled:opacity-50" id="fills-next" disabled>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9 18l6-6-6-6"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Include the fills handler -->
+    <script src="/pages/dashboard/fills.js"></script>
+</body>
+</html> 

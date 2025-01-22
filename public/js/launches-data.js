@@ -1,29 +1,6 @@
 const launchesData = {
     "tokens": [
         {
-            "id": "PURRG",
-            "streamId": "AAAAAAcIiTsSAjVt",
-            "ticker": "PURRG",
-            "name": "THE CAT STAYS ARROGANT.",
-            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAGbGTBnbuoFBttMX0oufiDe1KXnoWnVyQACi8MxG7CFeFNSO2Fq5NNnTgEAAwIAA20AAzYE",
-            "hypurr": "https://app.hypurr.fun/launch/7561",
-            "links": {
-                "twitter": "https://x.com/purrg_hl",
-                "website": "https://www.purrg.com/"
-            }
-        },
-        {
-            "id": "HWTR",
-            "streamId": "AAAAAAcIrmYSAjVt",
-            "ticker": "HWTR",
-            "name": "First AI investment DAO on Hyperliquid",
-            "icon": "https://media.hypurr.fun/AgACAgUAAxkBAQb9dmeIHDB2cJf08tXmG3tdPxtdIEsRAAIG1TEbDexBVJ4xZEH2HBlBAQADAgADeAADNgQ",
-            "hypurr": "https://app.hypurr.fun/launch/13102",
-            "links": {
-                "twitter": "https://x.com/HedgewaterDAO"
-            }
-        },
-        {
             "id": "TILT",
             "streamId": "AAAAAAcIxk4SAjVt",
             "ticker": "TILT",
@@ -39,23 +16,12 @@ const launchesData = {
             "id": "VORTX",
             "streamId": "AAAAAAcIsE0SAjVt",
             "ticker": "VORTX",
-            "name": "Interface for HL combining web and Di...",
+            "name": "Interface for HL combining web and Discord trade",
             "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAGjhANncwkVYsenC6fB-2wNLs-SYYhNlgACp60xG75hmEcmP1xf1YSTNAEAAwIAA3gAAzYE",
             "hypurr": "https://app.hypurr.fun/launch/9904",
             "links": {
                 "twitter": "https://x.com/vortx_hl",
                 "website": "vortx.gg"
-            }
-        },
-        {
-            "id": "GUARD",
-            "streamId": "AAAAAAcI11oSAjVt",
-            "ticker": "GUARD",
-            "name": "Chain Guardians",
-            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAHRAhZnew_DyHoy6QABz_z3ZtqabZYue-4AAlHEMRuI_9lT3W3ODcMmjKsBAAMCAAN5AAM2BA",
-            "hypurr": "https://app.hypurr.fun/launch/11607",
-            "links": {
-                "twitter": "https://x.com/_ChainGuardians"
             }
         },
         {
@@ -70,28 +36,14 @@ const launchesData = {
             }
         },
         {
-            "id": "HYDRA",
-            "streamId": "AAAAAAcIg0kSAjVt",
-            "ticker": "HYDRA",
-            "name": "HYDRA: AI trading agent on Hyper...",
-            "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAG8aF9nd6IjnXxGXAABLqxraoVmdl1XRPEAAlitMRuNccBHP2DHv8Xwf7cBAAMCAAN5AAM2BA",
-            "hypurr": "https://app.hypurr.fun/launch/9347",
+            "id": "GUARD",
+            "streamId": "AAAAAAcI11oSAjVt",
+            "ticker": "GUARD",
+            "name": "Chain Guardians",
+            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAHRAhZnew_DyHoy6QABz_z3ZtqabZYue-4AAlHEMRuI_9lT3W3ODcMmjKsBAAMCAAN5AAM2BA",
+            "hypurr": "https://app.hypurr.fun/launch/11607",
             "links": {
-                "twitter": "https://x.com/AgentHydra_com",
-                "telegram": "https://t.me/Agent_HYDRA",
-                "website": "https://www.agenthydra.com"
-            }
-        },
-        {
-            "id": "HORSY",
-            "streamId": "AAAAAAcI0igSAjVt",
-            "ticker": "HORSY",
-            "name": "$HORSY",
-            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAFGSUtnXzll31MjFGkn6n6zrLHboFzxSAACG8MxG4v5AVMVLQJD8LDNOAEAAwIAA3gAAzYE",
-            "hypurr": "https://app.hypurr.fun/launch/5202",
-            "links": {
-                "twitter": "https://x.com/HorsyOnHL",
-                "website": "Horsy.games"
+                "twitter": "https://x.com/_ChainGuardians"
             }
         },
         {
@@ -107,14 +59,62 @@ const launchesData = {
             }
         },
         {
+            "id": "HORSY",
+            "streamId": "AAAAAAcI0igSAjVt",
+            "ticker": "HORSY",
+            "name": "$HORSY",
+            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAFGSUtnXzll31MjFGkn6n6zrLHboFzxSAACG8MxG4v5AVMVLQJD8LDNOAEAAwIAA3gAAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/5202",
+            "links": {
+                "twitter": "https://x.com/HorsyOnHL",
+                "website": "Horsy.games"
+            }
+        },
+        {
+            "id": "HYPPIE",
+            "streamId": "AAAAAAcI2TkSAjVt",
+            "ticker": "HYPPIE",
+            "name": "HyppieLiquid",
+            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAFts8JnY0jy0k_fqFKZ5rSLBwfg-epW9QACecIxG9bjGFNR8TKu7sGTFQEAAwIAA3gAAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/7385",
+            "links": {
+                "twitter": "https://x.com/hyppieliquid",
+                "website": "https://hyppieliquid.com"
+            }
+        },
+        {
             "id": "RAT",
             "streamId": "AAAAAAcIqFQSAjVt",
             "ticker": "RAT",
-            "name": "Rat Race Combat: Skill, Gems...",
+            "name": "Rat Race Combat: Skill, Gems, Crypto. 🐀💎",
             "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAG5te9ndvec4Y5Xesm5eiNyYUVD5hUPzgACNcUxG9GDuFO10froyDN_wgEAAwIAA3kAAzYE",
             "hypurr": "https://app.hypurr.fun/launch/10792",
             "links": {
                 "twitter": "https://x.com/ratracecombat"
+            }
+        },
+        {
+            "id": "HYDRA",
+            "streamId": "AAAAAAcIg0kSAjVt",
+            "ticker": "HYDRA",
+            "name": "HYDRA: AI trading agent on Hyperliquid with ML.",
+            "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAG8aF9nd6IjnXxGXAABLqxraoVmdl1XRPEAAlitMRuNccBHP2DHv8Xwf7cBAAMCAAN5AAM2BA",
+            "hypurr": "https://app.hypurr.fun/launch/9347",
+            "links": {
+                "twitter": "https://x.com/AgentHydra_com",
+                "telegram": "https://t.me/Agent_HYDRA",
+                "website": "https://www.agenthydra.com"
+            }
+        },
+        {
+            "id": "LUNA",
+            "streamId": "AAAAAAcI5BsSAjVt",
+            "ticker": "LUNA",
+            "name": "Luna, the daughter of Liquina and Schizo",
+            "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAFBYAxnXvN4Ccb7AuKtt1sIkfLoQC21BAAChq0xG-52-UZQeKTN8AR5SgEAAwIAA20AAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/3556",
+            "links": {
+                "twitter": "https://x.com/LunaAI_HL"
             }
         },
         {
@@ -140,18 +140,6 @@ const launchesData = {
             }
         },
         {
-            "id": "GROMP",
-            "streamId": "AAAAAAcIqWQSAjVt",
-            "ticker": "GROMP",
-            "name": "AI-powered trading insights for Hyp...",
-            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAH6Z0pnhWc8dfq7retaMt5i_FFOlJIquwAC2ccxGwdXKFDnAAFnQTWFbdkBAAMCAAN4AAM2BA",
-            "hypurr": "https://app.hypurr.fun/launch/12841",
-            "links": {
-                "twitter": "https://x.com/GrompAI",
-                "website": "Gromp.ai"
-            }
-        },
-        {
             "id": "KARU",
             "streamId": "AAAAAAcI4CASAjVt",
             "ticker": "KARU",
@@ -160,17 +148,6 @@ const launchesData = {
             "hypurr": "https://app.hypurr.fun/launch/4192",
             "links": {
                 "twitter": "https://x.com/karu__16"
-            }
-        },
-        {
-            "id": "LUNA",
-            "streamId": "AAAAAAcI5BsSAjVt",
-            "ticker": "LUNA",
-            "name": "Luna, the daughter of Liquina and Schizo",
-            "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAFBYAxnXvN4Ccb7AuKtt1sIkfLoQC21BAAChq0xG-52-UZQeKTN8AR5SgEAAwIAA20AAzYE",
-            "hypurr": "https://app.hypurr.fun/launch/3556",
-            "links": {
-                "twitter": "https://x.com/LunaAI_HL"
             }
         },
         {
@@ -186,31 +163,6 @@ const launchesData = {
             }
         },
         {
-            "id": "PFUN",
-            "streamId": "AAAAAAcImGMSAjVt",
-            "ticker": "PFUN",
-            "name": "Bet on token success with PredictFun...",
-            "icon": "https://media.hypurr.fun/AgACAgIAAxkBAAH0yzFngspKgme236v4tBnlqBG5_bpKRAAC7ucxG77EGUg84YNTz3Gu4QEAAwIAA3gAAzYE",
-            "hypurr": "https://app.hypurr.fun/launch/12696",
-            "links": {
-                "twitter": "https://x.com/PredictFun_hl",
-                "website": "https://predictfun.xyz"
-            }
-        },
-        {
-            "id": "BTD",
-            "streamId": "AAAAAAcIoT8SAjVt",
-            "ticker": "BTD",
-            "name": "Bitcoin-pegged token with the staking...",
-            "icon": "https://media.hypurr.fun/AgACAgUAAxkBAQJMlmeHJBeJyrRbSFobpiHuAgGpHeTtAAKBxTEbEK85VCsCDHWzMIK_AQADAgADeQADNgQ",
-            "hypurr": "https://app.hypurr.fun/launch/8097",
-            "links": {
-                "twitter": "https://x.com/bitcoindogs8",
-                "telegram": "https://t.me/addstickers/BitcoinDogs7",
-                "website": "https://bitcoindogss.github.io"
-            }
-        },
-        {
             "id": "CHAD",
             "streamId": "AAAAAAcIsgsSAjVt",
             "ticker": "CHAD",
@@ -219,43 +171,6 @@ const launchesData = {
             "hypurr": "https://app.hypurr.fun/launch/1458",
             "links": {
                 "twitter": "https://x.com/HyperChadCoin."
-            }
-        },
-        {
-            "id": "AIVA",
-            "streamId": "AAAAAAcI8WQSAjVt",
-            "ticker": "AIVA",
-            "name": "The first AI-driven stablecoin on Hyper...",
-            "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAH9i0Jnhm9F6zDdVullROQyfP6tFoZtcQACzqwxG0NjOEQDI1jG2aIwdgEAAwIAA3kAAzYE",
-            "hypurr": "https://app.hypurr.fun/launch/12913",
-            "links": {
-                "twitter": "https://x.com/AIVAFinance",
-                "telegram": "https://t.me/AIVAFi"
-            }
-        },
-        {
-            "id": "HPAD",
-            "streamId": "AAAAAAcIxmISAjVt",
-            "ticker": "HPAD",
-            "name": "HypePad",
-            "icon": "https://media.hypurr.fun/AgACAgUAAxkBAAHz9QxngpFksktP-oMWVG_sfg1vsNlCwwAClMIxG_WVGFS5_jMbDCo-JQEAAwIAA3gAAzYE",
-            "hypurr": "https://app.hypurr.fun/launch/12614",
-            "links": {
-                "twitter": "https://x.com/hypepad_hl",
-                "telegram": "https://t.me/hypepadchat",
-                "website": "hypepad.fun"
-            }
-        },
-        {
-            "id": "HAI",
-            "streamId": "AAAAAAcIpk0SAjVt",
-            "ticker": "HAI",
-            "name": "HyperAI Platform",
-            "icon": "https://media.hypurr.fun/AgACAgIAAxkBAAGjC8ZncvFL5hpYpL2LJYN9qFRSKKW45wACFukxG2wzmUtoWeRny7FsGwEAAwIAA3gAAzYE",
-            "hypurr": "https://app.hypurr.fun/launch/9894",
-            "links": {
-                "twitter": "https://x.com/HyperAI_trade",
-                "telegram": "https://t.me/HyperAI_trade"
             }
         },
         {
@@ -271,6 +186,41 @@ const launchesData = {
             }
         },
         {
+            "id": "HAI",
+            "streamId": "AAAAAAcIpk0SAjVt",
+            "ticker": "HAI",
+            "name": "HyperAI Platform",
+            "icon": "https://media.hypurr.fun/AgACAgIAAxkBAAGjC8ZncvFL5hpYpL2LJYN9qFRSKKW45wACFukxG2wzmUtoWeRny7FsGwEAAwIAA3gAAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/9894",
+            "links": {
+                "twitter": "https://x.com/HyperAI_trade",
+                "telegram": "https://t.me/HyperAI_trade"
+            }
+        },
+        {
+            "id": "GRAND",
+            "streamId": "AAAAAAcI02cSAjVt",
+            "ticker": "GRAND",
+            "name": "Tap2Earn game on Hyperliquid. 300K Users, 2M subs",
+            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAQ-gJ2eKYynLp0Fxt048X23h-FqhteEoAAJmyjEbMOBZUCwQNmqb4PI_AQADAgADeAADNgQ",
+            "hypurr": "https://app.hypurr.fun/launch/13267",
+            "links": {
+                "twitter": "https://x.com/grand_combat",
+                "telegram": "https://t.me/grandcombat_bot"
+            }
+        },
+        {
+            "id": "BUBBLE",
+            "streamId": "AAAAAAcItmUSAjVt",
+            "ticker": "BUBBLE",
+            "name": "BubbleMap and Terminal Tools for HyperLiquid",
+            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAQFWbmeG5ESRPQz-0OvYICVS6Rwat_i6AAKsxjEbhts4UNvlQaCyYUhzAQADAgADeAADNgQ",
+            "hypurr": "https://app.hypurr.fun/launch/12982",
+            "links": {
+                "twitter": "https://x.com/hyperbubble_app"
+            }
+        },
+        {
             "id": "PLCAT",
             "streamId": "AAAAAAcI1SoSAjVt",
             "ticker": "PLCAT",
@@ -283,69 +233,22 @@ const launchesData = {
             }
         },
         {
-            "id": "GIGAHL",
-            "streamId": "AAAAAAcI4GESAjVt",
-            "ticker": "GIGAHL",
-            "name": "GIGA LIQUID",
-            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAHtDRBngKhmp_njuyI4UZI-YggSDSZ1FgACscYxGwJ-AAFQr9VEvq0St3MBAAMCAAN5AAM2BA",
-            "hypurr": "https://app.hypurr.fun/launch/12512",
+            "id": "PFUN",
+            "streamId": "AAAAAAcImGMSAjVt",
+            "ticker": "PFUN",
+            "name": "Bet on token success with PredictFun on HypurrFun!",
+            "icon": "https://media.hypurr.fun/AgACAgIAAxkBAAH0yzFngspKgme236v4tBnlqBG5_bpKRAAC7ucxG77EGUg84YNTz3Gu4QEAAwIAA3gAAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/12696",
             "links": {
-                "twitter": "https://x.com/GigaLiquidOnHL",
-                "telegram": "https://t.me/addstickers/gigaliquidonhl"
-            }
-        },
-        {
-            "id": "BUBBLE",
-            "streamId": "AAAAAAcItmUSAjVt",
-            "ticker": "BUBBLE",
-            "name": "BubbleMap and Terminal Tools for Hype...",
-            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAQFWbmeG5ESRPQz-0OvYICVS6Rwat_i6AAKsxjEbhts4UNvlQaCyYUhzAQADAgADeAADNgQ",
-            "hypurr": "https://app.hypurr.fun/launch/12982",
-            "links": {
-                "twitter": "https://x.com/hyperbubble_app"
-            }
-        },
-        {
-            "id": "SYNAI",
-            "streamId": "AAAAAAcIhGcSAjVt",
-            "ticker": "SYNAI",
-            "name": "Premium AI tools powered by Synthara...",
-            "icon": "https://media.hypurr.fun/AgACAgIAAxkBAQrT6WeJIv4T5RQ4D8rh3IlXlGZ2fsAXAAKi6zEbP_pRSKaT2_8gHNs5AQADAgADeAADNgQ",
-            "hypurr": "https://app.hypurr.fun/launch/13188",
-            "links": {
-                "twitter": "https://x.com/SyntharaAI_hl",
-                "telegram": "https://t.me/syntharai",
-                "website": "https://www.syntharai.com"
-            }
-        },
-        {
-            "id": "BULBUL",
-            "streamId": "AAAAAAcI0kkSAjVt",
-            "ticker": "BULBUL",
-            "name": "For DAO members only—not for the public.",
-            "icon": "https://media.hypurr.fun/AgACAgQAAxUAAWdXaKzsuOs3kRANTXUqyLqkfzW6AALHwDEbEM0xU14hbYivWwWVAQADAgADYQADNgQ",
-            "hypurr": "https://app.hypurr.fun/launch/9426",
-            "links": {
-                "twitter": "https://x.com/kimsubbae114",
-                "telegram": "https://t.me/bulbul2cryptoDAO"
-            }
-        },
-        {
-            "id": "MAKAO",
-            "streamId": "AAAAAAcI8WYSAjVt",
-            "ticker": "MAKAO",
-            "name": "Makao Swap",
-            "icon": "https://media.hypurr.fun/AgACAgIAAxkBAQoIo2eI--zpKJMNnRWmfVOeFTvIyQyoAAKb6jEbKSRISAYHByA8D0UvAQADAgADeAADNgQ",
-            "hypurr": "https://app.hypurr.fun/launch/13169",
-            "links": {
-                "twitter": "https://x.com/makaoswap?s=21"
+                "twitter": "https://x.com/PredictFun_hl",
+                "website": "https://predictfun.xyz"
             }
         },
         {
             "id": "PAWS",
             "streamId": "AAAAAAcIszISAjVt",
             "ticker": "PAWS",
-            "name": "PAWSlytics - AI Trading Analytics on...",
+            "name": "PAWSlytics - AI Trading Analytics on Hyperliquid",
             "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAHIbyZneX4aQBT7sw7KzMvRNHTPiHgkXAACpMMxG_odyFMIOmYiaLBbqAEAAwIAA20AAzYE",
             "hypurr": "https://app.hypurr.fun/launch/6451",
             "links": {
@@ -354,14 +257,52 @@ const launchesData = {
             }
         },
         {
-            "id": "AURAI",
-            "streamId": "AAAAAAcI8mQSAjVt",
-            "ticker": "AURAI",
-            "name": "Automated AI agent on Hyperliquid",
-            "icon": "https://media.hypurr.fun/AgACAgIAAxkBAAH9wOBnhnRnL12wBVDE42enS_OsC9kIQgAChOkxG-bfMUjnTe_S69cxmQEAAwIAA3gAAzYE",
-            "hypurr": "https://app.hypurr.fun/launch/12914",
+            "id": "HPLT",
+            "streamId": "AAAAAAcI+2ASAjVt",
+            "ticker": "HPLT",
+            "name": "hypurrlottoapp - ($HPLT)",
+            "icon": "https://media.hypurr.fun/AgACAgUAAxkBAAHpyrlnf3iWgeg0LxliMjjwUrqkw5W1WgACycIxG1pWAAFUnHr8yvyYJ4QBAAMCAAN5AAM2BA",
+            "hypurr": "https://app.hypurr.fun/launch/12411",
             "links": {
-                "twitter": "https://x.com/AuraAgentHL"
+                "twitter": "https://x.com/hypurrlottoapp",
+                "telegram": "https://t.me/+tF0zWOAe0_4xZDA1",
+                "website": "https://hypurrlotto.app"
+            }
+        },
+        {
+            "id": "BLIPS",
+            "streamId": "AAAAAAcI7V0SAjVt",
+            "ticker": "BLIPS",
+            "name": "babylips is an aggregator bridge",
+            "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAHnRZZnftEraZd-JWyjkKbCMnAB_FAUGAACQa4xG0QH-EeUn6poFrMkNwEAAwIAA3gAAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/12013",
+            "links": {
+                "twitter": "https://x.com/baby_lips10",
+                "telegram": "https://t.me/baby_lipss",
+                "website": "li.fi"
+            }
+        },
+        {
+            "id": "PURRG",
+            "streamId": "AAAAAAcIiTsSAjVt",
+            "ticker": "PURRG",
+            "name": "THE CAT STAYS ARROGANT.",
+            "icon": "https://media.hypurr.fun/AgACAgQAAxkBAAGbGTBnbuoFBttMX0oufiDe1KXnoWnVyQACi8MxG7CFeFNSO2Fq5NNnTgEAAwIAA20AAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/7561",
+            "links": {
+                "twitter": "https://x.com/purrg_hl"
+            }
+        },
+        {
+            "id": "COOK",
+            "streamId": "AAAAAAcIxkwSAjVt",
+            "ticker": "COOK",
+            "name": "Computation Oriented Operations Kit",
+            "icon": "https://media.hypurr.fun/AgACAgEAAxkBAAGjwPJncxuJhhz6Z9yq9otg8rEvO1wJJAACea0xG8cdmUecpKGad5349gEAAwIAA3gAAzYE",
+            "hypurr": "https://app.hypurr.fun/launch/9798",
+            "links": {
+                "twitter": "https://x.com/cookprotocol",
+                "website": "cookprotocol.xyz"
             }
         }
     ]

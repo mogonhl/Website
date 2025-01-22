@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
-const ICONS_DIR = path.join(__dirname, '../public/assets/icons/spot');
+const ICONS_DIR = path.join(__dirname, '../../public/assets/icons/spot');
 
 async function fetchTokenNames() {
     console.log('Fetching token names from Hyperliquid API...');
@@ -64,9 +64,9 @@ async function fetchTokenNames() {
                     console.log('First few tokens:', Object.entries(tokenNames).slice(0, 5));
 
                     // Save to spot_names.json
-                    const namesPath = path.join(__dirname, '../spot_names.json');
+                    const namesPath = path.join(__dirname, '../../public/spot_names.json');
                     fs.writeFileSync(namesPath, JSON.stringify(tokenNames, null, 2));
-                    console.log('Token names saved to spot_names.json');
+                    console.log('Token names saved to spot_names.json at:', namesPath);
 
                     resolve(tokenNames);
                 } catch (error) {
@@ -89,11 +89,19 @@ async function fetchTokenNames() {
 }
 
 async function downloadIcon(name) {
-    console.log(`Downloading icon for ${name}...`);
+    console.log(`Processing icon for ${name}...`);
     
+    const iconPath = path.join(ICONS_DIR, `${name}.svg`);
+    
+    // Check if icon already exists
+    if (fs.existsSync(iconPath)) {
+        console.log(`Icon ${name}.svg already exists, skipping download`);
+        return true;
+    }
+    
+    console.log(`Downloading icon for ${name}...`);
     return new Promise((resolve) => {
         const iconUrl = `https://app.hyperliquid.xyz/coins/${name}_USDC.svg`;
-        const iconPath = path.join(ICONS_DIR, `${name}.svg`);
 
         const req = https.get(iconUrl, (res) => {
             if (res.statusCode === 200) {
@@ -123,14 +131,27 @@ async function downloadAllIcons() {
         fs.mkdirSync(ICONS_DIR, { recursive: true });
     }
 
-    // Download default icon first
+    // Download default icon first if missing
     await downloadIcon('default');
 
-    // Fetch token names and download their icons
+    // Fetch token names
     const tokenNames = await fetchTokenNames();
     
-    // Download icons for each token
-    for (const [id, name] of Object.entries(tokenNames)) {
+    // Get list of existing icons
+    const existingIcons = new Set(
+        fs.readdirSync(ICONS_DIR)
+            .filter(f => f.endsWith('.svg'))
+            .map(f => f.slice(0, -4))  // Remove .svg extension
+    );
+    
+    // Only process tokens that don't have icons yet
+    const missingTokens = Object.entries(tokenNames)
+        .filter(([_, name]) => !existingIcons.has(name));
+    
+    console.log(`Found ${missingTokens.length} tokens missing icons out of ${Object.keys(tokenNames).length} total tokens`);
+    
+    // Download icons for missing tokens
+    for (const [id, name] of missingTokens) {
         await downloadIcon(name);
         // Add a small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 1000));
