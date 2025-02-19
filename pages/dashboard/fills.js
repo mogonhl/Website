@@ -39,12 +39,23 @@ class FillsHandler extends GRPCHandler {
         this.transactionsPerPage = 15;
         this.allTrades = []; // Store all trades
         
+        // Initialize filter properties
+        this.tradeTypeFilter = 'all';
+        this.minAmount = null;
+        this.maxAmount = null;
+        this.accountFilter = '';
+        this.selectedAssets = new Set(['all']); // Store selected assets
+        
         // Initialize table structure
         this.initializeTable();
         this.initializeToggle();
+        this.initializeFilters();
         
         // Start time updater
         this.startTimeUpdater();
+
+        // Check for assets without entries after a delay
+        setTimeout(() => this.checkAndReconnectEmptyAssets(), 5000);
     }
 
     initializeTable() {
@@ -136,7 +147,7 @@ class FillsHandler extends GRPCHandler {
     }
 
     // Add new methods for stream handling
-    addStream(name, payload) {
+    addStream(name, payload, launchId) {
         if (this.streams.has(name)) {
             console.log(`Stream ${name} already exists`);
             return;
@@ -146,7 +157,8 @@ class FillsHandler extends GRPCHandler {
             name,
             payload,
             isStreaming: false,
-            endpoint: 'https://grpc.hypurr.fun/hypurr.Static/HyperliquidLaunchFills'
+            endpoint: 'https://grpc.hypurr.fun/hypurr.Static/HyperliquidLaunchFills',
+            launchId
         };
 
         this.streams.set(name, streamConfig);
@@ -455,14 +467,32 @@ class FillsHandler extends GRPCHandler {
         row.dataset.timestamp = fill.timestamp.getTime();
         row.dataset.tradeKey = `${fill.timestamp.getTime()}-${fill.account}-${fill.purrg}-${fill.type}`;
         
+        // Get the launch ID from the stream config
+        const streamConfig = this.streams.get(streamName);
+        const launchId = streamConfig ? streamConfig.launchId : null;
+        
         // Add all the cells (type, account, asset, etc...)
         const start = fill.account.slice(0, 8);
         const end = fill.account.slice(-6);
         
         row.innerHTML = `
             <td><span class="fill-type ${fill.type.toLowerCase()}">${fill.type}</span></td>
-            <td class="fill-account">${start}...${end}</td>
-            <td class="fill-asset">${streamName}</td>
+            <td class="fill-account">
+                <a href="https://app.hypurr.fun/wallet/${fill.account}" 
+                   target="_blank" 
+                   class="hover:underline">
+                    ${start}...${end}
+                </a>
+            </td>
+            <td class="fill-asset">
+                ${launchId ? `
+                    <a href="https://app.hypurr.fun/launch/${launchId}" 
+                       target="_blank" 
+                       class="hover:underline">
+                        ${streamName}
+                    </a>
+                ` : streamName}
+            </td>
             <td class="fill-price">$${fill.price.toFixed(4)}</td>
             <td class="fill-amount">${fill.purrg.toFixed(2)}</td>
             <td class="fill-time">${this.formatTimeDiff(fill.timestamp)}</td>
@@ -473,29 +503,313 @@ class FillsHandler extends GRPCHandler {
         return row.outerHTML;
     }
 
-    refreshTableDisplay() {
-        const tbody = document.querySelector('#fills-container .fills-table tbody');
-        if (!tbody) return;
+    initializeFilters() {
+        // Asset Filter
+        const assetFilterToggle = document.getElementById('asset-filter-toggle');
+        const assetFilterPopover = document.getElementById('asset-filter-popover');
+        const assetFilterButtons = document.querySelectorAll('.asset-filter-btn');
+        const assetSearchInput = document.getElementById('asset-search');
 
-        // Filter trades if high value only is active
-        let visibleTrades = this.allTrades;
-        if (this.showHighValueOnly) {
-            visibleTrades = this.allTrades.filter(trade => trade.total > 500);
+        // Initialize search functionality
+        assetSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            assetFilterButtons.forEach(btn => {
+                const asset = btn.querySelector('span').textContent;
+                const matches = asset.toLowerCase().includes(searchTerm);
+                btn.style.display = matches ? '' : 'none';
+            });
+        });
+
+        // Prevent search input from triggering dropdown close
+        assetSearchInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Clear search when dropdown closes
+        const clearAssetSearch = () => {
+            assetSearchInput.value = '';
+            assetFilterButtons.forEach(btn => {
+                btn.style.display = '';
+            });
+        };
+
+        // Track selected assets
+        this.selectedAssets = new Set(['all']);
+
+        // Toggle popover
+        assetFilterToggle.addEventListener('click', () => {
+            const isActive = assetFilterToggle.classList.toggle('active');
+            assetFilterPopover.classList.toggle('hidden', !isActive);
+            if (!isActive) {
+                clearAssetSearch();
+            }
+        });
+
+        // Handle asset filter selection
+        assetFilterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const asset = button.getAttribute('data-asset');
+                
+                if (asset === 'all') {
+                    // If "All Assets" is clicked
+                    if (!this.selectedAssets.has('all')) {
+                        // Clear all other selections
+                        this.selectedAssets.clear();
+                        this.selectedAssets.add('all');
+                        // Update UI
+                        assetFilterButtons.forEach(btn => {
+                            if (btn.getAttribute('data-asset') !== 'all') {
+                                const checkbox = btn.querySelector('div[class*="w-3.5"]')?.querySelector('svg');
+                                if (checkbox) checkbox.classList.add('hidden');
+                            }
+                        });
+                    }
+                } else {
+                    // If specific asset is clicked
+                    const checkbox = button.querySelector('div[class*="w-3.5"]')?.querySelector('svg');
+                    if (!checkbox) return;
+
+                    if (this.selectedAssets.has('all')) {
+                        // Remove "All Assets" selection
+                        this.selectedAssets.delete('all');
+                    }
+
+                    // Toggle selection for clicked asset
+                    const wasSelected = this.selectedAssets.has(asset);
+                    if (wasSelected) {
+                        this.selectedAssets.delete(asset);
+                        checkbox.classList.add('hidden');
+                    } else {
+                        this.selectedAssets.add(asset);
+                        checkbox.classList.remove('hidden');
+                        
+                        // Check if we need to reconnect the stream
+                        const hasEntries = this.allTrades.some(trade => trade.assetName === asset);
+                        if (!hasEntries) {
+                            // Get the stream for this asset
+                            const stream = this.streams.get(asset);
+                            if (stream) {
+                                // Force reconnection by setting isStreaming to false and calling connectStream
+                                stream.isStreaming = false;
+                                this.connectStream(asset);
+                                console.log(`Reconnecting stream for ${asset} due to no entries`);
+                            }
+                        }
+                    }
+
+                    // If no assets selected, select "All Assets"
+                    if (this.selectedAssets.size === 0) {
+                        this.selectedAssets.add('all');
+                    }
+                }
+
+                // Update All Assets button color
+                const allAssetsBtn = document.querySelector('.asset-filter-btn[data-asset="all"]');
+                const allAssetsSpan = allAssetsBtn?.querySelector('span');
+                const allAssetsSvg = allAssetsBtn?.querySelector('svg');
+                if (allAssetsSpan && allAssetsSvg) {
+                    if (this.selectedAssets.has('all')) {
+                        allAssetsSpan.classList.add('text-[rgba(72,255,225,0.9)]');
+                        allAssetsSvg.classList.add('text-[rgba(72,255,225,0.9)]');
+                    } else {
+                        allAssetsSpan.classList.remove('text-[rgba(72,255,225,0.9)]');
+                        allAssetsSvg.classList.remove('text-[rgba(72,255,225,0.9)]');
+                    }
+                }
+
+                // Update button text
+                this.updateAssetFilterButtonText();
+                
+                // Apply filters
+                this.applyFilters();
+            });
+        });
+
+        // Close popover when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!assetFilterToggle.contains(event.target) && !assetFilterPopover.contains(event.target)) {
+                assetFilterToggle.classList.remove('active');
+                assetFilterPopover.classList.add('hidden');
+                clearAssetSearch();
+            }
+        });
+
+        // Trade Type Filter
+        document.querySelectorAll('.trade-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.trade-type-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.tradeTypeFilter = btn.dataset.type;
+                this.currentPage = 1; // Reset to first page
+                this.refreshTableDisplay();
+            });
+        });
+
+        // Amount Range Filter
+        const amountToggle = document.getElementById('amount-range-toggle');
+        const amountPopover = document.getElementById('amount-range-popover');
+        const minInput = document.getElementById('min-amount');
+        const maxInput = document.getElementById('max-amount');
+        const applyBtn = document.getElementById('apply-amount-range');
+        const clearBtn = document.getElementById('clear-amount-range');
+
+        // Toggle popover
+        amountToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isActive = amountPopover.classList.toggle('hidden');
+            amountToggle.classList.toggle('active', !isActive);
+        });
+
+        // Close popover when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!amountPopover.contains(e.target) && e.target !== amountToggle) {
+                amountPopover.classList.add('hidden');
+                amountToggle.classList.remove('active');
+            }
+        });
+
+        // Apply amount range
+        applyBtn.addEventListener('click', () => {
+            this.minAmount = minInput.value ? parseFloat(minInput.value) : null;
+            this.maxAmount = maxInput.value ? parseFloat(maxInput.value) : null;
+            amountPopover.classList.add('hidden');
+            amountToggle.classList.remove('active');
+            // Update toggle text to show active filter
+            const toggleText = amountToggle.querySelector('span');
+            if (this.minAmount !== null || this.maxAmount !== null) {
+                const min = this.minAmount !== null ? `$${this.minAmount}` : '0';
+                const max = this.maxAmount !== null ? `$${this.maxAmount}` : '∞';
+                toggleText.textContent = `${min} - ${max}`;
+            } else {
+                toggleText.textContent = 'Amount Range';
+            }
+            this.currentPage = 1; // Reset to first page
+            this.refreshTableDisplay();
+        });
+
+        // Clear amount range
+        clearBtn.addEventListener('click', () => {
+            minInput.value = '';
+            maxInput.value = '';
+            this.minAmount = null;
+            this.maxAmount = null;
+            amountToggle.querySelector('span').textContent = 'Amount Range';
+            this.currentPage = 1; // Reset to first page
+            this.refreshTableDisplay();
+        });
+
+        // Account Filter
+        const accountInput = document.getElementById('account-filter');
+        const clearAccountBtn = document.getElementById('clear-account-filter');
+
+        accountInput.addEventListener('input', (e) => {
+            this.accountFilter = e.target.value;
+            clearAccountBtn.classList.toggle('hidden', !this.accountFilter);
+            this.currentPage = 1; // Reset to first page
+            this.refreshTableDisplay();
+        });
+
+        clearAccountBtn.addEventListener('click', () => {
+            accountInput.value = '';
+            this.accountFilter = '';
+            clearAccountBtn.classList.add('hidden');
+            this.currentPage = 1; // Reset to first page
+            this.refreshTableDisplay();
+        });
+    }
+
+    updateAssetFilterButtonText() {
+        const toggle = document.getElementById('asset-filter-toggle');
+        const label = toggle.querySelector('.asset-filter-label');
+        const selectedAssetsContainer = document.getElementById('selected-assets');
+        
+        if (this.selectedAssets.has('all')) {
+            label.textContent = 'Asset';
+            selectedAssetsContainer.innerHTML = '';
+        } else {
+            label.textContent = '';
+            selectedAssetsContainer.innerHTML = Array.from(this.selectedAssets)
+                .map(asset => `
+                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[rgba(72,255,225,0.1)] text-[rgba(72,255,225,0.9)] rounded">
+                        ${asset}
+                        <button class="remove-asset" data-asset="${asset}">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </span>
+                `).join('');
+
+            // Add click handlers for remove buttons
+            selectedAssetsContainer.querySelectorAll('.remove-asset').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent dropdown from opening
+                    const asset = btn.dataset.asset;
+                    this.selectedAssets.delete(asset);
+                    
+                    // Update checkbox in dropdown
+                    const assetBtn = document.querySelector(`.asset-filter-btn[data-asset="${asset}"]`);
+                    if (assetBtn) {
+                        const checkbox = assetBtn.querySelector('svg');
+                        if (checkbox) checkbox.classList.add('hidden');
+                    }
+
+                    // If no assets selected, select "All Assets"
+                    if (this.selectedAssets.size === 0) {
+                        this.selectedAssets.add('all');
+                        const allAssetsCheckbox = document.querySelector('[data-asset="all"]').querySelector('div[class*="w-3.5"]').querySelector('svg');
+                        allAssetsCheckbox.classList.remove('hidden');
+                    }
+
+                    this.updateAssetFilterButtonText();
+                    this.applyFilters();
+                });
+            });
         }
+    }
+
+    applyFilters() {
+        // Get filtered trades
+        const visibleTrades = this.allTrades.filter(trade => {
+            // Type filter
+            const typeMatch = this.tradeTypeFilter === 'all' || trade.type.toLowerCase() === this.tradeTypeFilter;
+            
+            // Asset filter
+            const assetMatch = this.selectedAssets.has('all') || this.selectedAssets.has(trade.assetName);
+            
+            // Amount filter
+            const amountMatch = (!this.minAmount || trade.total >= this.minAmount) &&
+                              (!this.maxAmount || trade.total <= this.maxAmount);
+            
+            // Account filter
+            const accountMatch = !this.accountFilter || 
+                trade.account.toLowerCase().includes(this.accountFilter.toLowerCase());
+
+            // High value filter
+            const valueMatch = !this.showHighValueOnly || trade.total > 500;
+
+            return typeMatch && assetMatch && amountMatch && accountMatch && valueMatch;
+        });
 
         // Calculate pagination
-        const totalRows = visibleTrades.length;
         const start = (this.currentPage - 1) * this.transactionsPerPage;
-        const end = Math.min(start + this.transactionsPerPage, totalRows);
+        const end = Math.min(start + this.transactionsPerPage, visibleTrades.length);
         
         // Get current page trades
         const currentPageTrades = visibleTrades.slice(start, end);
         
         // Update tbody
-        tbody.innerHTML = currentPageTrades.map(trade => trade.html).join('');
+        const tbody = document.querySelector('#fills-container .fills-table tbody');
+        if (tbody) {
+            tbody.innerHTML = currentPageTrades.map(trade => trade.html).join('');
+        }
         
         // Update pagination display
-        this.updatePagination(totalRows);
+        this.updatePagination(visibleTrades.length);
+    }
+
+    refreshTableDisplay() {
+        this.applyFilters();
     }
 
     changePage(direction) {
@@ -532,27 +846,44 @@ class FillsHandler extends GRPCHandler {
         if (prevButton) prevButton.disabled = this.currentPage === 1;
         if (nextButton) nextButton.disabled = this.currentPage >= totalPages;
     }
+
+    // Add new method to check and reconnect empty assets
+    checkAndReconnectEmptyAssets() {
+        this.streams.forEach((stream, assetName) => {
+            const hasEntries = this.allTrades.some(trade => trade.assetName === assetName);
+            if (!hasEntries) {
+                console.log(`No entries found for ${assetName}, reconnecting...`);
+                stream.isStreaming = false;
+                this.connectStream(assetName);
+            }
+        });
+    }
 }
 
-// Initialize with multiple streams
+// Initialize when navigated to via SPA
+if (document.readyState === 'complete') {
+    initializeLaunchesPage();
+}
+
 try {
     console.log('Starting fills handler...');
     // Make the handler instance globally accessible
     window.fills = new FillsHandler();
     
-    // Add both streams
-    window.fills.addStream('VORTX', 'AAAAAAUKAwiwTQ==');
-    window.fills.addStream('TILT', 'AAAAAAUKAwjGTg==');
-    window.fills.addStream('GUARD', 'AAAAAAUKAwjXWg==');
-    window.fills.addStream('FUND', 'AAAAAAUKAwjKIw==');
-    window.fills.addStream('HORSY', 'AAAAAAUKAwjSKA==');
-    window.fills.addStream('QUANT', 'AAAAAAUKAwj+EQ==');
-    window.fills.addStream('DQNTA', 'AAAAAAUKAwjkZg==');
-    window.fills.addStream('AIDIVN', 'AAAAAAUKAwj/Yw==');
-    window.fills.addStream('BLOCK', 'AAAAAAUKAwj3OA==');
-    window.fills.addStream('LUNA', 'AAAAAAUKAwjkGw==');
-    window.fills.addStream('DEFIN', 'AAAAAAUKAwjmaA==');
-    window.fills.addStream('PURRG', 'AAAAAAUKAwiJOw==');
+    // Add streams with [name, payload, launchId]
+    window.fills.addStream('VORTX', 'AAAAAAUKAwiwTQ==', 9904);
+    window.fills.addStream('TILT', 'AAAAAAUKAwjGTg==', 10054);
+    window.fills.addStream('GUARD', 'AAAAAAUKAwjXWg==', 11607);
+    window.fills.addStream('FUND', 'AAAAAAUKAwjKIw==', 4554);
+    window.fills.addStream('HORSY', 'AAAAAAUKAwjSKA==', 5202);
+    window.fills.addStream('QUANT', 'AAAAAAUKAwj+EQ==', 2302);
+    window.fills.addStream('DQNTA', 'AAAAAAUKAwjkZg==', 13156);
+    window.fills.addStream('AIDIVN', 'AAAAAAUKAwj/Yw==', 12799);
+    window.fills.addStream('BLOCK', 'AAAAAAUKAwj3OA==', 7287);
+    window.fills.addStream('LUNA', 'AAAAAAUKAwjkGw==', 3556);
+    window.fills.addStream('DEFIN', 'AAAAAAUKAwjmaA==', 13414);
+    window.fills.addStream('CUDY', 'AAAAAAUKAwjcag==', 13660);
+    window.fills.addStream('PURRG', 'AAAAAAUKAwiJOw==', 7561);
     
     console.log('Connections initiated. Waiting for data...');
 } catch (error) {

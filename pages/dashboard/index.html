@@ -284,6 +284,182 @@
         #high-value-toggle.active span {
             color: rgba(72,255,225,0.9);
         }
+
+        .sort-button.active.ascending svg {
+            transform: rotate(180deg);
+        }
+
+        /* Filter Styles */
+        .trade-type-btn {
+            color: rgb(148,158,156);
+            transition: all 0.2s ease;
+        }
+
+        .trade-type-btn:hover {
+            color: white;
+        }
+
+        .trade-type-btn[data-type="buy"].active {
+            color: #10b981;
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        .trade-type-btn[data-type="sell"].active {
+            color: #ef4444;
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .trade-type-btn[data-type="all"].active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        #amount-range-toggle {
+            color: rgb(148,158,156);
+        }
+
+        #amount-range-toggle:hover {
+            color: white;
+        }
+
+        #amount-range-toggle.active {
+            border-color: rgba(72,255,225,0.9);
+        }
+
+        #amount-range-toggle svg {
+            transition: transform 0.2s ease;
+        }
+
+        #amount-range-toggle.active svg {
+            transform: rotate(180deg);
+        }
+
+        #account-filter {
+            transition: all 0.2s ease;
+            color: rgb(148,158,156);
+            font-size: 13px;
+            padding-right: 32px; /* Make room for the icons */
+        }
+
+        #account-filter:focus {
+            color: white;
+            outline: none;
+            border-color: rgba(72,255,225,0.3);
+        }
+
+        #account-filter::placeholder {
+            color: rgb(148,158,156);
+            opacity: 0.7;
+        }
+
+        /* Show clear button when input has text */
+        #account-filter:not(:placeholder-shown) ~ #clear-account-filter {
+            display: block;
+        }
+
+        /* Hide person icon when clear button is visible */
+        #account-filter:not(:placeholder-shown) ~ div {
+            display: none;
+        }
+
+        #amount-range-popover input {
+            color: rgb(148,158,156);
+            transition: all 0.2s ease;
+            font-size: 13px;
+        }
+
+        #amount-range-popover input:hover {
+            border-color: rgba(72,255,225,0.3);
+        }
+
+        #amount-range-popover input:focus {
+            color: white;
+            outline: none;
+            border-color: rgba(72,255,225,0.9);
+        }
+
+        #amount-range-popover input::-webkit-outer-spin-button,
+        #amount-range-popover input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #amount-range-popover input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Remove the conflicting styles */
+        #apply-amount-range:hover {
+            color: rgba(72,255,225,0.3);
+        }
+
+        /* Override fills.js styles to match our branding */
+
+        /* Asset Filter Styles */
+        #asset-filter-toggle {
+            color: rgb(148,158,156);
+        }
+
+        #asset-filter-toggle:hover {
+            color: white;
+        }
+
+        #asset-filter-toggle.active {
+            border-color: rgba(72,255,225,0.9);
+        }
+
+        #asset-filter-toggle svg {
+            transition: transform 0.2s ease;
+        }
+
+        #asset-filter-toggle.active svg {
+            transform: rotate(180deg);
+        }
+
+        /* Remove transition from remove-asset buttons */
+        .remove-asset svg {
+            transition: none;
+        }
+
+        /* Style the asset search input like account search */
+        #asset-search {
+            transition: all 0.2s ease;
+            color: rgb(148,158,156);
+            font-size: 13px;
+        }
+
+        #asset-search:focus {
+            color: white;
+            outline: none;
+            border-color: rgba(72,255,225,0.9);
+        }
+
+        #asset-search::placeholder {
+            color: rgb(148,158,156);
+            opacity: 0.7;
+        }
+
+        /* Style for All Assets option */
+        .asset-filter-btn[data-asset="all"] {
+            border-radius: 6px;
+        }
+
+        .asset-filter-btn[data-asset="all"]:hover {
+            background-color: rgba(72,255,225,0.1);
+        }
+
+        .asset-filter-btn {
+            border-radius: 4px;
+        }
+
+        .asset-filter-btn:hover {
+            background-color: rgba(72,255,225,0.1);
+        }
+
+        .asset-filter-btn.active {
+            color: white !important;
+            background-color: rgba(72,255,225,0.1);
+        }
     </style>
 </head>
 <body>
@@ -305,7 +481,194 @@
                         <span class="text-xl text-white font-medium">Transaction Feed</span>
                         <span class="text-xs bg-[rgba(72,255,225,0.2)] text-[rgba(72,255,225,0.9)] px-2 py-0.5 rounded">Beta</span>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center">
+                        <div class="flex items-center gap-3">
+                            <!-- Trade Type Filter -->
+                            <div class="flex items-center bg-[#0f1a1f] border border-[#0a2622] rounded-lg overflow-hidden">
+                                <button class="trade-type-btn active px-3 py-1.5 text-xs transition-colors" data-type="all">All</button>
+                                <button class="trade-type-btn px-3 py-1.5 text-xs transition-colors" data-type="buy">Buys</button>
+                                <button class="trade-type-btn px-3 py-1.5 text-xs transition-colors" data-type="sell">Sells</button>
+                            </div>
+
+                            <!-- Asset Filter -->
+                            <div class="relative">
+                                <button id="asset-filter-toggle" class="min-w-[120px] px-3 py-1.5 text-xs bg-[#0f1a1f] border border-[#0a2622] rounded-lg hover:border-[rgba(72,255,225,0.9)] transition-colors flex items-center gap-2 flex-wrap">
+                                    <span class="asset-filter-label">Asset</span>
+                                    <div id="selected-assets" class="flex flex-wrap gap-1"></div>
+                                    <svg class="w-4 h-4 opacity-80 ml-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                <!-- Asset Filter Popover (hidden by default) -->
+                                <div id="asset-filter-popover" class="hidden absolute top-full mt-2 right-0 bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-2 min-w-[200px] z-10">
+                                    <!-- Search input -->
+                                    <div class="mb-2 relative">
+                                        <input type="text" 
+                                               id="asset-search" 
+                                               placeholder="Search assets..." 
+                                               class="w-full px-3 py-1.5 text-xs bg-[#0f1a1f] border border-[#0a2622] rounded-lg text-[rgb(148,158,156)] focus:text-white focus:border-[rgba(72,255,225,0.9)] transition-colors">
+                                    </div>
+                                    <div class="space-y-1 max-h-[300px] overflow-y-auto">
+                                        <button class="asset-filter-btn w-full px-3 py-2 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center mb-2" data-asset="all">
+                                            <svg class="w-3 h-3 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M3 6h18M3 12h18M3 18h18"/>
+                                            </svg>
+                                            <span>All Assets</span>
+                                        </button>
+                                        <div class="pt-2 border-t border-[rgba(72,255,225,0.1)]">
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="VORTX">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>VORTX</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="TILT">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>TILT</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="GUARD">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>GUARD</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="FUND">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>FUND</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="HORSY">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>HORSY</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="QUANT">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>QUANT</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="DQNTA">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>DQNTA</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="AIDIVN">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>AIDIVN</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="BLOCK">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>BLOCK</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="LUNA">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>LUNA</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="DEFIN">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>DEFIN</span>
+                                            </button>
+                                            <button class="asset-filter-btn w-full px-3 py-1.5 text-xs text-left text-[rgb(148,158,156)] hover:text-white transition-colors flex items-center gap-2" data-asset="PURRG">
+                                                <div class="w-3.5 h-3.5 border border-[rgb(148,158,156)] rounded flex items-center justify-center">
+                                                    <svg class="w-2.5 h-2.5 text-white hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                        <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <span>PURRG</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Amount Range Filter -->
+                            <div class="relative">
+                                <button id="amount-range-toggle" class="px-3 py-1.5 text-xs bg-[#0f1a1f] border border-[#0a2622] rounded-lg hover:border-[rgba(72,255,225,0.9)] transition-colors flex items-center gap-1">
+                                    <span>Amount Range</span>
+                                    <svg class="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                <!-- Amount Range Popover (hidden by default) -->
+                                <div id="amount-range-popover" class="hidden absolute top-full mt-2 right-0 bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-4 min-w-[240px] z-10">
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="text-xs text-[rgb(148,158,156)]">Minimum Amount ($)</label>
+                                            <input type="number" id="min-amount" class="w-full mt-1 px-3 py-1.5 bg-[rgba(15,26,31,0.7)] border border-[rgba(72,255,225,0.3)] rounded text-sm" placeholder="0">
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-[rgb(148,158,156)]">Maximum Amount ($)</label>
+                                            <input type="number" id="max-amount" class="w-full mt-1 px-3 py-1.5 bg-[rgba(15,26,31,0.7)] border border-[rgba(72,255,225,0.3)] rounded text-sm" placeholder="No limit">
+                                        </div>
+                                        <div class="flex justify-end gap-2 pt-2">
+                                            <button id="clear-amount-range" class="px-3 py-1.5 text-xs text-[rgb(148,158,156)] hover:text-white transition-colors">Clear</button>
+                                            <button id="apply-amount-range" class="px-3 py-1.5 text-xs !text-[#ffffff] hover:!text-[rgba(72,255,225,0.9)] transition-colors">Apply</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Filter -->
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    id="account-filter"
+                                    placeholder="Search account..." 
+                                    class="w-[180px] px-3 py-1.5 text-xs bg-[rgba(15,26,31,0.7)] border border-[#0a2622] rounded-lg"
+                                >
+                                <div class="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-[rgb(148,158,156)]">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                </div>
+                                <button 
+                                    id="clear-account-filter"
+                                    class="hidden absolute right-2 top-1/2 transform -translate-y-1/2 text-[rgb(148,158,156)] hover:text-white transition-colors"
+                                >
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="h-3 w-px bg-[#0a2622] mx-3"></div>
                         <button 
                             id="high-value-toggle"
                             class="w-9 h-9 flex items-center justify-center rounded bg-[#0f1a1f] border border-[#0a2622] hover:border-[rgba(72,255,225,0.9)] transition-all duration-200"
