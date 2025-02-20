@@ -74,7 +74,7 @@ async function getMarketData() {
     let totalMarketCap = 0;
 
     for (const details of data.details) {
-        if (!details.coin) continue;  // Only skip if no coin name
+        if (!details.coin || details.coin === '@142') continue;  // Skip if no coin name or if it's token @142
 
         // Log PURR data for debugging
         if (details.coin === 'PURR/USDC') {

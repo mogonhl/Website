@@ -39,6 +39,11 @@ async function fetchTokenNames() {
                     // Get all active tokens with their metadata
                     const tokenNames = {};
                     marketData.forEach(t => {
+                        // Skip token @142
+                        if (t.coin === '@142') {
+                            return;
+                        }
+
                         // Find metadata for this token in universe array
                         const meta = universe.find(m => m.name === t.coin);
                         if (!meta) {

@@ -36,6 +36,12 @@ async function consolidateSpotData() {
                         return;
                     }
 
+                    const tokenIdStr = token.tokenId;
+                    // Skip token @142
+                    if (tokenIdStr === '@142') {
+                        return;
+                    }
+
                     // Get the latest price
                     const latestPrice = token.prices[token.prices.length - 1][1];
                     const latestTimestamp = token.prices[token.prices.length - 1][0];
@@ -77,9 +83,6 @@ async function consolidateSpotData() {
                     const snapshotData = token.prices
                         .filter(([timestamp]) => timestamp >= sevenDaysAgo)
                         .map(([timestamp, price]) => [timestamp, price]);
-                    
-                    // Ensure we have the token ID in the correct format
-                    const tokenIdStr = token.tokenId.toString().replace('@', '');
                     
                     consolidatedData[tokenIdStr] = {
                         p: latestPrice, // latest price

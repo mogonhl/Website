@@ -41,7 +41,8 @@ async function loadAllChunks() {
                                 allData.push({
                                     tokenId,
                                     prices: parsed.prices,
-                                    market_caps: parsed.market_caps || []
+                                    market_caps: parsed.market_caps || [],
+                                    volumes: parsed.volumes || []
                                 });
                                 console.log(`Added ${tokenId} with ${parsed.prices.length} price points`);
                             }
@@ -118,18 +119,175 @@ async function determineStableStartPoint(tokens, minTokens = 5) {
     return timestampEntries[0]?.[0];
 }
 
+async function createSnipeIndex(tokens, redisKey, stableStartTimestamp) {
+    console.log('\nProcessing Snipe Index');
+    
+    // Filter out token @142
+    const tokensToProcess = tokens.filter(t => t.tokenId !== '@142');
+    
+    // Get all unique timestamps from price data
+    const timestamps = new Set();
+    tokensToProcess.forEach(token => {
+        if (!token.prices) return;
+        token.prices.forEach(([timestamp]) => {
+            if (timestamp >= stableStartTimestamp) {
+                timestamps.add(timestamp);
+            }
+        });
+    });
+
+    // Convert to sorted array
+    const sortedTimestamps = Array.from(timestamps).sort((a, b) => a - b);
+    console.log(`\nFound ${sortedTimestamps.length} unique timestamps`);
+    
+    // Calculate index values for each timestamp
+    const indexValues = sortedTimestamps.map(timestamp => {
+        let totalValue = 0;
+        let validTokenCount = 0;
+        
+        // For each token, calculate its current value from a $1 investment
+        tokensToProcess.forEach(token => {
+            const pricePoint = token.prices?.find(([t]) => t === timestamp);
+            const firstPricePoint = token.prices?.[0];
+            
+            if (pricePoint && firstPricePoint) {
+                const [, currentPrice] = pricePoint;
+                const [, initialPrice] = firstPricePoint;
+                
+                if (!isNaN(currentPrice) && !isNaN(initialPrice) && initialPrice > 0) {
+                    // Calculate how many tokens $1 would have bought initially
+                    const initialTokens = 1 / initialPrice;
+                    // Calculate current value of those tokens
+                    const currentValue = initialTokens * currentPrice;
+                    totalValue += currentValue;
+                    validTokenCount++;
+                }
+            }
+        });
+        
+        // Subtract the initial $1 investment per token to show net profit/loss
+        const netValue = totalValue - validTokenCount;
+        
+        if (validTokenCount === 0) {
+            console.log(`No valid tokens found for timestamp ${new Date(timestamp).toISOString()}`);
+        }
+        
+        return [timestamp, netValue];
+    }).filter(([, value]) => !isNaN(value));
+
+    // Print statistics
+    console.log('\nSnipe Index Statistics:');
+    console.log(`Start date: ${new Date(sortedTimestamps[0]).toISOString()}`);
+    console.log(`End date: ${new Date(sortedTimestamps[sortedTimestamps.length - 1]).toISOString()}`);
+    console.log(`Initial value: ${indexValues[0]?.[1]?.toFixed(4) || 'NaN'}`);
+    console.log(`Final value: ${indexValues[indexValues.length - 1]?.[1]?.toFixed(4) || 'NaN'}`);
+    console.log(`Number of tokens: ${tokensToProcess.length}`);
+    console.log(`Total data points: ${indexValues.length}`);
+
+    // Store in Redis
+    await redis.set(redisKey, { prices: indexValues });
+}
+
+async function createVolumeWeightedIndex(tokens, uniqueTimestamps) {
+    console.log('\nProcessing Volume-Weighted (FOMO) Index');
+
+    // Filter out token @142
+    tokens = tokens.filter(token => token.tokenId !== '@142');
+
+    const indexValues = {};
+    let totalTokens = 0;
+
+    // Initialize with 100
+    uniqueTimestamps.forEach(timestamp => {
+        const tokensForTimestamp = tokens.filter(token => {
+            const pricePoint = token.prices.find(p => p[0] === timestamp);
+            return pricePoint && pricePoint[1] > 0;
+        });
+
+        if (tokensForTimestamp.length > 0) {
+            let weightedSum = 0;
+            let totalVolume = 0;
+
+            tokensForTimestamp.forEach(token => {
+                const pricePoint = token.prices.find(p => p[0] === timestamp);
+                if (pricePoint) {
+                    const price = pricePoint[1];
+                    // Use price as a proxy for volume (higher price = higher volume weight)
+                    const volume = price;
+                    weightedSum += price * volume;
+                    totalVolume += volume;
+                }
+            });
+
+            if (totalVolume > 0) {
+                indexValues[timestamp] = weightedSum / totalVolume;
+            }
+        }
+    });
+
+    // Convert to array and sort by timestamp
+    const sortedValues = Object.entries(indexValues)
+        .map(([timestamp, value]) => [parseInt(timestamp), value])
+        .sort(([a], [b]) => a - b);
+
+    // Store in Redis with the correct format
+    if (sortedValues.length > 0) {
+        const initialValue = sortedValues[0][1];
+        const normalizedValues = sortedValues.map(([timestamp, value]) => [
+            timestamp,
+            (value / initialValue) * 100
+        ]);
+
+        await redis.set('spot_data_volume_index', { prices: normalizedValues });
+
+        console.log('\nVolume-Weighted (FOMO) Index Statistics:');
+        console.log(`Start date: ${new Date(normalizedValues[0][0]).toISOString()}`);
+        console.log(`End date: ${new Date(normalizedValues[normalizedValues.length - 1][0]).toISOString()}`);
+        console.log(`Initial value: ${normalizedValues[0][1].toFixed(4)}`);
+        console.log(`Final value: ${normalizedValues[normalizedValues.length - 1][1].toFixed(4)}`);
+        console.log(`Number of tokens: ${tokens.length}`);
+        console.log(`Total data points: ${normalizedValues.length}`);
+    } else {
+        console.log('\nNo valid data points found for Volume-Weighted (FOMO) Index');
+    }
+}
+
 async function createIndices(tokens) {
     console.log('\n=== Creating Multiple Indices ===');
 
     // Determine stable start point for regular indices (minimum 5 tokens)
     const stableStartTimestamp = await determineStableStartPoint(tokens, 5);
     
-    // Create indices with different calculation methods
+    // Get all unique timestamps from price data
+    const timestamps = new Set();
+    tokens.forEach(token => {
+        if (!token.prices) return;
+        token.prices.forEach(([timestamp]) => {
+            if (timestamp >= stableStartTimestamp) {
+                timestamps.add(timestamp);
+            }
+        });
+    });
+    const uniqueTimestamps = Array.from(timestamps).sort((a, b) => a - b);
+    
+    // Create market cap weighted indices
     console.log('\nCreating Market Cap Index (with HYPE)...');
     await createMarketCapIndex(tokens, true, 'spot_data_mcap_index', stableStartTimestamp);
     
     console.log('\nCreating Market Cap Ex-HYPE Index...');
     await createMarketCapIndex(tokens, false, 'spot_data_mcap_ex_hype_index', stableStartTimestamp);
+
+    // Create equal weight index
+    console.log('\nCreating Equal Weight Index...');
+    await createEqualWeightIndex(tokens, 'spot_data_equal_index', stableStartTimestamp);
+
+    // Create snipe index
+    console.log('\nCreating Snipe Index...');
+    await createSnipeIndex(tokens, 'spot_data_snipe_index', stableStartTimestamp);
+
+    // Create volume weighted (FOMO) index
+    console.log('\nCreating Volume-Weighted (FOMO) Index...');
+    await createVolumeWeightedIndex(tokens, uniqueTimestamps);
 }
 
 async function createMarketCapIndex(tokens, includeHype, redisKey, stableStartTimestamp) {
@@ -137,8 +295,8 @@ async function createMarketCapIndex(tokens, includeHype, redisKey, stableStartTi
     
     // Filter out HYPE token if needed and validate data
     const tokensToProcess = includeHype 
-        ? tokens 
-        : tokens.filter(t => t.tokenId !== '@107');
+        ? tokens.filter(t => t.tokenId !== '@142')
+        : tokens.filter(t => t.tokenId !== '@107' && t.tokenId !== '@142');
 
     // Log token counts and HYPE token presence
     console.log(`Total tokens before filtering: ${tokens.length}`);
@@ -242,6 +400,72 @@ async function createMarketCapIndex(tokens, includeHype, redisKey, stableStartTi
         }
         
         return [timestamp, weightedSum];
+    }).filter(([, value]) => !isNaN(value) && value > 0);
+
+    // Print statistics
+    console.log('\nIndex Statistics:');
+    console.log(`Start date: ${new Date(sortedTimestamps[0]).toISOString()}`);
+    console.log(`End date: ${new Date(sortedTimestamps[sortedTimestamps.length - 1]).toISOString()}`);
+    console.log(`Initial value: ${indexValues[0]?.[1]?.toFixed(4) || 'NaN'}`);
+    console.log(`Final value: ${indexValues[indexValues.length - 1]?.[1]?.toFixed(4) || 'NaN'}`);
+    console.log(`Number of tokens: ${tokensToProcess.length}`);
+    console.log(`Total data points: ${indexValues.length}`);
+
+    // Store in Redis
+    await redis.set(redisKey, { prices: indexValues });
+}
+
+async function createEqualWeightIndex(tokens, redisKey, stableStartTimestamp) {
+    console.log(`\nProcessing Equal-Weight Index`);
+    
+    // Filter out @142 token
+    const tokensToProcess = tokens.filter(t => t.tokenId !== '@142');
+
+    // Log token count
+    console.log(`Total tokens before filtering: ${tokens.length}`);
+    console.log(`Tokens after filtering: ${tokensToProcess.length}`);
+
+    // Get all unique timestamps from price data
+    const timestamps = new Set();
+    tokensToProcess.forEach(token => {
+        if (!token.prices) return;
+        token.prices.forEach(([timestamp]) => {
+            if (timestamp >= stableStartTimestamp) {
+                timestamps.add(timestamp);
+            }
+        });
+    });
+
+    // Convert to sorted array
+    const sortedTimestamps = Array.from(timestamps).sort((a, b) => a - b);
+    console.log(`\nFound ${sortedTimestamps.length} unique timestamps`);
+    
+    // Calculate index values for each timestamp
+    const indexValues = sortedTimestamps.map(timestamp => {
+        let totalValidTokens = 0;
+        let sumOfReturns = 0;
+        
+        // Calculate simple average of prices
+        tokensToProcess.forEach(token => {
+            const pricePoint = token.prices?.find(([t]) => t === timestamp);
+            
+            if (pricePoint) {
+                const [, price] = pricePoint;
+                if (!isNaN(price) && price > 0) {
+                    sumOfReturns += price;
+                    totalValidTokens++;
+                }
+            }
+        });
+        
+        // Calculate equal-weighted average
+        const equalWeightedValue = totalValidTokens > 0 ? sumOfReturns / totalValidTokens : 0;
+        
+        if (totalValidTokens === 0) {
+            console.log(`No valid tokens found for timestamp ${new Date(timestamp).toISOString()}`);
+        }
+        
+        return [timestamp, equalWeightedValue];
     }).filter(([, value]) => !isNaN(value) && value > 0);
 
     // Print statistics
