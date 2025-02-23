@@ -787,6 +787,26 @@
                 return;
             }
 
+            // Load spot names mapping
+            let spotNames;
+            try {
+                const spotNamesResponse = await fetch('/public/spot_names.json');
+                spotNames = await spotNamesResponse.json();
+            } catch (error) {
+                console.error('Error loading spot names:', error);
+                spotNames = {};
+            }
+
+            // Check if name starts with @ and map it if needed
+            let displayName = launchData.name;
+            if (displayName.startsWith('@')) {
+                // Get the mapped name directly using the @ format
+                const mappedName = spotNames[displayName];
+                if (mappedName) {
+                    displayName = mappedName;
+                }
+            }
+
             // Check cache first
             let tokenData = tokenDataCache.get(launchData.fullName);
             const cacheTime = tokenDataCache.get(launchData.fullName + '_time');
@@ -820,7 +840,7 @@
             const marketCap = currentPrice * parseFloat(tokenData.circulatingSupply);
 
             // Update UI
-            document.getElementById('latest-token-name').textContent = launchData.name;
+            document.getElementById('latest-token-name').textContent = displayName;
             document.getElementById('latest-token-time').textContent = formatTimeDifference(launchData.launchTime);
             document.getElementById('latest-token-price').textContent = `$${currentPrice.toFixed(6)}`;
             document.getElementById('latest-token-24h').textContent = `${performance24h.toFixed(1)}%`;
@@ -842,7 +862,7 @@
             };
 
             // Try to load token icon with the same logic as the spot table
-            const tokenName = launchData.name === 'HYPE' ? 'Hype' : launchData.name;
+            const tokenName = displayName === 'HYPE' ? 'Hype' : displayName;
             tryLoadImage(`/assets/icons/spot/${tokenName}.svg`)
                 .then(src => {
                     iconImg.src = src;

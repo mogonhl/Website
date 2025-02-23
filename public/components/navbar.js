@@ -48,9 +48,9 @@ async function injectNavbar() {
                     </div>
                 </div>
                 <div class="flex items-center space-x-6">
-                    <div class="h-4 w-[40px] bg-white/10 rounded animate-pulse"></div>
-                    <div class="flex items-center">
-                        <div class="h-7 w-[72px] bg-[rgba(72,255,225,0.2)] rounded animate-pulse"></div>
+                    <div class="flex items-center space-x-6">
+                        <div class="h-4 w-[56px] bg-white/10 rounded animate-pulse"></div>
+                        <div class="h-7 w-[72px] bg-[rgba(72,255,225,0.4)] rounded animate-pulse"></div>
                         <div class="mx-3 h-4 w-px bg-white/10"></div>
                         <div class="h-7 w-[72px] bg-white/10 rounded animate-pulse"></div>
                     </div>

@@ -88,13 +88,33 @@
         .twitter-scroll::-webkit-scrollbar-thumb:hover {
             background: rgba(72, 255, 225, 0.5);
         }
+
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .gradient-text {
+            color: white;
+            transition: color 0.2s ease;
+        }
+
+        a:hover .gradient-text {
+            color: rgba(72, 255, 225, 0.9);
+        }
     </style>
 </head>
 <body>
     <div id="navbar-container"></div>
 
     <div class="min-h-screen pt-12">
-        <div class="max-w-7xl mx-auto px-8 pt-20">
+        <div class="max-w-7xl mx-auto px-8 pt-20 pb-32">
             <div class="flex flex-col mb-8">
                 <h1 class="text-4xl font-bold mb-2">
                     <span class="text-[rgba(72,255,225,0.9)]">Roadmap</span>
@@ -104,57 +124,57 @@
 
             <div class="grid grid-cols-[1fr,1.5fr] gap-6">
                 <div class="grid grid-cols-1 gap-3">
-                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="planning">
+                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="core">
                         <div class="flex items-center">
                             <div class="mr-4 status-icon">
-                                <i class="fas fa-check-circle text-base"></i>
+                                <i class="fas fa-rocket text-base"></i>
                             </div>
                             <div class="flex-1">
                                 <div class="flex justify-between items-center">
-                                    <h3 class="text-[13px] font-medium">Planning & Pre-Production</h3>
-                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">1. Sept</span>
+                                    <h3 class="text-[13px] font-medium">Core Products</h3>
+                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">April</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="production">
+                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="token">
                         <div class="flex items-center">
                             <div class="mr-4 status-icon">
-                                <i class="fas fa-spinner text-base"></i>
+                                <i class="fas fa-coins text-base"></i>
                             </div>
                             <div class="flex-1">
                                 <div class="flex justify-between items-center">
-                                    <h3 class="text-[13px] font-medium">Production</h3>
-                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">1. Oct</span>
+                                    <h3 class="text-[13px] font-medium">Token Design</h3>
+                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">June</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="whitelist">
+                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="community">
                         <div class="flex items-center">
                             <div class="mr-4 status-icon">
-                                <i class="fas fa-clock text-base"></i>
+                                <i class="fas fa-users text-base"></i>
                             </div>
                             <div class="flex-1">
                                 <div class="flex justify-between items-center">
-                                    <h3 class="text-[13px] font-medium">Whitelist Launch</h3>
-                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">End of Nov</span>
+                                    <h3 class="text-[13px] font-medium">Community</h3>
+                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">August</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="minting">
+                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="discussion">
                         <div class="flex items-center">
                             <div class="mr-4 status-icon">
-                                <i class="fas fa-hourglass text-base"></i>
+                                <i class="fas fa-comments text-base"></i>
                             </div>
                             <div class="flex-1">
                                 <div class="flex justify-between items-center">
-                                    <h3 class="text-[13px] font-medium">Whitelist Minting</h3>
-                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">TBA</span>
+                                    <h3 class="text-[13px] font-medium">Open for Discussion</h3>
+                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">Always</span>
                                 </div>
                             </div>
                         </div>
@@ -162,99 +182,112 @@
                 </div>
 
                 <div id="description-panel" class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-6">
-                    <div class="planning-content hidden">
-                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Quality comes first. We took our time to plan out everything and build our production pipeline.</p>
-                        <div class="space-y-3">
+                    <div class="core-content hidden">
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">From Idea to full product. Steps include research, design, backend development, and testing. Well... not to much, I prefer testing in prod when feasible.</p>
+                        <div class="grid grid-cols-2 gap-x-8 gap-y-3">
                             <div class="flex items-center">
                                 <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
                                     <i class="fas fa-check text-xs"></i>
                                 </div>
-                                <span class="text-[13px] text-white/80">Initial concept development</span>
+                                <span class="text-[13px] text-white/80">Airdrops</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-spinner fa-spin text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Transaction Feed</span>
                             </div>
                             <div class="flex items-center">
                                 <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
                                     <i class="fas fa-check text-xs"></i>
                                 </div>
-                                <span class="text-[13px] text-white/80">Team formation</span>
+                                <span class="text-[13px] text-white/80">Ecosystem</span>
                             </div>
                             <div class="flex items-center">
                                 <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-check text-xs"></i>
+                                    <i class="far fa-clock text-xs"></i>
                                 </div>
-                                <span class="text-[13px] text-white/80">Pipeline setup</span>
+                                <span class="text-[13px] text-white/80">Dust Collector</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-spinner fa-spin text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Launches</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="far fa-clock text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Paperhanded</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="production-content hidden">
-                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Starting the production on the procedurally generated planets and the smart contract for minting.</p>
+                    <div class="token-content hidden">
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Hype EVM launched. That changes the planning a bit. I will start pivoting away from HFUN to look at the entire ecosystem. DefiLlama for HYPE is next.</p>
                         <div class="space-y-3">
                             <div class="flex items-center">
                                 <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-check text-xs"></i>
+                                    <i class="fas fa-spinner fa-spin text-xs"></i>
                                 </div>
-                                <span class="text-[13px] text-white/80">Smart contract development</span>
+                                <span class="text-[13px] text-white/80">Token Gating</span>
                             </div>
                             <div class="flex items-center">
                                 <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-spinner text-xs"></i>
+                                    <i class="far fa-clock text-xs"></i>
                                 </div>
-                                <span class="text-[13px] text-white/80">Planet generation system</span>
+                                <span class="text-[13px] text-white/80">Relaunch on EVM</span>
                             </div>
                             <div class="flex items-center">
                                 <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-clock text-xs"></i>
+                                    <i class="far fa-lightbulb text-xs"></i>
                                 </div>
-                                <span class="text-[13px] text-white/80">Testing and optimization</span>
+                                <span class="text-[13px] text-white/80">Expand Core Product</span>
+                            </div>
+                        </div>
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mt-4">It's too early to say what future products will be. Depends on the uprising protocols in the space. Classics come to mind ofc.</p>
+                    </div>
+
+                    <div class="community-content hidden">
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Community is everything. This not being a traditional shitcoin means that I am focusing on the product first. Marathon not a Sprint and all that.</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-spinner fa-spin text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Hire Illustration Artist</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="far fa-lightbulb text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Set up AI_SLOP</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="far fa-lightbulb text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">PURRG Telegram</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="whitelist-content hidden">
-                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Our most active community members will be able to join the whitelist.</p>
-                        <div class="space-y-3">
-                            <div class="flex items-center">
-                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-clock text-xs"></i>
-                                </div>
-                                <span class="text-[13px] text-white/80">Community engagement program</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-clock text-xs"></i>
-                                </div>
-                                <span class="text-[13px] text-white/80">Whitelist criteria setup</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-clock text-xs"></i>
-                                </div>
-                                <span class="text-[13px] text-white/80">Registration system</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="minting-content hidden">
-                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Pre-Sale Minting is opened for our Whitelisted members. The price for whitelist minting will be 0.6 SOL.</p>
-                        <div class="space-y-3">
-                            <div class="flex items-center">
-                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-hourglass text-xs"></i>
-                                </div>
-                                <span class="text-[13px] text-white/80">Minting dApp deployment</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-hourglass text-xs"></i>
-                                </div>
-                                <span class="text-[13px] text-white/80">Whitelist verification</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
-                                    <i class="fas fa-hourglass text-xs"></i>
-                                </div>
-                                <span class="text-[13px] text-white/80">Launch monitoring</span>
-                            </div>
+                    <div class="discussion-content hidden">
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">I'm working on this by myself. That means progress is slow but I can pivot fast. I'm open to suggestions and feedback.</p>
+                        <div class="flex gap-3">
+                            <a href="https://t.me/ShuiTangs" target="_blank" class="flex items-center gap-2 bg-[rgba(72,255,225,0.1)] hover:bg-[rgba(72,255,225,0.2)] transition-colors px-4 py-2 rounded">
+                                <svg class="text-[rgba(72,255,225,0.9)]" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.041-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                                </svg>
+                                <span class="text-[13px] font-medium text-[rgba(72,255,225,0.9)]">DM on Telegram</span>
+                            </a>
+                            <a href="https://x.com/ShuiTangs" target="_blank" class="flex items-center gap-2 bg-black/20 hover:bg-black/30 transition-colors px-4 py-2 rounded">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                </svg>
+                                <span class="text-[13px] font-medium text-white">DM on X</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -262,20 +295,23 @@
 
             <div class="mt-12">
                 <div class="flex items-center mb-6">
-                    <h2 class="text-xl font-medium text-[rgba(72,255,225,0.9)]">Latest Updates</h2>
-                    <a href="https://x.com/purrg_hl" target="_blank" class="ml-3 opacity-60 hover:opacity-100 transition-opacity">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                        </svg>
-                    </a>
+                    <h2 class="text-xl font-medium text-[rgba(72,255,225,0.9)]">Latest Logs</h2>
+                    <div class="ml-auto flex gap-2 text-[rgb(148,158,156)]">
+                        <span id="prevTweets" class="cursor-pointer transition-colors select-none hover:text-[rgba(72,255,225,0.9)] opacity-30">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </span>
+                        <span id="nextTweets" class="cursor-pointer transition-colors select-none hover:text-[rgba(72,255,225,0.9)]">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 5l7 7-7 7" />
+                            </svg>
+                        </span>
+                    </div>
                 </div>
                 
-                <div class="relative">
-                    <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#002420] to-transparent z-10"></div>
-                    <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#002420] to-transparent z-10"></div>
-                    <div id="twitter-feed" class="overflow-x-auto pb-4 twitter-scroll">
-                        <div class="flex gap-4 items-center justify-center h-32">
-                            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[rgba(72,255,225,0.9)]"></div>
+                <div id="twitter-feed" class="grid grid-cols-3 gap-4 auto-rows-fr">
+                    <div class="flex items-center justify-center h-32">
                         </div>
                     </div>
                 </div>
@@ -287,6 +323,20 @@
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof initializeNavbar === 'function') {
                 initializeNavbar();
+            }
+
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffTime = Math.abs(now - date);
+                const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffHours < 24) {
+                    return `${diffHours}h`;
+                } else {
+                    return `${diffDays}d`;
+                }
             }
 
             // Initialize roadmap functionality
@@ -324,104 +374,148 @@
             });
 
             // Show first item by default
-            showContent('planning');
+            showContent('core');
 
             // Fetch and display tweets
             async function fetchTweetsWithRetry(retryCount = 0, delay = 1000) {
                 try {
-                    console.log('Fetching tweets... (attempt ' + (retryCount + 1) + ')');
-                    const response = await fetch('/api/tweets');
-                    console.log('Response status:', response.status);
+                    console.log('Fetching tweets from Redis...');
+                    const response = await fetch('https://witty-dassie-40050.upstash.io/get/Twitter', {
+                        headers: {
+                            'Authorization': 'Bearer AZxyAAIjcDE3Mzk2MTJkNzJjMDg0Yzk0ODMyZWE3YmRjOGRmZTQxZHAxMA'
+                        }
+                    });
                     
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        console.error('API error response:', errorData);
-                        
-                        // If rate limited and we haven't exceeded max retries
-                        if (response.status === 429 && retryCount < 3) {
-                            console.log(`Rate limited, retrying in ${delay}ms...`);
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            return fetchTweetsWithRetry(retryCount + 1, delay * 2);
-                        }
-                        
-                        throw new Error(errorData.message || 'Failed to fetch tweets');
+                        throw new Error('Failed to fetch from Redis');
                     }
                     
-                    const data = await response.json();
-                    console.log('Received data:', data);
+                    const result = await response.json();
+                    console.log('Redis response:', result);
+                    
+                    if (!result || !result.result) {
+                        console.error('Invalid Redis response structure:', result);
+                        throw new Error('No tweets available - missing result');
+                    }
+
+                    // Parse the result if it's a string
+                    let tweetData;
+                    try {
+                        tweetData = typeof result.result === 'string' ? JSON.parse(result.result) : result.result;
+                        console.log('Parsed tweet data:', tweetData);
+                    } catch (e) {
+                        console.error('Failed to parse tweet data:', e);
+                        throw new Error('Invalid tweet data format');
+                    }
+                    
+                    if (!Array.isArray(tweetData)) {
+                        console.error('Invalid tweet data structure:', tweetData);
+                        throw new Error('No tweets available - invalid data format');
+                    }
+                    
+                    console.log('Tweets found:', tweetData.length);
                     
                     const twitterFeed = document.getElementById('twitter-feed');
                     
-                    // Check if data has the expected structure
-                    if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
-                        throw new Error('No tweets available');
-                    }
-                    
-                    const tweetsHtml = data.data.map(tweet => {
-                        const tweetDate = new Date(tweet.created_at);
-                        const timeAgo = getTimeAgo(tweetDate);
-                        
+                    const tweetsHtml = tweetData.map((tweet, index) => {
                         return `
-                            <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-4 w-[350px]">
-                                <div class="flex items-start justify-between mb-3">
-                                    <div class="flex items-center">
-                                        <img src="/assets/Sticker/32.png" alt="PURRG" class="w-5 h-5 rounded mr-2">
-                                        <div>
-                                            <div class="flex items-center">
-                                                <span class="text-[13px] font-medium">PURRG</span>
-                                                <svg class="ml-1 text-[rgba(72,255,225,0.9)]" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                                    <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
-                                                </svg>
+                            <a href="https://x.com/purrg_hl/status/${tweet.id}" target="_blank" rel="noopener noreferrer" class="block ${index >= 3 ? 'hidden' : ''}">
+                                <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-4 w-full h-full hover:border-[rgba(72,255,225,0.3)] transition-colors flex flex-col">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div class="flex items-center gap-3">
+                                            <img src="/assets/Twitter.png" alt="PURRG" class="w-10 h-10 rounded-full">
+                                            <div class="flex flex-col">
+                                                <div class="flex items-center gap-1">
+                                                    <span class="text-[14px] font-semibold text-white">PURRG</span>
+                                                    <svg class="text-[rgba(72,255,225,0.9)]" width="16" height="16" viewBox="0 0 24 24">
+                                                        <circle fill="currentColor" cx="12" cy="12" r="10"/>
+                                                        <path fill="#0f1a1f" d="M16.2 8.8l-5.8 5.8-2.6-2.6c-.4-.4-1-.4-1.4 0-.4.4-.4 1 0 1.4l3.3 3.3c.2.2.4.3.7.3.3 0 .5-.1.7-.3l6.5-6.5c.4-.4.4-1 0-1.4-.4-.4-1-.4-1.4 0z"/>
+                                                    </svg>
+                                                </div>
+                                                <span class="text-[12px] text-white/50 -mt-1">@purrg_hl</span>
                                             </div>
-                                            <span class="text-[11px] text-white/40">@purrg_hl</span>
+                                        </div>
+                                        <div class="flex items-center h-full">
+                                            <span class="text-[12px] text-white/50">${formatDate(tweet.date)}</span>
                                         </div>
                                     </div>
-                                    <span class="text-[11px] text-white/40">${timeAgo}</span>
+                                    <div class="h-[1px] bg-[#949e9c] opacity-10 -mx-2 mb-4"></div>
+                                    <div class="flex-1 flex flex-col">
+                                        <div class="font-medium mb-2 text-[13px] gradient-text">/PURRG_LOG ${tweet.title}</div>
+                                        <div class="text-[13px] leading-relaxed text-white/80">${tweet.text}</div>
+                                    </div>
+                                    ${tweet.image ? `
+                                        <div class="mt-4">
+                                            <img src="${tweet.image}" alt="Tweet media" class="rounded-lg w-full h-32 object-cover">
+                                        </div>
+                                    ` : ''}
                                 </div>
-                                <p class="text-[13px] leading-relaxed text-white/80">${tweet.text}</p>
-                            </div>
+                            </a>
                         `;
                     }).join('');
                     
-                    twitterFeed.innerHTML = `<div class="flex gap-4" style="min-width: max-content;">${tweetsHtml}</div>`;
+                    twitterFeed.innerHTML = tweetsHtml;
+
+                    // After rendering, ensure all containers have the same height
+                    const tweets = twitterFeed.querySelectorAll('a > div');
+                    let maxHeight = 0;
+                    tweets.forEach(tweet => {
+                        const height = tweet.scrollHeight;
+                        maxHeight = Math.max(maxHeight, height);
+                    });
+                    tweets.forEach(tweet => {
+                        tweet.style.minHeight = `${maxHeight}px`;
+                    });
+
+                    // Initialize tweet navigation
+                    let currentPage = 0;
+                    const tweetsPerPage = 3;
+                    const totalPages = Math.ceil(tweetData.length / tweetsPerPage);
+                    const allTweets = twitterFeed.querySelectorAll('a');
+
+                    function showPage(page) {
+                        const prevBtn = document.getElementById('prevTweets');
+                        const nextBtn = document.getElementById('nextTweets');
+                        
+                        // Update button opacities
+                        prevBtn.style.opacity = page === 0 ? '0.3' : '1';
+                        nextBtn.style.opacity = page >= totalPages - 1 ? '0.3' : '1';
+                        
+                        allTweets.forEach((tweet, index) => {
+                            const shouldShow = index >= page * tweetsPerPage && index < (page + 1) * tweetsPerPage;
+                            tweet.classList.toggle('hidden', !shouldShow);
+                        });
+                    }
+
+                    document.getElementById('prevTweets').addEventListener('click', () => {
+                        if (currentPage > 0) {
+                            currentPage--;
+                            showPage(currentPage);
+                        }
+                    });
+
+                    document.getElementById('nextTweets').addEventListener('click', () => {
+                        if (currentPage < totalPages - 1) {
+                            currentPage++;
+                            showPage(currentPage);
+                        }
+                    });
+
+                    // Show first page
+                    showPage(0);
                 } catch (error) {
                     console.error('Error fetching tweets:', error);
                     const twitterFeed = document.getElementById('twitter-feed');
                     twitterFeed.innerHTML = `
                         <div class="flex items-center justify-center h-32">
                             <p class="text-[13px] text-white/60">
-                                ${error.message === 'Please configure TWITTER_BEARER_TOKEN in .env file' 
-                                    ? 'Twitter feed is currently being configured...' 
-                                    : error.message === 'No tweets available'
-                                        ? 'No tweets available at the moment'
-                                        : error.message === 'Too Many Requests'
-                                            ? 'Loading tweets...'
-                                            : `Failed to load tweets: ${error.message}`}
+                                ${error.message === 'No tweets available'
+                                    ? 'No tweets available at the moment'
+                                    : `Failed to load tweets: ${error.message}`}
                             </p>
                         </div>
                     `;
                 }
-            }
-
-            function getTimeAgo(date) {
-                const seconds = Math.floor((new Date() - date) / 1000);
-                
-                let interval = Math.floor(seconds / 31536000);
-                if (interval > 1) return interval + 'y';
-                
-                interval = Math.floor(seconds / 2592000);
-                if (interval > 1) return interval + 'mo';
-                
-                interval = Math.floor(seconds / 86400);
-                if (interval > 1) return interval + 'd';
-                
-                interval = Math.floor(seconds / 3600);
-                if (interval > 1) return interval + 'h';
-                
-                interval = Math.floor(seconds / 60);
-                if (interval > 1) return interval + 'm';
-                
-                return Math.floor(seconds) + 's';
             }
 
             // Fetch tweets when the page loads
