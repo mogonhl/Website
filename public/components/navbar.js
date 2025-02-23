@@ -6,6 +6,7 @@ function getActivePage() {
     if (path.includes('/launches')) return 'launches';
     if (path.includes('/explorer')) return 'explorer';
     if (path.includes('/dashboard')) return 'dashboard';
+    if (path.includes('/roadmap')) return 'roadmap';
     return '';
 }
 

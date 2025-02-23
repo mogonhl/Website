@@ -1,69 +1,110 @@
-// Sample tweet data
-const PAPER_HANDS_TWEETS = [
-    {
-        id: '1',
-        author: {
-            name: 'Anon',
-            handle: '0xfren',
-            avatar: '/assets/anon.png'
-        },
-        content: 'Just sold my $HYPE airdrop for 2x. Easy money! 🎯',
-        date: '2023-12-21',
-        metrics: {
-            likes: 2100,
-            comments: 1400
-        },
-        sale: {
-            price: 2.00,
-            currentValue: 5830,
-            multiplier: 191.5
-        }
-    },
-    {
-        id: '2',
-        author: {
-            name: 'DegenTrader',
-            handle: 'degenfren',
-            avatar: '/assets/anon.png'
-        },
-        content: '$HYPE is just another airdrop. Sold everything at $3.50. Don\'t be greedy anon. 🤝',
-        date: '2023-12-22',
-        metrics: {
-            likes: 3200,
-            comments: 2800
-        },
-        sale: {
-            price: 3.50,
-            currentValue: 10202,
-            multiplier: 109.4
-        }
-    },
-    {
-        id: '3',
-        author: {
-            name: 'CryptoWizard',
-            handle: 'wizardofcrypto',
-            avatar: '/assets/anon.png'
-        },
-        content: 'Technical Analysis shows $HYPE is overbought at $5. Just sold my entire stack. Good luck holding the bag! 📊',
-        date: '2023-12-23',
-        metrics: {
-            likes: 4500,
-            comments: 3900
-        },
-        sale: {
-            price: 5.00,
-            currentValue: 14575,
-            multiplier: 76.3
-        }
-    }
-];
+// Cache for storing tweets
+let tweetCache = {
+    data: null,
+    timestamp: null,
+    lastRequestTime: null
+};
 
-export default function handler(req, res) {
-    if (req.method === 'GET') {
-        // Return all tweets
-        res.status(200).json(PAPER_HANDS_TWEETS);
-    } else {
-        res.status(405).json({ message: 'Method not allowed' });
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const REQUEST_COOLDOWN = 2000; // 2 seconds between requests
+const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
+const TWITTER_USERNAME = 'purrg_hl'; // Twitter username
+
+export default async function handler(req, res) {
+    console.log('=== Twitter API Debug Info ===');
+    console.log('Bearer token:', TWITTER_BEARER_TOKEN ? `${TWITTER_BEARER_TOKEN.substring(0, 10)}...` : 'missing');
+    console.log('Username:', TWITTER_USERNAME);
+
+    // Validate bearer token format
+    if (!TWITTER_BEARER_TOKEN || !TWITTER_BEARER_TOKEN.startsWith('AAAA')) {
+        console.error('Invalid Bearer Token format');
+        return res.status(500).json({ 
+            error: 'Twitter API not configured',
+            message: 'Invalid Bearer Token format'
+        });
+    }
+
+    try {
+        const now = Date.now();
+
+        // First, get the user ID from username
+        console.log('Looking up user ID...');
+        const userUrl = `https://api.twitter.com/2/users/by/username/${TWITTER_USERNAME}`;
+        const userResponse = await fetch(userUrl, {
+            headers: {
+                'Authorization': `Bearer ${TWITTER_BEARER_TOKEN}`
+            }
+        });
+
+        console.log('User lookup response:', userResponse.status);
+        const userData = await userResponse.json();
+        console.log('User data:', userData);
+
+        if (!userResponse.ok || !userData.data || !userData.data.id) {
+            throw new Error('Failed to find Twitter user: ' + TWITTER_USERNAME);
+        }
+
+        const userId = userData.data.id;
+        console.log('Found user ID:', userId);
+
+        // Now fetch tweets
+        console.log('Fetching tweets...');
+        const url = `https://api.twitter.com/2/users/${userId}/tweets?max_results=5&tweet.fields=created_at&exclude=retweets,replies`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${TWITTER_BEARER_TOKEN}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        console.log('Tweet response status:', response.status);
+        if (response.headers) {
+            console.log('Rate limit info:', {
+                limit: response.headers.get('x-rate-limit-limit'),
+                remaining: response.headers.get('x-rate-limit-remaining'),
+                reset: response.headers.get('x-rate-limit-reset')
+            });
+        }
+        
+        const data = await response.json();
+        console.log('Raw API response:', data);
+
+        if (!response.ok) {
+            if (response.status === 429) {
+                throw new Error('Twitter API rate limit exceeded. Please try again in a few minutes.');
+            }
+            throw new Error(data.detail || data.error?.message || 'Failed to fetch tweets');
+        }
+
+        if (!data || !data.data || !Array.isArray(data.data)) {
+            throw new Error('Invalid response format from Twitter API');
+        }
+
+        // Update cache with new data
+        tweetCache = {
+            data: data,
+            timestamp: now,
+            lastRequestTime: now
+        };
+
+        console.log('Successfully fetched tweets:', data.data.length);
+        res.status(200).json(data);
+    } catch (error) {
+        console.error('=== Twitter API Error ===');
+        console.error('Error:', error.message);
+        console.error('Stack:', error.stack);
+        
+        // If we have cached data and hit rate limit, return cache
+        if (error.message.includes('rate limit') && tweetCache.data) {
+            console.log('Rate limited, returning cached data');
+            return res.status(200).json(tweetCache.data);
+        }
+        
+        res.status(500).json({ 
+            error: 'Failed to fetch tweets',
+            message: error.message,
+            details: 'Check server logs for more information'
+        });
     }
 } 

@@ -10,6 +10,9 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
     const server = express();
 
+    // Add body parsing middleware
+    server.use(express.json());
+
     // Mobile detection middleware - must come before static file serving
     server.use((req, res, next) => {
         // Skip for certain paths
@@ -20,6 +23,7 @@ app.prepare().then(() => {
             req.path === '/mobile' ||
             req.path === '/explorer' ||
             req.path === '/airdrops' ||
+            req.path === '/roadmap' ||
             req.path === '/chat' ||
             req.path.includes('.') // Skip for static files
         ) {
@@ -37,6 +41,23 @@ app.prepare().then(() => {
         }
 
         next();
+    });
+
+    // Handle API routes first
+    server.use('/api', async (req, res, next) => {
+        try {
+            const apiPath = req.path.substring(1); // Remove leading slash
+            const apiModule = require(`./pages/api/${apiPath}`);
+            
+            if (typeof apiModule.default === 'function') {
+                await apiModule.default(req, res);
+            } else {
+                next();
+            }
+        } catch (error) {
+            console.error('API route error:', error);
+            res.status(500).json({ error: 'Internal server error', message: error.message });
+        }
     });
 
     // Serve static files
@@ -60,6 +81,10 @@ app.prepare().then(() => {
 
     server.get('/airdrops', (req, res) => {
         res.sendFile(path.join(__dirname, 'pages/airdrops/index.html'));
+    });
+
+    server.get('/roadmap', (req, res) => {
+        res.sendFile(path.join(__dirname, 'pages/roadmap/index.html'));
     });
 
     server.get('/chat', (req, res) => {

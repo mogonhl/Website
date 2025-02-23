@@ -15,6 +15,7 @@
     { "src": "pages/ecosystem/**", "use": "@vercel/static" },
     { "src": "pages/launches/**", "use": "@vercel/static" },
     { "src": "pages/dashboard/**", "use": "@vercel/static" },
+    { "src": "pages/roadmap/**", "use": "@vercel/static" },
     { "src": "styles/**", "use": "@vercel/static" }
   ],
   "routes": [
@@ -37,6 +38,10 @@
     {
       "src": "/explorer",
       "dest": "/pages/explorer/index.html"
+    },
+    {
+      "src": "/roadmap",
+      "dest": "/pages/roadmap/index.html"
     },
     {
       "src": "/mobile",

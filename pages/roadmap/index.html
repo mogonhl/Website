@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PURRG Roadmap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="/styles/navbar.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <script src="/components/navbar.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #002420;
+            background-image: url('/assets/back.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            color: white;
+            position: relative;
+        }
+
+        .status-icon {
+            color: rgba(72, 255, 225, 0.9);
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .roadmap-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .roadmap-item:hover {
+            border-color: rgba(72, 255, 225, 0.2);
+        }
+
+        .roadmap-item.active {
+            border-color: rgba(72, 255, 225, 0.9);
+            background-color: rgba(15, 26, 31, 0.9);
+        }
+
+        .sub-task {
+            padding-left: 24px;
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .sub-task::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(72, 255, 225, 0.1);
+        }
+
+        .sub-task:last-child::before {
+            height: 50%;
+        }
+
+        .twitter-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .twitter-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .twitter-scroll::-webkit-scrollbar-thumb {
+            background: rgba(72, 255, 225, 0.3);
+            border-radius: 2px;
+        }
+
+        .twitter-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(72, 255, 225, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="min-h-screen pt-12">
+        <div class="max-w-7xl mx-auto px-8 pt-20">
+            <div class="flex flex-col mb-8">
+                <h1 class="text-4xl font-bold mb-2">
+                    <span class="text-[rgba(72,255,225,0.9)]">Roadmap</span>
+                </h1>
+                <p class="text-[rgb(148,158,156)]">This roadmap outlines our goals and where we want to take PURRG.</p>
+            </div>
+
+            <div class="grid grid-cols-[1fr,1.5fr] gap-6">
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="planning">
+                        <div class="flex items-center">
+                            <div class="mr-4 status-icon">
+                                <i class="fas fa-check-circle text-base"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-[13px] font-medium">Planning & Pre-Production</h3>
+                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">1. Sept</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="production">
+                        <div class="flex items-center">
+                            <div class="mr-4 status-icon">
+                                <i class="fas fa-spinner text-base"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-[13px] font-medium">Production</h3>
+                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">1. Oct</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="whitelist">
+                        <div class="flex items-center">
+                            <div class="mr-4 status-icon">
+                                <i class="fas fa-clock text-base"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-[13px] font-medium">Whitelist Launch</h3>
+                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">End of Nov</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="roadmap-item bg-[#0f1a1f] border border-[#0a2622] rounded-lg px-6 py-4 relative" data-phase="minting">
+                        <div class="flex items-center">
+                            <div class="mr-4 status-icon">
+                                <i class="fas fa-hourglass text-base"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-[13px] font-medium">Whitelist Minting</h3>
+                                    <span class="text-[rgba(72,255,225,0.9)] text-[13px]">TBA</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="description-panel" class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-6">
+                    <div class="planning-content hidden">
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Quality comes first. We took our time to plan out everything and build our production pipeline.</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-check text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Initial concept development</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-check text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Team formation</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-check text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Pipeline setup</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="production-content hidden">
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Starting the production on the procedurally generated planets and the smart contract for minting.</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-check text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Smart contract development</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-spinner text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Planet generation system</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-clock text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Testing and optimization</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="whitelist-content hidden">
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Our most active community members will be able to join the whitelist.</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-clock text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Community engagement program</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-clock text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Whitelist criteria setup</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-clock text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Registration system</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="minting-content hidden">
+                        <p class="text-[rgb(148,158,156)] text-[13px] leading-relaxed mb-4">Pre-Sale Minting is opened for our Whitelisted members. The price for whitelist minting will be 0.6 SOL.</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-hourglass text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Minting dApp deployment</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-hourglass text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Whitelist verification</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="mr-3 status-icon" style="width: 16px; height: 16px;">
+                                    <i class="fas fa-hourglass text-xs"></i>
+                                </div>
+                                <span class="text-[13px] text-white/80">Launch monitoring</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12">
+                <div class="flex items-center mb-6">
+                    <h2 class="text-xl font-medium text-[rgba(72,255,225,0.9)]">Latest Updates</h2>
+                    <a href="https://x.com/purrg_hl" target="_blank" class="ml-3 opacity-60 hover:opacity-100 transition-opacity">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                    </a>
+                </div>
+                
+                <div class="relative">
+                    <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#002420] to-transparent z-10"></div>
+                    <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#002420] to-transparent z-10"></div>
+                    <div id="twitter-feed" class="overflow-x-auto pb-4 twitter-scroll">
+                        <div class="flex gap-4 items-center justify-center h-32">
+                            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[rgba(72,255,225,0.9)]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof initializeNavbar === 'function') {
+                initializeNavbar();
+            }
+
+            // Initialize roadmap functionality
+            const roadmapItems = document.querySelectorAll('.roadmap-item');
+            const descriptionPanel = document.getElementById('description-panel');
+
+            function showContent(phase) {
+                // Hide all content sections
+                document.querySelectorAll('[class$="-content"]').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show selected content
+                const selectedContent = document.querySelector(`.${phase}-content`);
+                if (selectedContent) {
+                    selectedContent.classList.remove('hidden');
+                }
+
+                // Update active states
+                roadmapItems.forEach(item => {
+                    if (item.dataset.phase === phase) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+
+            // Add click handlers
+            roadmapItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const phase = this.dataset.phase;
+                    showContent(phase);
+                });
+            });
+
+            // Show first item by default
+            showContent('planning');
+
+            // Fetch and display tweets
+            async function fetchTweetsWithRetry(retryCount = 0, delay = 1000) {
+                try {
+                    console.log('Fetching tweets... (attempt ' + (retryCount + 1) + ')');
+                    const response = await fetch('/api/tweets');
+                    console.log('Response status:', response.status);
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error('API error response:', errorData);
+                        
+                        // If rate limited and we haven't exceeded max retries
+                        if (response.status === 429 && retryCount < 3) {
+                            console.log(`Rate limited, retrying in ${delay}ms...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            return fetchTweetsWithRetry(retryCount + 1, delay * 2);
+                        }
+                        
+                        throw new Error(errorData.message || 'Failed to fetch tweets');
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Received data:', data);
+                    
+                    const twitterFeed = document.getElementById('twitter-feed');
+                    
+                    // Check if data has the expected structure
+                    if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+                        throw new Error('No tweets available');
+                    }
+                    
+                    const tweetsHtml = data.data.map(tweet => {
+                        const tweetDate = new Date(tweet.created_at);
+                        const timeAgo = getTimeAgo(tweetDate);
+                        
+                        return `
+                            <div class="bg-[#0f1a1f] border border-[#0a2622] rounded-lg p-4 w-[350px]">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex items-center">
+                                        <img src="/assets/Sticker/32.png" alt="PURRG" class="w-5 h-5 rounded mr-2">
+                                        <div>
+                                            <div class="flex items-center">
+                                                <span class="text-[13px] font-medium">PURRG</span>
+                                                <svg class="ml-1 text-[rgba(72,255,225,0.9)]" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z"/>
+                                                </svg>
+                                            </div>
+                                            <span class="text-[11px] text-white/40">@purrg_hl</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-[11px] text-white/40">${timeAgo}</span>
+                                </div>
+                                <p class="text-[13px] leading-relaxed text-white/80">${tweet.text}</p>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    twitterFeed.innerHTML = `<div class="flex gap-4" style="min-width: max-content;">${tweetsHtml}</div>`;
+                } catch (error) {
+                    console.error('Error fetching tweets:', error);
+                    const twitterFeed = document.getElementById('twitter-feed');
+                    twitterFeed.innerHTML = `
+                        <div class="flex items-center justify-center h-32">
+                            <p class="text-[13px] text-white/60">
+                                ${error.message === 'Please configure TWITTER_BEARER_TOKEN in .env file' 
+                                    ? 'Twitter feed is currently being configured...' 
+                                    : error.message === 'No tweets available'
+                                        ? 'No tweets available at the moment'
+                                        : error.message === 'Too Many Requests'
+                                            ? 'Loading tweets...'
+                                            : `Failed to load tweets: ${error.message}`}
+                            </p>
+                        </div>
+                    `;
+                }
+            }
+
+            function getTimeAgo(date) {
+                const seconds = Math.floor((new Date() - date) / 1000);
+                
+                let interval = Math.floor(seconds / 31536000);
+                if (interval > 1) return interval + 'y';
+                
+                interval = Math.floor(seconds / 2592000);
+                if (interval > 1) return interval + 'mo';
+                
+                interval = Math.floor(seconds / 86400);
+                if (interval > 1) return interval + 'd';
+                
+                interval = Math.floor(seconds / 3600);
+                if (interval > 1) return interval + 'h';
+                
+                interval = Math.floor(seconds / 60);
+                if (interval > 1) return interval + 'm';
+                
+                return Math.floor(seconds) + 's';
+            }
+
+            // Fetch tweets when the page loads
+            fetchTweetsWithRetry();
+        });
+    </script>
+</body>
+</html>
